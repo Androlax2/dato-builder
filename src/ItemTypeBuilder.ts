@@ -15,21 +15,30 @@ export type ItemTypeBuilderBody = Omit<
     api_key?: string;
 };
 
+export type ItemTypeBuilderConfig = {
+    /** When true, existing fields with matching api_key will be updated to match definitions */
+    overrideExisting?: boolean;
+};
+
 export default abstract class ItemTypeBuilder {
     protected api = new DatoApi(getDatoClient());
+    protected readonly client = this.api.client;
     protected readonly body: SimpleSchemaTypes.ItemTypeCreateSchema;
     protected readonly name: string;
     protected readonly type: ItemTypeBuilderType;
     protected readonly fields: Field[] = [];
+    protected readonly config: Required<ItemTypeBuilderConfig>;
 
     protected constructor(
         type: ItemTypeBuilderType,
         body: Omit<SimpleSchemaTypes.ItemTypeCreateSchema, "api_key"> & {
             api_key?: string;
         },
+        config: ItemTypeBuilderConfig = {},
     ) {
         this.type = type;
         this.name = body.name;
+        this.config = {overrideExisting: config.overrideExisting ?? false};
 
         const apiKey =
             body.api_key ||
@@ -54,58 +63,87 @@ export default abstract class ItemTypeBuilder {
         return this;
     }
 
-    public addInteger(label: string, options?: IntegerBody): this {
-        const integerField = new Integer(label, options);
-        return this.addField(integerField);
+    private getNewFieldPosition(): number {
+        return this.fields.length + 1;
     }
 
-    private async syncFields(itemTypeId: string) {
+    public addInteger(label: string, options?: IntegerBody): this {
+        return this.addField(
+            new Integer(label, {
+                ...options,
+                position: options?.position ?? this.getNewFieldPosition(),
+            }),
+        );
+    }
+
+    /**
+     * Synchronize fields: create, update (if override), and delete
+     *
+     * @param itemTypeId ID to sync against
+     */
+    private async syncFields(itemTypeId: string): Promise<void> {
         const existing = await this.api.call(() =>
-            this.api.client.fields.list(itemTypeId),
+            this.client.fields.list(itemTypeId),
         );
         const desired = this.fields.map((f) => f.build());
 
-        // Create or update fields
+        // Create new
+        const toCreate = desired.filter(
+            (d) => !existing.some((e) => e.api_key === d.api_key),
+        );
         await Promise.all(
-            desired.map((def) => {
-                const match = existing.find((e) => e.api_key === def.api_key);
-                return this.api.call(() =>
-                    match
-                        ? this.api.client.fields.update(match.id, def)
-                        : this.api.client.fields.create(itemTypeId, def),
-                );
-            }),
+            toCreate.map((d) =>
+                this.api.call(() => this.client.fields.create(itemTypeId, d)),
+            ),
         );
 
-        // Destroy removed fields
-        await Promise.all(
-            existing
-                .filter((e) => !desired.some((d) => d.api_key === e.api_key))
-                .map((e) => this.api.call(() => this.api.client.fields.destroy(e.id))),
-        );
+        if (this.config.overrideExisting) {
+            // Update existing fields
+            const updates = existing.flatMap((e) => {
+                const def = desired.find((d) => d.api_key === e.api_key);
+                return def
+                    ? [this.api.call(() => this.client.fields.update(e.id, def))]
+                    : [];
+            });
+            await Promise.all(updates);
+
+            // Delete removed
+            const toDelete = existing.filter(
+                (e) => !desired.some((d) => d.api_key === e.api_key),
+            );
+            await Promise.all(
+                toDelete.map((e) =>
+                    this.api.call(() => this.client.fields.destroy(e.id)),
+                ),
+            );
+        }
     }
 
     public async create(): Promise<string> {
-        const itemType = await this.api.call(() =>
-            this.api.client.itemTypes.create(this.body),
+        const item = await this.api.call(() =>
+            this.client.itemTypes.create(this.body),
         );
-        await this.syncFields(itemType.id);
-        return itemType.id;
+        await this.syncFields(item.id);
+
+        console.info(`Created item type "${this.name}" (id=${item.id})`);
+
+        return item.id;
     }
 
     public async update(): Promise<string> {
-        const itemType = await this.api.call(() =>
-            this.api.client.itemTypes.update(this.body.api_key, this.body),
+        const item = await this.api.call(() =>
+            this.client.itemTypes.update(this.body.api_key, this.body),
         );
-        await this.syncFields(itemType.id);
-        return itemType.id;
+        await this.syncFields(item.id);
+
+        console.info(`Updated item type "${this.name}" (id=${item.id})`);
+
+        return item.id;
     }
 
     public async upsert(): Promise<string> {
         try {
-            await this.api.call(() =>
-                this.api.client.itemTypes.find(this.body.api_key),
-            );
+            await this.api.call(() => this.client.itemTypes.find(this.body.api_key));
 
             return this.update();
         } catch (error: unknown) {

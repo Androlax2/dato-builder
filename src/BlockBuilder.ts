@@ -1,4 +1,4 @@
-import ItemTypeBuilder, {type ItemTypeBuilderType} from "./ItemTypeBuilder";
+import ItemTypeBuilder, {type ItemTypeBuilderConfig, type ItemTypeBuilderType,} from "./ItemTypeBuilder";
 
 type BlockBuilderBody = {
     /**
@@ -16,7 +16,11 @@ type BlockBuilderBody = {
 export default class BlockBuilder extends ItemTypeBuilder {
     protected type: ItemTypeBuilderType = "block";
 
-    constructor(name: string, options?: BlockBuilderBody) {
-        super("block", {...options, name});
+    constructor(
+        name: string,
+        options?: BlockBuilderBody,
+        config?: ItemTypeBuilderConfig,
+    ) {
+        super("block", {...options, name}, config);
     }
 }

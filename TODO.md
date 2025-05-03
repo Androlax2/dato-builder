@@ -10,3 +10,4 @@
 - Add issue templates
 - Set up workflow for release
 - Test it work in javascript and typescript environments
+- Delete the test key from Dato "4138815ad42637c8ad7268e303618e"
