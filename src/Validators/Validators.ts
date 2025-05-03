@@ -1,14 +1,19 @@
-import NumberRangeValidator from "./NumberRangeValidator";
-import RequiredValidator from "./RequiredValidator";
+import EnumValidator, {type EnumValidatorConfig} from "./EnumValidator";
+import FormatValidator, {type FormatValidatorConfig} from "./FormatValidator";
+import LengthValidator, {type LengthValidatorConfig} from "./LengthValidator";
+import NumberRangeValidator, {type NumberRangeValidatorConfig,} from "./NumberRangeValidator";
+import RequiredValidator, {type RequiredValidatorConfig,} from "./RequiredValidator";
+import UniqueValidator, {type UniqueValidatorConfig} from "./UniqueValidator";
 import type {Validator} from "./types";
 
-export type ValidatorConfig = {
-    required?: boolean;
-    number_range?: {
-        min?: number;
-        max?: number;
-    };
-};
+export type ValidatorConfig = Partial<{
+    required: RequiredValidatorConfig;
+    number_range: NumberRangeValidatorConfig;
+    unique: UniqueValidatorConfig;
+    format: FormatValidatorConfig;
+    length: LengthValidatorConfig;
+    enum: EnumValidatorConfig;
+}>;
 
 export default class Validators {
     private validators: Validator[] = [];
@@ -20,6 +25,22 @@ export default class Validators {
 
         if (config.number_range) {
             this.validators.push(new NumberRangeValidator(config.number_range));
+        }
+
+        if (config.unique) {
+            this.validators.push(new UniqueValidator());
+        }
+
+        if (config.format) {
+            this.validators.push(new FormatValidator(config.format));
+        }
+
+        if (config.length) {
+            this.validators.push(new LengthValidator(config.length));
+        }
+
+        if (config.enum) {
+            this.validators.push(new EnumValidator(config.enum));
         }
     }
 

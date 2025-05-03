@@ -3,6 +3,7 @@ import DatoApi from "./Api/DatoApi";
 import NotFoundError from "./Api/Error/NotFoundError";
 import type Field from "./Fields/Field";
 import Integer, {type IntegerBody} from "./Fields/Integer";
+import SingleLineString, {type SingleLineStringBody,} from "./Fields/SingleLineString";
 import {getDatoClient} from "./config";
 import {loadDatoBuilderConfig} from "./config/loader";
 import {generateDatoApiKey} from "./utils/utils";
@@ -95,7 +96,7 @@ export default abstract class ItemTypeBuilder {
         return this;
     }
 
-    private getNewFieldPosition(): number {
+    protected getNewFieldPosition(): number {
         return this.fields.length + 1;
     }
 
@@ -104,6 +105,23 @@ export default abstract class ItemTypeBuilder {
             new Integer(label, {
                 ...options,
                 position: options?.position ?? this.getNewFieldPosition(),
+            }),
+        );
+    }
+
+    public addSingleLineString(
+        label: string,
+        options?: SingleLineStringBody,
+    ): this {
+        return this.addField(
+            new SingleLineString(label, {
+                ...options,
+                position: options?.position ?? this.getNewFieldPosition(),
+                validators: {
+                    ...options?.validators,
+                    unique:
+                        this.type === "block" ? undefined : options?.validators?.unique,
+                },
             }),
         );
     }

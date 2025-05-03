@@ -1,9 +1,11 @@
 import BlockBuilder from "./BlockBuilder";
 
-const TestBlock = new BlockBuilder("Block yolo").addInteger("Yolo number", {
-    validators: {
-        required: true,
-    },
-});
+const TestBlock = new BlockBuilder("Block yolo")
+    .addInteger("my super integer")
+    .addSingleLineString("my super string", {
+        validators: {
+            unique: true,
+        },
+    });
 
 void TestBlock.upsert();

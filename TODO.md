@@ -1,4 +1,4 @@
-- Finish all fields
+- Finish all fields (https://www.datocms.com/docs/content-management-api/resources/field)
 - Test that model & blocks are working
 - Add tests
 - Add documentation
