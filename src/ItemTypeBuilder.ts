@@ -54,6 +54,11 @@ export default abstract class ItemTypeBuilder {
         };
     }
 
+    public setOverrideExisting(value = true): this {
+        this.config.overrideExisting = value;
+        return this;
+    }
+
     public addField(field: Field): this {
         const key = field.build().api_key;
         if (this.fields.some((f) => f.build().api_key === key)) {
