@@ -3,3 +3,4 @@ dato-builder.iml
 build/
 node_modules/
 dato-builder.config.ts
+coverage/
