@@ -8,8 +8,13 @@ export type MultiLineTextBody = Omit<FieldBody, "label"> & {
     >;
 };
 
+export type MultiLineTextConfig = {
+    label: string;
+    body?: MultiLineTextBody;
+};
+
 export default class MultiLineText extends Field {
-    constructor(label: string, body?: MultiLineTextBody) {
+    constructor({label, body}: MultiLineTextConfig) {
         super("text", {
             ...body,
             label,

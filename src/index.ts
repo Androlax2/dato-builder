@@ -1,17 +1,33 @@
 import BlockBuilder from "./BlockBuilder";
 
 const TestBlock = new BlockBuilder("Block yolo")
-    .addInteger("my super integer")
-    .addSingleLineString("my super string", {
-        validators: {
-            required: true,
+    .addInteger({
+        label: "my super integer",
+    })
+    .addSingleLineString({
+        label: "my super single line string",
+        body: {
+            validators: {
+                required: true,
+                unique: true,
+            },
         },
     })
-
-    .addMultiLineText("my super multi line text", {
-        validators: {
-            sanitized_html: {
-                sanitize_before_validation: true,
+    .addSingleLineString({
+        label: "heading",
+        options: {
+            heading: true,
+            placeholder: "my super placeholder",
+        },
+    })
+    .addMultiLineText({
+        label: "my super multi line text",
+        body: {
+            validators: {
+                required: true,
+                sanitized_html: {
+                    sanitize_before_validation: true,
+                },
             },
         },
     });

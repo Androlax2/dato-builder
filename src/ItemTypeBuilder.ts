@@ -2,9 +2,9 @@ import type * as SimpleSchemaTypes from "@datocms/cma-client/src/generated/Simpl
 import DatoApi from "./Api/DatoApi";
 import NotFoundError from "./Api/Error/NotFoundError";
 import type Field from "./Fields/Field";
-import Integer, {type IntegerBody} from "./Fields/Integer";
-import MultiLineText, {type MultiLineTextBody} from "./Fields/MultiLineText";
-import SingleLineString, {type SingleLineStringBody,} from "./Fields/SingleLineString";
+import Integer, {type IntegerConfig} from "./Fields/Integer";
+import MultiLineText, {type MultiLineTextConfig,} from "./Fields/MultiLineText";
+import SingleLineString, {type SingleLineStringConfig,} from "./Fields/SingleLineString";
 import {getDatoClient} from "./config";
 import {loadDatoBuilderConfig} from "./config/loader";
 import {generateDatoApiKey} from "./utils/utils";
@@ -101,33 +101,44 @@ export default abstract class ItemTypeBuilder {
         return this.fields.length + 1;
     }
 
-    public addInteger(label: string, body?: IntegerBody): this {
+    public addInteger({label, body}: IntegerConfig): this {
         return this.addField(
-            new Integer(label, {
-                ...body,
-                position: body?.position ?? this.getNewFieldPosition(),
-            }),
-        );
-    }
-
-    public addSingleLineString(label: string, body?: SingleLineStringBody): this {
-        return this.addField(
-            new SingleLineString(label, {
-                ...body,
-                position: body?.position ?? this.getNewFieldPosition(),
-                validators: {
-                    ...body?.validators,
-                    unique: this.type === "block" ? undefined : body?.validators?.unique,
+            new Integer({
+                label,
+                body: {
+                    ...body,
+                    position: body?.position ?? this.getNewFieldPosition(),
                 },
             }),
         );
     }
 
-    public addMultiLineText(label: string, body?: MultiLineTextBody): this {
+    public addSingleLineString({label, body, options}: SingleLineStringConfig) {
         return this.addField(
-            new MultiLineText(label, {
-                ...body,
-                position: body?.position ?? this.getNewFieldPosition(),
+            new SingleLineString({
+                label,
+                body: {
+                    ...body,
+                    position: body?.position ?? this.getNewFieldPosition(),
+                    validators: {
+                        ...body?.validators,
+                        unique:
+                            this.type === "block" ? undefined : body?.validators?.unique,
+                    },
+                },
+                options,
+            }),
+        );
+    }
+
+    public addMultiLineText({label, body}: MultiLineTextConfig): this {
+        return this.addField(
+            new MultiLineText({
+                label,
+                body: {
+                    ...body,
+                    position: body?.position ?? this.getNewFieldPosition(),
+                },
             }),
         );
     }

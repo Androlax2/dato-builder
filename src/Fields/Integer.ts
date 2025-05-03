@@ -5,8 +5,13 @@ export type IntegerBody = Omit<FieldBody, "label"> & {
     validators?: Pick<ValidatorConfig, "required" | "number_range">;
 };
 
+export type IntegerConfig = {
+    label: string;
+    body?: IntegerBody;
+};
+
 export default class Integer extends Field {
-    constructor(label: string, body?: IntegerBody) {
+    constructor({label, body}: IntegerConfig) {
         super("integer", {
             ...body,
             label,
