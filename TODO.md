@@ -1,4 +1,4 @@
-- Finish all fields (https://www.datocms.com/docs/content-management-api/resources/field)
+- Finish all fields (https://www.datocms.com/docs/content-management-api/resources/field#available-field-types)
 - Handle built-in editors for ech
   field (https://www.datocms.com/docs/content-management-api/resources/field#configuration-parameters-for-datocms-built-in-field-editors)
 - Test that model & blocks are working

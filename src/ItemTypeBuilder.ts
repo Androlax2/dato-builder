@@ -3,6 +3,7 @@ import DatoApi from "./Api/DatoApi";
 import NotFoundError from "./Api/Error/NotFoundError";
 import type Field from "./Fields/Field";
 import Integer, {type IntegerBody} from "./Fields/Integer";
+import MultiLineText, {type MultiLineTextBody} from "./Fields/MultiLineText";
 import SingleLineString, {type SingleLineStringBody,} from "./Fields/SingleLineString";
 import {getDatoClient} from "./config";
 import {loadDatoBuilderConfig} from "./config/loader";
@@ -122,6 +123,15 @@ export default abstract class ItemTypeBuilder {
                     unique:
                         this.type === "block" ? undefined : options?.validators?.unique,
                 },
+            }),
+        );
+    }
+
+    public addMultiLineText(label: string, options?: MultiLineTextBody): this {
+        return this.addField(
+            new MultiLineText(label, {
+                ...options,
+                position: options?.position ?? this.getNewFieldPosition(),
             }),
         );
     }

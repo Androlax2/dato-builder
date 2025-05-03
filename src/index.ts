@@ -6,6 +6,14 @@ const TestBlock = new BlockBuilder("Block yolo")
         validators: {
             required: true,
         },
+    })
+
+    .addMultiLineText("my super multi line text", {
+        validators: {
+            sanitized_html: {
+                sanitize_before_validation: true,
+            },
+        },
     });
 
 void TestBlock.upsert();
