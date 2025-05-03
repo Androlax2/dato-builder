@@ -1,3 +1,4 @@
 .idea/
 dato-builder.iml
 build/
+node_modules/
