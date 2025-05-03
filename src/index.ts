@@ -20,6 +20,14 @@ const TestBlock = new BlockBuilder("Block yolo")
             placeholder: "my super placeholder",
         },
     })
+    .addHeading({
+        label: "heading 2",
+        body: {
+            validators: {
+                required: true,
+            },
+        },
+    })
     .addMultiLineText({
         label: "my super multi line text",
         body: {
@@ -30,6 +38,14 @@ const TestBlock = new BlockBuilder("Block yolo")
                 },
             },
         },
+    })
+    .addStringRadioGroup({
+        label: "string radio group",
+        radios: [
+            {label: "radio 1", value: "value1"},
+            {label: "radio 2", value: "value2"},
+            {label: "radio 3", value: "value3"},
+        ],
     });
 
 void TestBlock.upsert();

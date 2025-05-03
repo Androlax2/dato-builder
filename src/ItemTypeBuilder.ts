@@ -5,6 +5,7 @@ import type Field from "./Fields/Field";
 import Integer, {type IntegerConfig} from "./Fields/Integer";
 import MultiLineText, {type MultiLineTextConfig,} from "./Fields/MultiLineText";
 import SingleLineString, {type SingleLineStringConfig,} from "./Fields/SingleLineString";
+import StringRadioGroup, {type StringRadioGroupConfig,} from "./Fields/StringRadioGroup";
 import {getDatoClient} from "./config";
 import {loadDatoBuilderConfig} from "./config/loader";
 import {generateDatoApiKey} from "./utils/utils";
@@ -127,6 +128,30 @@ export default abstract class ItemTypeBuilder {
                     },
                 },
                 options,
+            }),
+        );
+    }
+
+    public addHeading({label, body, options}: SingleLineStringConfig) {
+        return this.addSingleLineString({
+            label,
+            body,
+            options: {
+                ...options,
+                heading: true,
+            },
+        });
+    }
+
+    public addStringRadioGroup({label, radios, body}: StringRadioGroupConfig) {
+        return this.addField(
+            new StringRadioGroup({
+                label,
+                radios,
+                body: {
+                    ...body,
+                    position: body?.position ?? this.getNewFieldPosition(),
+                },
             }),
         );
     }
