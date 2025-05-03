@@ -7,7 +7,9 @@ export function loadDatoBuilderConfig(): DatoBuilderConfig {
 
     // Load config from file if it exists
     if (!tryLoadFromConfigFile(config)) {
-        console.warn("No config file found. Using default values.");
+        throw new Error(
+            "No Dato Builder config found. Please create a file named 'dato-builder.config.js' or 'dato-builder.config.ts' in the current directory.",
+        );
     }
 
     // Validate the config
