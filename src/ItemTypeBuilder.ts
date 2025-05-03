@@ -4,6 +4,7 @@ import NotFoundError from "./Api/Error/NotFoundError";
 import type Field from "./Fields/Field";
 import Integer, {type IntegerBody} from "./Fields/Integer";
 import {getDatoClient} from "./config";
+import {loadDatoBuilderConfig} from "./config/loader";
 import {generateDatoApiKey} from "./utils/utils";
 
 export type ItemTypeBuilderType = "model" | "block";
@@ -16,8 +17,17 @@ export type ItemTypeBuilderBody = Omit<
 };
 
 export type ItemTypeBuilderConfig = {
-    /** When true, existing fields with matching api_key will be updated to match definitions */
-    overrideExisting?: boolean;
+    /**
+     * Whether to overwrite existing fields in DatoCMS when syncing.
+     *
+     * - `false` (default): New fields will be created. All other fields
+     *  will be left untouched.
+     *
+     * - `true`: Fields with matching API keys will be updated to match
+     *   your code definitions, overwriting any manual changes made via
+     *   the DatoCMS dashboard.
+     */
+    overwriteExistingFields?: boolean;
 };
 
 export default abstract class ItemTypeBuilder {
@@ -38,7 +48,9 @@ export default abstract class ItemTypeBuilder {
     ) {
         this.type = type;
         this.name = body.name;
-        this.config = {overrideExisting: config.overrideExisting ?? false};
+
+        // Merge builder-specific and global config
+        this.config = this.mergeConfig(config);
 
         const apiKey =
             body.api_key ||
@@ -54,8 +66,23 @@ export default abstract class ItemTypeBuilder {
         };
     }
 
-    public setOverrideExisting(value = true): this {
-        this.config.overrideExisting = value;
+    /**
+     * Merge global config and builder-specific overrides into final config.
+     */
+    private mergeConfig(
+        builderConfig: ItemTypeBuilderConfig,
+    ): Required<ItemTypeBuilderConfig> {
+        const globalConfig = loadDatoBuilderConfig();
+        return {
+            overwriteExistingFields:
+                builderConfig.overwriteExistingFields ??
+                globalConfig.overwriteExistingFields ??
+                false,
+        };
+    }
+
+    public setOverrideExistingFields(value = true): this {
+        this.config.overwriteExistingFields = value;
         return this;
     }
 
@@ -102,7 +129,7 @@ export default abstract class ItemTypeBuilder {
             ),
         );
 
-        if (this.config.overrideExisting) {
+        if (this.config.overwriteExistingFields) {
             // Update existing fields
             const updates = existing.flatMap((e) => {
                 const def = desired.find((d) => d.api_key === e.api_key);
