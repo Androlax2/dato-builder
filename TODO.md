@@ -1,0 +1,12 @@
+- Finish all fields
+- Test that model & blocks are working
+- Add tests
+- Add documentation
+- Add examples
+- Add a semantic versioning
+- Add lefthook
+- Add cspell
+- Add pull_request_template
+- Add issue templates
+- Set up workflow for release
+- Test it work in javascript and typescript environments
