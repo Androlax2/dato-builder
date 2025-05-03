@@ -33,7 +33,7 @@ export type ItemTypeBuilderConfig = {
 export default abstract class ItemTypeBuilder {
     protected api = new DatoApi(getDatoClient());
     protected readonly client = this.api.client;
-    protected readonly body: SimpleSchemaTypes.ItemTypeCreateSchema;
+    readonly body: SimpleSchemaTypes.ItemTypeCreateSchema;
     protected readonly name: string;
     protected readonly type: ItemTypeBuilderType;
     protected readonly fields: Field[] = [];
