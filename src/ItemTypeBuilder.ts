@@ -3,6 +3,7 @@ import DatoApi from "./Api/DatoApi";
 import NotFoundError from "./Api/Error/NotFoundError";
 import type Field from "./Fields/Field";
 import Integer, {type IntegerConfig} from "./Fields/Integer";
+import Markdown, {type MarkdownConfig} from "./Fields/Markdown";
 import MultiLineText, {type MultiLineTextConfig,} from "./Fields/MultiLineText";
 import SingleLineString, {type SingleLineStringConfig,} from "./Fields/SingleLineString";
 import StringRadioGroup, {type StringRadioGroupConfig,} from "./Fields/StringRadioGroup";
@@ -129,6 +130,19 @@ export default abstract class ItemTypeBuilder {
                     },
                 },
                 options,
+            }),
+        );
+    }
+
+    public addMarkdown({label, toolbar, body}: MarkdownConfig) {
+        return this.addField(
+            new Markdown({
+                label,
+                toolbar,
+                body: {
+                    ...body,
+                    position: body?.position ?? this.getNewFieldPosition(),
+                },
             }),
         );
     }
