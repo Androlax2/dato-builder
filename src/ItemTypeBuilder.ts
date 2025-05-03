@@ -8,6 +8,7 @@ import MultiLineText, {type MultiLineTextConfig,} from "./Fields/MultiLineText";
 import SingleLineString, {type SingleLineStringConfig,} from "./Fields/SingleLineString";
 import StringRadioGroup, {type StringRadioGroupConfig,} from "./Fields/StringRadioGroup";
 import StringSelect, {type StringSelectConfig} from "./Fields/StringSelect";
+import Textarea, {type TextareaConfig} from "./Fields/Textarea";
 import Wysiwyg, {type WysiwygConfig} from "./Fields/Wysiwyg";
 import {getDatoClient} from "./config";
 import {loadDatoBuilderConfig} from "./config/loader";
@@ -153,6 +154,19 @@ export default abstract class ItemTypeBuilder {
             new Wysiwyg({
                 label,
                 toolbar,
+                body: {
+                    ...body,
+                    position: body?.position ?? this.getNewFieldPosition(),
+                },
+            }),
+        );
+    }
+
+    public addTextarea({label, placeholder, body}: TextareaConfig) {
+        return this.addField(
+            new Textarea({
+                label,
+                placeholder,
                 body: {
                     ...body,
                     position: body?.position ?? this.getNewFieldPosition(),

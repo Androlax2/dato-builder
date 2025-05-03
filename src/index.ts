@@ -8,6 +8,10 @@ const TestBlock = new BlockBuilder("Block yolo")
     .addWysiwyg({
         label: "Wysiwyg",
         toolbar: ["link"],
+    })
+    .addTextarea({
+        label: "Textarea",
+        placeholder: "Placeholder",
     });
 
 void TestBlock.upsert();
