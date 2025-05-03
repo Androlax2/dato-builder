@@ -14,7 +14,7 @@ type BlockBuilderBody = {
 };
 
 export default class BlockBuilder extends ItemTypeBuilder {
-    protected type: ItemTypeBuilderType = "block";
+    public type: ItemTypeBuilderType = "block";
 
     constructor(
         name: string,

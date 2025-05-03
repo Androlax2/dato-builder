@@ -41,10 +41,10 @@ export default abstract class ItemTypeBuilder {
     protected api = new DatoApi(getDatoClient());
     protected readonly client = this.api.client;
     readonly body: SimpleSchemaTypes.ItemTypeCreateSchema;
-    protected readonly name: string;
-    protected readonly type: ItemTypeBuilderType;
-    protected readonly fields: Field[] = [];
-    protected readonly config: Required<ItemTypeBuilderConfig>;
+    readonly name: string;
+    readonly type: ItemTypeBuilderType;
+    readonly fields: Field[] = [];
+    readonly config: Required<ItemTypeBuilderConfig>;
 
     protected constructor(
         type: ItemTypeBuilderType,
@@ -102,7 +102,7 @@ export default abstract class ItemTypeBuilder {
         return this;
     }
 
-    protected getNewFieldPosition(): number {
+    getNewFieldPosition(): number {
         return this.fields.length + 1;
     }
 

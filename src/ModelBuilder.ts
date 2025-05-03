@@ -1,7 +1,7 @@
 import ItemTypeBuilder, {type ItemTypeBuilderBody, type ItemTypeBuilderConfig, type ItemTypeBuilderType,} from "./ItemTypeBuilder";
 
 export default class ModelBuilder extends ItemTypeBuilder {
-    protected type: ItemTypeBuilderType = "model";
+    public type: ItemTypeBuilderType = "model";
 
     constructor(
         name: string,
