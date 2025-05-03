@@ -4,7 +4,7 @@ const TestBlock = new BlockBuilder("Block yolo")
     .addInteger("my super integer")
     .addSingleLineString("my super string", {
         validators: {
-            unique: true,
+            required: true,
         },
     });
 
