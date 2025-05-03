@@ -3,12 +3,22 @@ import DatoApi from "../src/Api/DatoApi";
 import NotFoundError from "../src/Api/Error/NotFoundError";
 import type Field from "../src/Fields/Field";
 import Integer from "../src/Fields/Integer";
+import Markdown from "../src/Fields/Markdown";
+import SingleLineString from "../src/Fields/SingleLineString";
+import StringRadioGroup from "../src/Fields/StringRadioGroup";
+import StringSelect from "../src/Fields/StringSelect";
 import ItemTypeBuilder, {type ItemTypeBuilderType,} from "../src/ItemTypeBuilder";
 import * as configLoader from "../src/config/loader";
 
-// Mock dependencies
 jest.mock("../src/Api/DatoApi");
 jest.mock("../src/Fields/Integer");
+jest.mock("../src/Fields/SingleLineString");
+jest.mock("../src/Fields/Markdown");
+jest.mock("../src/Fields/Wysiwyg");
+jest.mock("../src/Fields/Textarea");
+jest.mock("../src/Fields/StringRadioGroup");
+jest.mock("../src/Fields/StringSelect");
+jest.mock("../src/Fields/MultiLineText");
 jest.mock("../src/utils/utils", () => ({
     generateDatoApiKey: jest.fn((name: string, suffix: string) => {
         if (suffix) {
@@ -26,7 +36,7 @@ jest.mock("../src/config", () => ({
     getDatoClient: jest.fn(() => ({})),
 }));
 
-// Create a concrete implementation of ItemTypeBuilder for testing
+// Same TestItemTypeBuilder class as in the original file
 class TestItemTypeBuilder extends ItemTypeBuilder {
     // biome-ignore lint/suspicious/noExplicitAny: It's a test
     constructor(type: ItemTypeBuilderType, body: any, config: any = {}) {
@@ -382,6 +392,429 @@ describe("ItemTypeBuilder", () => {
             mockClientItemTypes.find.mockRejectedValueOnce(genericError);
 
             await expect(builder.upsert()).rejects.toThrow(genericError);
+        });
+    });
+
+    describe("getNewFieldPosition", () => {
+        it("should return 1 for the first field", () => {
+            expect(builder.getNewFieldPosition()).toBe(1);
+        });
+
+        it("should increment position for each field", () => {
+            const mockField1 = {
+                build: jest.fn().mockReturnValue({api_key: "field1"}),
+            } as unknown as Field;
+            const mockField2 = {
+                build: jest.fn().mockReturnValue({api_key: "field2"}),
+            } as unknown as Field;
+
+            builder.addField(mockField1);
+            expect(builder.getNewFieldPosition()).toBe(2);
+
+            builder.addField(mockField2);
+            expect(builder.getNewFieldPosition()).toBe(3);
+        });
+    });
+
+    describe("addSingleLineString", () => {
+        it("should create a new SingleLineString field with the correct position", () => {
+            const mockField = {
+                build: jest.fn().mockReturnValue({api_key: "title"}),
+            };
+            (SingleLineString as jest.Mock).mockImplementation(() => mockField);
+
+            const spy = jest.spyOn(builder, "addField");
+
+            builder.addSingleLineString({label: "Title"});
+
+            expect(SingleLineString).toHaveBeenCalledWith({
+                label: "Title",
+                body: {
+                    position: 1,
+                    validators: {
+                        unique: undefined,
+                    },
+                },
+                options: undefined,
+            });
+
+            expect(spy).toHaveBeenCalledWith(mockField);
+        });
+
+        it("should disable unique validation for block item types", () => {
+            const blockBuilder = new TestItemTypeBuilder("block", {
+                name: "Test Block",
+                singleton: false,
+                sortable: true,
+                draft_mode_active: false,
+                all_locales_required: true,
+            });
+
+            const mockField = {
+                build: jest.fn().mockReturnValue({api_key: "title"}),
+            };
+            (SingleLineString as jest.Mock).mockImplementation(() => mockField);
+
+            blockBuilder.addSingleLineString({
+                label: "Title",
+                body: {
+                    validators: {
+                        unique: true,
+                    },
+                },
+            });
+
+            expect(SingleLineString).toHaveBeenCalledWith({
+                label: "Title",
+                body: {
+                    position: 1,
+                    validators: {
+                        unique: undefined,
+                    },
+                },
+                options: undefined,
+            });
+        });
+
+        it("should preserve unique validation for model item types", () => {
+            const mockField = {
+                build: jest.fn().mockReturnValue({api_key: "title"}),
+            };
+            (SingleLineString as jest.Mock).mockImplementation(() => mockField);
+
+            builder.addSingleLineString({
+                label: "Title",
+                body: {
+                    validators: {
+                        unique: true,
+                    },
+                },
+            });
+
+            expect(SingleLineString).toHaveBeenCalledWith({
+                label: "Title",
+                body: {
+                    position: 1,
+                    validators: {
+                        unique: true,
+                    },
+                },
+                options: undefined,
+            });
+        });
+    });
+
+    describe("addMarkdown", () => {
+        it("should create a new Markdown field with the correct position and toolbar options", () => {
+            const mockField = {
+                build: jest.fn().mockReturnValue({api_key: "content"}),
+            };
+            (Markdown as jest.Mock).mockImplementation(() => mockField);
+
+            const spy = jest.spyOn(builder, "addField");
+
+            builder.addMarkdown({
+                label: "Content",
+                toolbar: ["bold", "italic", "code"],
+            });
+
+            expect(Markdown).toHaveBeenCalledWith({
+                label: "Content",
+                toolbar: ["bold", "italic", "code"],
+                body: {
+                    position: 1,
+                },
+            });
+
+            expect(spy).toHaveBeenCalledWith(mockField);
+        });
+    });
+
+    describe("addHeading", () => {
+        it("should create a heading field with heading option set to true", () => {
+            const mockField = {
+                build: jest.fn().mockReturnValue({api_key: "section_title"}),
+            };
+            (SingleLineString as jest.Mock).mockImplementation(() => mockField);
+
+            const spy = jest.spyOn(builder, "addSingleLineString");
+
+            builder.addHeading({
+                label: "Section Title",
+            });
+
+            expect(spy).toHaveBeenCalledWith({
+                label: "Section Title",
+                body: undefined,
+                options: {
+                    heading: true,
+                },
+            });
+        });
+
+        it("should merge custom options with heading=true", () => {
+            const mockField = {
+                build: jest.fn().mockReturnValue({api_key: "section_title"}),
+            };
+            (SingleLineString as jest.Mock).mockImplementation(() => mockField);
+
+            const spy = jest.spyOn(builder, "addSingleLineString");
+
+            builder.addHeading({
+                label: "Section Title",
+                options: {
+                    // @ts-ignore
+                    customOption: "value",
+                },
+            });
+
+            expect(spy).toHaveBeenCalledWith({
+                label: "Section Title",
+                body: undefined,
+                options: {
+                    heading: true,
+                    customOption: "value",
+                },
+            });
+        });
+    });
+
+    describe("syncFields", () => {
+        it("should create new fields that don't exist yet", async () => {
+            const mockField = {
+                build: jest.fn().mockReturnValue({
+                    api_key: "new_field",
+                    label: "New Field",
+                }),
+            } as unknown as Field;
+
+            builder.addField(mockField);
+
+            // Execute the private syncFields method via the public create method
+            await builder.create();
+
+            expect(mockClientFields.list).toHaveBeenCalledWith("item-123");
+            expect(mockClientFields.create).toHaveBeenCalledWith("item-123", {
+                api_key: "new_field",
+                label: "New Field",
+            });
+            // No updates or deletes should happen
+            expect(mockClientFields.update).not.toHaveBeenCalled();
+            expect(mockClientFields.destroy).not.toHaveBeenCalled();
+        });
+
+        it("should update existing fields when overwriteExistingFields is true", async () => {
+            builder.setOverrideExistingFields(true);
+
+            const mockField = {
+                build: jest.fn().mockReturnValue({
+                    api_key: "existing_field",
+                    label: "Updated Field",
+                }),
+            } as unknown as Field;
+
+            builder.addField(mockField);
+
+            // Mock an existing field with the same api_key
+            mockClientFields.list.mockResolvedValueOnce([
+                {id: "field-123", api_key: "existing_field", label: "Old Field"},
+            ]);
+
+            await builder.update();
+
+            expect(mockClientFields.update).toHaveBeenCalledWith("field-123", {
+                api_key: "existing_field",
+                label: "Updated Field",
+            });
+        });
+
+        it("should delete fields no longer in the builder when overwriteExistingFields is true", async () => {
+            builder.setOverrideExistingFields(true);
+
+            // Mock multiple existing fields
+            mockClientFields.list.mockResolvedValueOnce([
+                {id: "field-123", api_key: "field1", label: "Field 1"},
+                {id: "field-456", api_key: "field2", label: "Field 2"},
+            ]);
+
+            // Only add one field to the builder
+            const mockField = {
+                build: jest.fn().mockReturnValue({
+                    api_key: "field1",
+                    label: "Field 1",
+                }),
+            } as unknown as Field;
+
+            builder.addField(mockField);
+
+            await builder.update();
+
+            // Should delete field2 since it's not in the builder
+            expect(mockClientFields.destroy).toHaveBeenCalledWith("field-456");
+        });
+
+        it("should not update or delete fields when overwriteExistingFields is false", async () => {
+            // Explicitly set to false (already the default)
+            builder.setOverrideExistingFields(false);
+
+            // Mock existing fields
+            mockClientFields.list.mockResolvedValueOnce([
+                {id: "field-123", api_key: "field1", label: "Field 1"},
+                {id: "field-456", api_key: "field2", label: "Field 2"},
+            ]);
+
+            // Add a field with the same api_key but different label
+            const mockField = {
+                build: jest.fn().mockReturnValue({
+                    api_key: "field1",
+                    label: "Updated Field 1",
+                }),
+            } as unknown as Field;
+
+            builder.addField(mockField);
+
+            await builder.update();
+
+            // No updates or deletes should happen
+            expect(mockClientFields.update).not.toHaveBeenCalled();
+            expect(mockClientFields.destroy).not.toHaveBeenCalled();
+        });
+    });
+
+    describe("StringRadioGroup and StringSelect tests", () => {
+        it("should create a StringRadioGroup with the correct options", () => {
+            const mockField = {
+                build: jest.fn().mockReturnValue({api_key: "status"}),
+            };
+            (StringRadioGroup as jest.Mock).mockImplementation(() => mockField);
+
+            const spy = jest.spyOn(builder, "addField");
+            const radios = [
+                {label: "Published", value: "published"},
+                {label: "Draft", value: "draft"},
+            ];
+
+            builder.addStringRadioGroup({
+                label: "Status",
+                radios,
+            });
+
+            expect(StringRadioGroup).toHaveBeenCalledWith({
+                label: "Status",
+                radios,
+                body: {
+                    position: 1,
+                },
+            });
+
+            expect(spy).toHaveBeenCalledWith(mockField);
+        });
+
+        it("should create a StringSelect with the correct options", () => {
+            const mockField = {
+                build: jest.fn().mockReturnValue({api_key: "category"}),
+            };
+            (StringSelect as jest.Mock).mockImplementation(() => mockField);
+
+            const spy = jest.spyOn(builder, "addField");
+            const options = [
+                {label: "News", value: "news"},
+                {label: "Opinion", value: "opinion"},
+            ];
+
+            builder.addStringSelect({
+                label: "Category",
+                options,
+            });
+
+            expect(StringSelect).toHaveBeenCalledWith({
+                label: "Category",
+                options,
+                body: {
+                    position: 1,
+                },
+            });
+
+            expect(spy).toHaveBeenCalledWith(mockField);
+        });
+    });
+
+    describe("Error handling", () => {
+        it("should propagate API errors when creating fields", async () => {
+            const mockField = {
+                build: jest.fn().mockReturnValue({api_key: "test_field"}),
+            } as unknown as Field;
+
+            builder.addField(mockField);
+
+            const apiError = new Error("API Error");
+            mockClientFields.create.mockRejectedValueOnce(apiError);
+
+            await expect(builder.create()).rejects.toThrow(apiError);
+        });
+    });
+
+    describe("Integration tests", () => {
+        it("should handle a complete model with multiple field types", async () => {
+            // Create mock fields of different types
+            const mockFieldBuilds = {
+                title: {api_key: "title", label: "Title", field_type: "string"},
+                content: {
+                    api_key: "content",
+                    label: "Content",
+                    field_type: "markdown",
+                },
+                category: {
+                    api_key: "category",
+                    label: "Category",
+                    field_type: "string_select",
+                },
+            };
+
+            // Create mock field instances
+            const titleField = {
+                build: jest.fn().mockReturnValue(mockFieldBuilds.title),
+            };
+            const contentField = {
+                build: jest.fn().mockReturnValue(mockFieldBuilds.content),
+            };
+            const categoryField = {
+                build: jest.fn().mockReturnValue(mockFieldBuilds.category),
+            };
+
+            // Mock the field constructors
+            (SingleLineString as jest.Mock).mockImplementation(() => titleField);
+            (Markdown as jest.Mock).mockImplementation(() => contentField);
+            (StringSelect as jest.Mock).mockImplementation(() => categoryField);
+
+            // Add fields to the builder
+            builder.addSingleLineString({label: "Title"});
+            builder.addMarkdown({label: "Content", toolbar: []});
+            builder.addStringSelect({
+                label: "Category",
+                options: [
+                    {label: "News", value: "news"},
+                    {label: "Opinion", value: "opinion"},
+                ],
+            });
+
+            // Execute upsert
+            await builder.upsert();
+
+            // Check that all fields were created
+            expect(mockClientFields.create).toHaveBeenCalledTimes(3);
+            expect(mockClientFields.create).toHaveBeenCalledWith(
+                "item-123",
+                mockFieldBuilds.title,
+            );
+            expect(mockClientFields.create).toHaveBeenCalledWith(
+                "item-123",
+                mockFieldBuilds.content,
+            );
+            expect(mockClientFields.create).toHaveBeenCalledWith(
+                "item-123",
+                mockFieldBuilds.category,
+            );
         });
     });
 });
