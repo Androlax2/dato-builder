@@ -6,9 +6,9 @@ export type IntegerBody = Omit<FieldBody, "label"> & {
 };
 
 export default class Integer extends Field {
-    constructor(label: string, options?: IntegerBody) {
+    constructor(label: string, body?: IntegerBody) {
         super("integer", {
-            ...options,
+            ...body,
             label,
         });
     }

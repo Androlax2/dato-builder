@@ -101,37 +101,33 @@ export default abstract class ItemTypeBuilder {
         return this.fields.length + 1;
     }
 
-    public addInteger(label: string, options?: IntegerBody): this {
+    public addInteger(label: string, body?: IntegerBody): this {
         return this.addField(
             new Integer(label, {
-                ...options,
-                position: options?.position ?? this.getNewFieldPosition(),
+                ...body,
+                position: body?.position ?? this.getNewFieldPosition(),
             }),
         );
     }
 
-    public addSingleLineString(
-        label: string,
-        options?: SingleLineStringBody,
-    ): this {
+    public addSingleLineString(label: string, body?: SingleLineStringBody): this {
         return this.addField(
             new SingleLineString(label, {
-                ...options,
-                position: options?.position ?? this.getNewFieldPosition(),
+                ...body,
+                position: body?.position ?? this.getNewFieldPosition(),
                 validators: {
-                    ...options?.validators,
-                    unique:
-                        this.type === "block" ? undefined : options?.validators?.unique,
+                    ...body?.validators,
+                    unique: this.type === "block" ? undefined : body?.validators?.unique,
                 },
             }),
         );
     }
 
-    public addMultiLineText(label: string, options?: MultiLineTextBody): this {
+    public addMultiLineText(label: string, body?: MultiLineTextBody): this {
         return this.addField(
             new MultiLineText(label, {
-                ...options,
-                position: options?.position ?? this.getNewFieldPosition(),
+                ...body,
+                position: body?.position ?? this.getNewFieldPosition(),
             }),
         );
     }

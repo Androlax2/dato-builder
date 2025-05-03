@@ -9,9 +9,9 @@ export type SingleLineStringBody = Omit<FieldBody, "label"> & {
 };
 
 export default class SingleLineString extends Field {
-    constructor(label: string, options?: SingleLineStringBody) {
+    constructor(label: string, body?: SingleLineStringBody) {
         super("string", {
-            ...options,
+            ...body,
             label,
         });
     }

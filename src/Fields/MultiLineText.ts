@@ -9,9 +9,9 @@ export type MultiLineTextBody = Omit<FieldBody, "label"> & {
 };
 
 export default class MultiLineText extends Field {
-    constructor(label: string, options?: MultiLineTextBody) {
+    constructor(label: string, body?: MultiLineTextBody) {
         super("text", {
-            ...options,
+            ...body,
             label,
         });
     }
