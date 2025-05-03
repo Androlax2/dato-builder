@@ -8,6 +8,7 @@ import MultiLineText, {type MultiLineTextConfig,} from "./Fields/MultiLineText";
 import SingleLineString, {type SingleLineStringConfig,} from "./Fields/SingleLineString";
 import StringRadioGroup, {type StringRadioGroupConfig,} from "./Fields/StringRadioGroup";
 import StringSelect, {type StringSelectConfig} from "./Fields/StringSelect";
+import Wysiwyg, {type WysiwygConfig} from "./Fields/Wysiwyg";
 import {getDatoClient} from "./config";
 import {loadDatoBuilderConfig} from "./config/loader";
 import {generateDatoApiKey} from "./utils/utils";
@@ -137,6 +138,19 @@ export default abstract class ItemTypeBuilder {
     public addMarkdown({label, toolbar, body}: MarkdownConfig) {
         return this.addField(
             new Markdown({
+                label,
+                toolbar,
+                body: {
+                    ...body,
+                    position: body?.position ?? this.getNewFieldPosition(),
+                },
+            }),
+        );
+    }
+
+    public addWysiwyg({label, toolbar, body}: WysiwygConfig) {
+        return this.addField(
+            new Wysiwyg({
                 label,
                 toolbar,
                 body: {
