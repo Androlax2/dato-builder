@@ -46,6 +46,14 @@ const TestBlock = new BlockBuilder("Block yolo")
             {label: "radio 2", value: "value2"},
             {label: "radio 3", value: "value3"},
         ],
+    })
+    .addStringSelect({
+        label: "string select",
+        options: [
+            {label: "option 1", value: "value1"},
+            {label: "option 2", value: "value2"},
+            {label: "option 3", value: "value3"},
+        ],
     });
 
 void TestBlock.upsert();

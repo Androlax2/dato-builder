@@ -6,6 +6,7 @@ import Integer, {type IntegerConfig} from "./Fields/Integer";
 import MultiLineText, {type MultiLineTextConfig,} from "./Fields/MultiLineText";
 import SingleLineString, {type SingleLineStringConfig,} from "./Fields/SingleLineString";
 import StringRadioGroup, {type StringRadioGroupConfig,} from "./Fields/StringRadioGroup";
+import StringSelect, {type StringSelectConfig} from "./Fields/StringSelect";
 import {getDatoClient} from "./config";
 import {loadDatoBuilderConfig} from "./config/loader";
 import {generateDatoApiKey} from "./utils/utils";
@@ -148,6 +149,19 @@ export default abstract class ItemTypeBuilder {
             new StringRadioGroup({
                 label,
                 radios,
+                body: {
+                    ...body,
+                    position: body?.position ?? this.getNewFieldPosition(),
+                },
+            }),
+        );
+    }
+
+    public addStringSelect({label, options, body}: StringSelectConfig) {
+        return this.addField(
+            new StringSelect({
+                label,
+                options,
                 body: {
                     ...body,
                     position: body?.position ?? this.getNewFieldPosition(),
