@@ -9,7 +9,6 @@ Quickly create Models, Blocks in DatoCMS from your source code.
 - [Simple Example](#simple-example)
   - [Block](#block)
   - [Model](#model)
-- [Builder API](#builder-api)
 
 ## Installation
 
