@@ -3,6 +3,7 @@
 const { spawn } = require("node:child_process");
 const path = require("node:path");
 const fs = require("node:fs");
+const ItemTypeBuilder = require("../build/ItemTypeBuilder").default;
 
 const args = process.argv.slice(2);
 const command = args[0];
@@ -134,8 +135,10 @@ function runFileOrDir(inputPath) {
   }
 }
 
-// CLI entry
-if (command === "run") {
+// CLI entry points
+if (command === "clear-cache") {
+  ItemTypeBuilder.clearCache();
+} else if (command === "run") {
   const input = args[1];
   if (!input) {
     console.error(
@@ -149,5 +152,8 @@ if (command === "run") {
   console.log("Usage:");
   console.log(
     "  dato-builder run <file.ts|file.js|folder>   Run a file or all files in a directory (recursively)",
+  );
+  console.log(
+    "  dato-builder clear-cache               Clear the itemTypeBuilder cache",
   );
 }

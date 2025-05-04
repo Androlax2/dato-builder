@@ -5,6 +5,7 @@ import type * as SimpleSchemaTypes from "@datocms/cma-client/src/generated/Simpl
 import DatoApi from "./Api/DatoApi";
 import GenericDatoError from "./Api/Error/GenericDatoError";
 import NotFoundError from "./Api/Error/NotFoundError";
+import UniquenessError from "./Api/Error/UniquenessError";
 import AssetGallery, { type AssetGalleryConfig } from "./Fields/AssetGallery";
 import BooleanField, { type BooleanConfig } from "./Fields/Boolean";
 import BooleanRadioGroup, {
@@ -80,6 +81,12 @@ export type ItemTypeBuilderConfig = {
   debug?: boolean;
 };
 
+// For tracking in-progress operations
+interface PendingOperation {
+  promise: Promise<string>;
+  timestamp: number;
+}
+
 export default abstract class ItemTypeBuilder {
   protected api = new DatoApi(getDatoClient());
   protected readonly client = this.api.client;
@@ -97,6 +104,13 @@ export default abstract class ItemTypeBuilder {
   private static cacheLoaded = false;
   private static itemCache: Map<string, { hash: string; id: string }> =
     new Map();
+
+  private static pendingOperations: Map<string, PendingOperation> = new Map();
+  private static lockFile = path.resolve(
+    __dirname,
+    ".itemTypeBuilderCache.lock",
+  );
+  private static readonly PENDING_OPERATION_TIMEOUT = 60000; // 60 seconds
 
   protected constructor(
     type: ItemTypeBuilderType,
@@ -126,66 +140,178 @@ export default abstract class ItemTypeBuilder {
     };
   }
 
-  private static loadCache(): void {
-    if (ItemTypeBuilder.cacheLoaded) return;
-    if (fs.existsSync(ItemTypeBuilder.cacheFile)) {
+  /**
+   * Attempt to acquire a lock for cache operations
+   * Uses a simple file-based lock with exponential backoff
+   */
+  private static async acquireLock(maxAttempts = 10): Promise<boolean> {
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
       try {
-        const data = fs.readFileSync(ItemTypeBuilder.cacheFile, "utf8");
-        const obj = JSON.parse(data) as Record<
-          string,
-          { hash: string; id: string }
-        >;
-        ItemTypeBuilder.itemCache = new Map(Object.entries(obj));
-      } catch (e) {
-        console.warn("Failed to load itemTypeBuilder cache:", e);
+        if (!fs.existsSync(ItemTypeBuilder.lockFile)) {
+          // Create the lock file
+          fs.writeFileSync(
+            ItemTypeBuilder.lockFile,
+            String(Date.now()),
+            "utf8",
+          );
+          return true;
+        }
+
+        // Check if the lock is stale (more than 30 seconds old)
+        const lockTime = Number.parseInt(
+          fs.readFileSync(ItemTypeBuilder.lockFile, "utf8"),
+        );
+        if (Date.now() - lockTime > 30000) {
+          // Lock is stale, override it
+          fs.writeFileSync(
+            ItemTypeBuilder.lockFile,
+            String(Date.now()),
+            "utf8",
+          );
+          return true;
+        }
+
+        // Wait with exponential backoff
+        const waitTime = Math.min(100 * 2 ** attempt, 2000);
+        await new Promise((resolve) => setTimeout(resolve, waitTime));
+      } catch (err) {
+        console.warn(`Failed to acquire lock on attempt ${attempt + 1}:`, err);
       }
     }
-    ItemTypeBuilder.cacheLoaded = true;
+
+    return false;
   }
 
-  private static saveCache(): void {
-    const obj: Record<string, { hash: string; id: string }> = {};
-    ItemTypeBuilder.itemCache.forEach((val, key) => {
-      obj[key] = val;
-    });
+  /**
+   * Release the lock for cache operations
+   */
+  private static releaseLock(): void {
     try {
-      fs.writeFileSync(
-        ItemTypeBuilder.cacheFile,
-        JSON.stringify(obj, null, 2),
-        "utf8",
-      );
-    } catch (e) {
-      console.warn("Failed to save itemTypeBuilder cache:", e);
+      if (fs.existsSync(ItemTypeBuilder.lockFile)) {
+        fs.unlinkSync(ItemTypeBuilder.lockFile);
+      }
+    } catch (err) {
+      console.warn("Failed to release lock:", err);
+    }
+  }
+
+  /**
+   * Clean up stale pending operations
+   */
+  private static cleanPendingOperations(): void {
+    const now = Date.now();
+    ItemTypeBuilder.pendingOperations.forEach((operation, key) => {
+      if (
+        now - operation.timestamp >
+        ItemTypeBuilder.PENDING_OPERATION_TIMEOUT
+      ) {
+        ItemTypeBuilder.pendingOperations.delete(key);
+      }
+    });
+  }
+
+  private static async loadCache(): Promise<void> {
+    if (ItemTypeBuilder.cacheLoaded) return;
+
+    try {
+      await ItemTypeBuilder.acquireLock();
+
+      if (fs.existsSync(ItemTypeBuilder.cacheFile)) {
+        try {
+          const data = fs.readFileSync(ItemTypeBuilder.cacheFile, "utf8");
+          const obj = JSON.parse(data) as Record<
+            string,
+            { hash: string; id: string }
+          >;
+          ItemTypeBuilder.itemCache = new Map(Object.entries(obj));
+        } catch (e) {
+          console.warn("Failed to load itemTypeBuilder cache:", e);
+        }
+      }
+      ItemTypeBuilder.cacheLoaded = true;
+    } finally {
+      ItemTypeBuilder.releaseLock();
+    }
+  }
+
+  public static clearCache(): void {
+    // Clear in-memory cache
+    ItemTypeBuilder.itemCache.clear();
+    ItemTypeBuilder.cacheLoaded = false;
+
+    if (fs.existsSync(ItemTypeBuilder.cacheFile)) {
+      try {
+        fs.unlinkSync(ItemTypeBuilder.cacheFile);
+        console.log("✅ ItemTypeBuilder cache file removed.");
+      } catch (e) {
+        console.warn("⚠️  Failed to delete cache file:", e);
+      }
+    } else {
+      console.log("⚠️  No cache file found, nothing to clear.");
+    }
+  }
+
+  private static async saveCache(): Promise<void> {
+    try {
+      const locked = await ItemTypeBuilder.acquireLock();
+      if (!locked) {
+        console.warn(
+          "Failed to acquire lock for saving cache, will try again later",
+        );
+        return;
+      }
+
+      const obj: Record<string, { hash: string; id: string }> = {};
+      ItemTypeBuilder.itemCache.forEach((val, key) => {
+        obj[key] = val;
+      });
+
+      try {
+        fs.writeFileSync(
+          ItemTypeBuilder.cacheFile,
+          JSON.stringify(obj, null, 2),
+          "utf8",
+        );
+      } catch (e) {
+        console.warn("Failed to save itemTypeBuilder cache:", e);
+      }
+    } finally {
+      ItemTypeBuilder.releaseLock();
     }
   }
 
   private static computeHash(
     body: SimpleSchemaTypes.ItemTypeCreateSchema,
     fields: SimpleSchemaTypes.FieldCreateSchema[],
+    config: ItemTypeBuilderConfig = {},
   ): string {
     const sorted = [...fields].sort((a, b) =>
       a.api_key.localeCompare(b.api_key),
     );
-    const serialized = JSON.stringify({ body, fields: sorted });
+    const serialized = JSON.stringify({ body, fields: sorted, config });
     return createHash("sha256").update(serialized).digest("hex");
   }
 
-  private static getCache(
+  private static async getCache(
     apiKey: string,
-  ): { hash: string; id: string } | undefined {
-    ItemTypeBuilder.loadCache();
+  ): Promise<{ hash: string; id: string } | undefined> {
+    await ItemTypeBuilder.loadCache();
     return ItemTypeBuilder.itemCache.get(apiKey);
   }
 
-  private static setCache(apiKey: string, hash: string, id: string): void {
-    ItemTypeBuilder.loadCache();
+  private static async setCache(
+    apiKey: string,
+    hash: string,
+    id: string,
+  ): Promise<void> {
+    await ItemTypeBuilder.loadCache();
     ItemTypeBuilder.itemCache.set(apiKey, { hash, id });
-    ItemTypeBuilder.saveCache();
+    await ItemTypeBuilder.saveCache();
   }
 
   private getDefinitionHash(): string {
     const defs = this.fields.map((f) => f.build());
-    return ItemTypeBuilder.computeHash(this.body, defs);
+    return ItemTypeBuilder.computeHash(this.body, defs, this.config);
   }
 
   private mergeConfig(
@@ -646,6 +772,51 @@ export default abstract class ItemTypeBuilder {
     );
   }
 
+  private static async handlePendingOperation(
+    apiKey: string,
+    operationPromise: Promise<string>,
+  ): Promise<string> {
+    const operation: PendingOperation = {
+      promise: operationPromise,
+      timestamp: Date.now(),
+    };
+
+    // Register this operation
+    ItemTypeBuilder.pendingOperations.set(apiKey, operation);
+
+    try {
+      return await operationPromise;
+    } finally {
+      // Clean up only if this operation is still the current one
+      const currentOp = ItemTypeBuilder.pendingOperations.get(apiKey);
+      if (currentOp && currentOp.promise === operation.promise) {
+        ItemTypeBuilder.pendingOperations.delete(apiKey);
+      }
+
+      // Clean up any stale operations
+      ItemTypeBuilder.cleanPendingOperations();
+    }
+  }
+
+  private async waitForPendingOperation(
+    apiKey: string,
+  ): Promise<string | undefined> {
+    const pendingOp = ItemTypeBuilder.pendingOperations.get(apiKey);
+    if (pendingOp) {
+      try {
+        if (this.config.debug) {
+          console.info(`Waiting for pending operation on "${this.name}"...`);
+        }
+        return await pendingOp.promise;
+      } catch (error) {
+        // If the pending operation failed, we'll try our own operation
+        console.warn(`Pending operation for "${this.name}" failed:`, error);
+        return undefined;
+      }
+    }
+    return undefined;
+  }
+
   private async syncFields(itemTypeId: string): Promise<void> {
     const existing = await this.api.call(() =>
       this.client.fields.list(itemTypeId),
@@ -681,86 +852,198 @@ export default abstract class ItemTypeBuilder {
     }
   }
 
-  public async create(): Promise<string> {
-    if (this.config.debug) {
-      console.info(`Creating item type \"${this.name}\"...`);
-    }
-
-    const apiKey = this.body.api_key;
-    const hash = this.getDefinitionHash();
-    const cached = ItemTypeBuilder.getCache(apiKey);
-    if (cached && cached.hash === hash) {
-      console.info(
-        `Create skipped: \"${this.name}\" unchanged (id=${cached.id})`,
-      );
-      return cached.id;
-    }
-
+  private async itemExists(
+    apiKey: string,
+  ): Promise<{ exists: boolean; id?: string }> {
     try {
       const item = await this.api.call(() =>
-        this.client.itemTypes.create(this.body),
+        this.client.itemTypes.find(apiKey),
       );
-      await this.syncFields(item.id);
-      console.info(`Created item type \"${this.name}\" (id=${item.id})`);
-
-      ItemTypeBuilder.setCache(apiKey, hash, item.id);
-
-      if (this.config.debug) {
-        console.info(
-          `Item type \"${this.name}\" cached (id=${item.id}, hash=${hash})`,
-        );
-      }
-      return item.id;
-    } catch (error: unknown) {
-      if (error instanceof GenericDatoError) {
-        console.error(
-          `Failed to create item type \"${this.name}\": ${error.message}`,
-        );
+      return { exists: true, id: item.id };
+    } catch (error) {
+      if (error instanceof NotFoundError) {
+        return { exists: false };
       }
       throw error;
     }
   }
 
-  public async update(): Promise<string> {
-    if (this.config.debug) {
-      console.info(`Updating item type \"${this.name}\"...`);
-    }
-
+  public async create(): Promise<string> {
     const apiKey = this.body.api_key;
     const hash = this.getDefinitionHash();
-    const cached = ItemTypeBuilder.getCache(apiKey);
+
+    // First check for any pending operations
+    const pendingResult = await this.waitForPendingOperation(apiKey);
+    if (pendingResult) {
+      if (this.config.debug) {
+        console.info(
+          `Using result from pending operation for "${this.name}": ${pendingResult}`,
+        );
+      }
+      return pendingResult;
+    }
+
+    // Check if already in cache with matching hash
+    const cached = await ItemTypeBuilder.getCache(apiKey);
     if (cached && cached.hash === hash) {
       console.info(
-        `Update skipped: \"${this.name}\" unchanged (id=${cached.id})`,
+        `Create skipped: "${this.name}" unchanged (id=${cached.id})`,
       );
       return cached.id;
     }
 
-    try {
-      const item = await this.api.call(() =>
-        this.client.itemTypes.update(apiKey, this.body),
-      );
+    if (this.config.debug) {
+      console.info(`Creating item type "${this.name}"...`);
+    }
 
-      await this.syncFields(item.id);
-      console.info(`Updated item type \"${this.name}\" (id=${item.id})`);
+    // Create a new operation and register it
+    const operation = async (): Promise<string> => {
+      try {
+        // Check if the item already exists first to handle race conditions
+        const existingCheck = await this.itemExists(apiKey);
+        if (existingCheck.exists) {
+          console.info(
+            `Item "${this.name}" already exists, updating instead...`,
+          );
+          // Use update logic instead
+          const item = await this.api.call(() =>
+            this.client.itemTypes.update(apiKey, this.body),
+          );
+          await this.syncFields(item.id);
+          await ItemTypeBuilder.setCache(apiKey, hash, item.id);
+          console.info(`Updated item type "${this.name}" (id=${item.id})`);
+          return item.id;
+        }
 
-      ItemTypeBuilder.setCache(apiKey, hash, item.id);
+        // Create the item
+        const item = await this.api.call(() =>
+          this.client.itemTypes.create(this.body),
+        );
+        await this.syncFields(item.id);
+        await ItemTypeBuilder.setCache(apiKey, hash, item.id);
+        console.info(`Created item type "${this.name}" (id=${item.id})`);
 
+        if (this.config.debug) {
+          console.info(
+            `Item type "${this.name}" cached (id=${item.id}, hash=${hash})`,
+          );
+        }
+        return item.id;
+      } catch (error: unknown) {
+        // Handle uniqueness errors by fetching the existing item
+        if (error instanceof UniquenessError) {
+          console.info(
+            `Uniqueness error creating "${this.name}", fetching existing...`,
+          );
+          try {
+            // Wait a moment for the API to stabilize
+            await new Promise((resolve) => setTimeout(resolve, 500));
+
+            // Try to find the item by API key
+            const item = await this.api.call(() =>
+              this.client.itemTypes.find(apiKey),
+            );
+
+            // Successfully found the item, update the cache
+            await ItemTypeBuilder.setCache(apiKey, hash, item.id);
+            console.info(
+              `Found existing item type "${this.name}" (id=${item.id})`,
+            );
+
+            // Now update the fields
+            await this.syncFields(item.id);
+            return item.id;
+          } catch (error: unknown) {
+            // If we can't find the item, rethrow the original error
+            console.error(
+              `Failed to find existing item type "${this.name}" after uniqueness error`,
+            );
+            throw error;
+          }
+        }
+
+        if (error instanceof GenericDatoError) {
+          console.error(
+            `Failed to create item type "${this.name}": ${error.message}`,
+          );
+        }
+        throw error;
+      }
+    };
+
+    return ItemTypeBuilder.handlePendingOperation(apiKey, operation());
+  }
+
+  public async update(): Promise<string> {
+    const apiKey = this.body.api_key;
+    const hash = this.getDefinitionHash();
+
+    // First check for any pending operations
+    const pending = await this.waitForPendingOperation(apiKey);
+    if (pending) {
       if (this.config.debug) {
         console.info(
-          `Item type \"${this.name}\" cached (id=${item.id}, hash=${hash})`,
+          `Using result from pending operation for "${this.name}": ${pending}`,
         );
       }
-
-      return item.id;
-    } catch (error: unknown) {
-      if (error instanceof GenericDatoError) {
-        console.error(
-          `Failed to update item type \"${this.name}\": ${error.message}`,
-        );
-      }
-      throw error;
+      return pending;
     }
+
+    // Check cache: skip if nothing changed
+    const cached = await ItemTypeBuilder.getCache(apiKey);
+    if (cached && cached.hash === hash) {
+      console.info(
+        `Update skipped: "${this.name}" unchanged (id=${cached.id})`,
+      );
+      return cached.id;
+    }
+
+    if (this.config.debug) {
+      console.info(`Updating item type "${this.name}"...`);
+    }
+
+    // Wrap the actual API call in an operation promise
+    const operation = async (): Promise<string> => {
+      try {
+        // Attempt the update
+        const item = await this.api.call(() =>
+          this.client.itemTypes.update(apiKey, this.body),
+        );
+        await this.syncFields(item.id);
+
+        // Persist to cache
+        await ItemTypeBuilder.setCache(apiKey, hash, item.id);
+
+        console.info(`Updated item type "${this.name}" (id=${item.id})`);
+        if (this.config.debug) {
+          console.info(
+            `Item type "${this.name}" cached (id=${item.id}, hash=${hash})`,
+          );
+        }
+        return item.id;
+      } catch (err: unknown) {
+        // If it doesn't exist, fall back to create
+        if (err instanceof NotFoundError) {
+          if (this.config.debug) {
+            console.info(
+              `Item "${this.name}" not found on update, creating instead...`,
+            );
+          }
+          return this.create();
+        }
+
+        // Log other Dato errors
+        if (err instanceof GenericDatoError) {
+          console.error(
+            `Failed to update item type "${this.name}": ${err.message}`,
+          );
+        }
+        throw err;
+      }
+    };
+
+    // Register & return a single in‐flight promise
+    return ItemTypeBuilder.handlePendingOperation(apiKey, operation());
   }
 
   public async upsert(): Promise<string> {
