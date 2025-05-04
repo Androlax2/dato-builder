@@ -43,6 +43,7 @@ function runFile(filePath) {
 
   const isTs = filePath.endsWith(".ts") || filePath.endsWith(".mts");
   const isJs = filePath.endsWith(".js") || filePath.endsWith(".mjs");
+
   const isExplicitESM = isESMFile(filePath);
   const projectIsESM = isESMProject();
 
