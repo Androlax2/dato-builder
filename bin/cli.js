@@ -25,33 +25,42 @@ function isESMFile(filePath) {
 function detectModuleSyntax(filePath) {
   try {
     const content = fs.readFileSync(filePath, "utf8");
-    // Simple check for import/export statements
-    const hasESMSyntax = content.match(/^\s*(import|export)\s/m);
-    return hasESMSyntax ? "esm" : "commonjs";
-  } catch (_err) {
-    return null; // Can't determine
+    return content.match(/^\s*(import|export)\s/m) ? "esm" : "commonjs";
+  } catch {
+    return null;
   }
 }
 
-function runFile(filePath) {
-  const resolved = path.resolve(process.cwd(), filePath);
+function findRunnableFilesRecursively(dirPath) {
+  const result = [];
 
-  if (!fs.existsSync(resolved)) {
-    console.error(`❌ File not found: ${resolved}`);
-    process.exit(1);
-  }
+  const walk = (currentPath) => {
+    const entries = fs.readdirSync(currentPath, { withFileTypes: true });
+    for (const entry of entries) {
+      const fullPath = path.join(currentPath, entry.name);
+      if (entry.isDirectory()) {
+        walk(fullPath);
+      } else if (
+        entry.isFile() &&
+        (entry.name.endsWith(".ts") || entry.name.endsWith(".js"))
+      ) {
+        result.push(fullPath);
+      }
+    }
+  };
 
-  const isTs = filePath.endsWith(".ts") || filePath.endsWith(".mts");
-  const isJs = filePath.endsWith(".js") || filePath.endsWith(".mjs");
+  walk(dirPath);
+  return result;
+}
 
-  const isExplicitESM = isESMFile(filePath);
+function runOneFile(resolvedFile) {
+  const isTs = resolvedFile.endsWith(".ts") || resolvedFile.endsWith(".mts");
+  const isJs = resolvedFile.endsWith(".js") || resolvedFile.endsWith(".mjs");
+
+  const isExplicitESM = isESMFile(resolvedFile);
   const projectIsESM = isESMProject();
-
-  // Check the file content for ESM syntax
-  const fileSyntax = detectModuleSyntax(resolved);
+  const fileSyntax = detectModuleSyntax(resolvedFile);
   const hasESMSyntax = fileSyntax === "esm";
-
-  // Determine if we should use ESM mode
   const useESM = isExplicitESM || projectIsESM;
 
   let nodeArgs = [];
@@ -61,31 +70,28 @@ function runFile(filePath) {
   };
 
   if (isTs) {
-    // For TypeScript files with ESM syntax in a CommonJS project
     if (hasESMSyntax && !useESM) {
-      // Set ts-node to transpile to CommonJS but allow ESM syntax
       env.TS_NODE_COMPILER_OPTIONS = JSON.stringify({
         module: "CommonJS",
         moduleResolution: "node",
         esModuleInterop: true,
         allowSyntheticDefaultImports: true,
       });
-      nodeArgs = ["-r", "ts-node/register", resolved];
+      nodeArgs = ["-r", "ts-node/register", resolvedFile];
     } else if (useESM) {
-      nodeArgs = ["--loader", "ts-node/esm", resolved];
+      nodeArgs = ["--loader", "ts-node/esm", resolvedFile];
     } else {
-      nodeArgs = ["-r", "ts-node/register", resolved];
+      nodeArgs = ["-r", "ts-node/register", resolvedFile];
     }
   } else if (isJs) {
     if (useESM && !isExplicitESM) {
-      // For .js files in ESM projects, we need to specify the loader
-      nodeArgs = ["--input-type=module", resolved];
+      nodeArgs = ["--input-type=module", resolvedFile];
     } else {
-      nodeArgs = [resolved];
+      nodeArgs = [resolvedFile];
     }
   } else {
-    console.error("❌ Only .ts and .js files are supported.");
-    process.exit(1);
+    console.error(`❌ Unsupported file type: ${resolvedFile}`);
+    return;
   }
 
   const child = spawn("node", nodeArgs.concat(args.slice(2)), {
@@ -93,22 +99,55 @@ function runFile(filePath) {
     env,
   });
 
-  child.on("exit", (code) => process.exit(code ?? 1));
+  child.on("exit", (code) => {
+    if (code !== 0) {
+      console.error(`❌ Execution failed for ${resolvedFile}`);
+      process.exit(code ?? 1);
+    }
+  });
 }
 
+function runFileOrDir(inputPath) {
+  const resolvedPath = path.resolve(process.cwd(), inputPath);
+
+  if (!fs.existsSync(resolvedPath)) {
+    console.error(`❌ File or folder not found: ${resolvedPath}`);
+    process.exit(1);
+  }
+
+  const stat = fs.statSync(resolvedPath);
+
+  if (stat.isDirectory()) {
+    const files = findRunnableFilesRecursively(resolvedPath);
+    if (files.length === 0) {
+      console.warn(`⚠️ No .ts or .js files found in: ${resolvedPath}`);
+    }
+
+    for (const file of files) {
+      runOneFile(file);
+    }
+  } else if (stat.isFile()) {
+    runOneFile(resolvedPath);
+  } else {
+    console.error(`❌ Unsupported path: ${resolvedPath}`);
+    process.exit(1);
+  }
+}
+
+// CLI entry
 if (command === "run") {
-  const file = args[1];
-  if (!file) {
+  const input = args[1];
+  if (!input) {
     console.error(
-      "❌ Missing file path. Usage: dato-builder run <file.ts|file.js>",
+      "❌ Missing path. Usage: dato-builder run <file.ts|file.js|folder>",
     );
     process.exit(1);
   }
-  runFile(file);
+  runFileOrDir(input);
 } else {
   console.log("📦 dato-builder CLI");
   console.log("Usage:");
   console.log(
-    "  dato-builder run <file.ts|file.js>   Run a JS or TS file with correct loader",
+    "  dato-builder run <file.ts|file.js|folder>   Run a file or all files in a directory (recursively)",
   );
 }
