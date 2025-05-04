@@ -1,3 +1,11 @@
+# [1.6.0](https://github.com/Androlax2/dato-builder/compare/v1.5.0...v1.6.0) (2025-05-04)
+
+
+### Features
+
+* **cli:** add `dato-builder` CLI for running JS/TS files ([4ff1996](https://github.com/Androlax2/dato-builder/commit/4ff1996dfef50d52ddda63581d020a12a1080a79))
+* **cli:** add CLI entry point and update documentation ([65fd760](https://github.com/Androlax2/dato-builder/commit/65fd760faf6a3e85b9e9a3cddb4e0404088dd6c5))
+
 # [1.5.0](https://github.com/Androlax2/dato-builder/compare/v1.4.0...v1.5.0) (2025-05-04)
 
 
