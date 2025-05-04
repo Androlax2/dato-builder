@@ -7,6 +7,9 @@ Quickly create Models, Blocks in DatoCMS from your source code.
 - [Installation](#installation)
   - [Configuration](#configuration)
 - [Simple Example](#simple-example)
+  - [Block](#block)
+  - [Model](#model)
+- [Builder API](#builder-api)
 
 ## Installation
 
@@ -45,7 +48,9 @@ module.exports = config;
 
 ## Simple Example
 
-`/datocms/blocks/test-block.ts`
+### Block
+
+`datocms/blocks/test-block.ts`
 ```typescript
 import { BlockBuilder } from "dato-builder";
 
@@ -80,3 +85,8 @@ To run it you can use the following command:
 npx dato-builder run datocms/blocks/test-block.ts
 ```
 
+### Model
+
+`datocms/models/test-model.ts`
+
+## Builder API
