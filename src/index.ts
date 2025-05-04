@@ -32,6 +32,18 @@ const TestBlock = new BlockBuilder("Block yolo")
         },
       },
     },
+  })
+  .addDateTime({
+    label: "DateTime",
+    body: {
+      validators: {
+        required: true,
+        date_time_range: {
+          min: new Date("2023-01-01T00:00:00"),
+          max: new Date("2023-12-31T23:59:59"),
+        },
+      },
+    },
   });
 
 void TestBlock.upsert();
