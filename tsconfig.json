@@ -1,4 +1,13 @@
 {
+  "exclude": [
+    "node_modules",
+    "build",
+    "coverage",
+    "tests",
+    "*.js",
+    "*.mjs",
+    "*.ts"
+  ],
   "compilerOptions": {
     "target": "es5",
     "module": "commonjs",

@@ -19,7 +19,7 @@ pre-push:
   commands:
     typescriptCheck:
       glob: "*.{ts}"
-      run: npx tsc --noEmit --skipLibCheck
+      run: npm run typecheck
 
     check:
       glob: "*.{js,ts,cjs,mjs,d.cts,d.mts,json,jsonc}"
