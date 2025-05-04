@@ -1,5 +1,9 @@
+import { createHash } from "node:crypto";
+import fs from "node:fs";
+import path from "node:path";
 import type * as SimpleSchemaTypes from "@datocms/cma-client/src/generated/SimpleSchemaTypes";
 import DatoApi from "./Api/DatoApi";
+import GenericDatoError from "./Api/Error/GenericDatoError";
 import NotFoundError from "./Api/Error/NotFoundError";
 import AssetGallery, { type AssetGalleryConfig } from "./Fields/AssetGallery";
 import BooleanField, { type BooleanConfig } from "./Fields/Boolean";
@@ -73,6 +77,7 @@ export type ItemTypeBuilderConfig = {
    *   the DatoCMS dashboard.
    */
   overwriteExistingFields?: boolean;
+  debug?: boolean;
 };
 
 export default abstract class ItemTypeBuilder {
@@ -83,6 +88,15 @@ export default abstract class ItemTypeBuilder {
   readonly type: ItemTypeBuilderType;
   readonly fields: Field[] = [];
   readonly config: Required<ItemTypeBuilderConfig>;
+
+  // Persistent cache file for item definitions
+  private static cacheFile = path.resolve(
+    __dirname,
+    ".itemTypeBuilderCache.json",
+  );
+  private static cacheLoaded = false;
+  private static itemCache: Map<string, { hash: string; id: string }> =
+    new Map();
 
   protected constructor(
     type: ItemTypeBuilderType,
@@ -112,9 +126,68 @@ export default abstract class ItemTypeBuilder {
     };
   }
 
-  /**
-   * Merge global config and builder-specific overrides into final config.
-   */
+  private static loadCache(): void {
+    if (ItemTypeBuilder.cacheLoaded) return;
+    if (fs.existsSync(ItemTypeBuilder.cacheFile)) {
+      try {
+        const data = fs.readFileSync(ItemTypeBuilder.cacheFile, "utf8");
+        const obj = JSON.parse(data) as Record<
+          string,
+          { hash: string; id: string }
+        >;
+        ItemTypeBuilder.itemCache = new Map(Object.entries(obj));
+      } catch (e) {
+        console.warn("Failed to load itemTypeBuilder cache:", e);
+      }
+    }
+    ItemTypeBuilder.cacheLoaded = true;
+  }
+
+  private static saveCache(): void {
+    const obj: Record<string, { hash: string; id: string }> = {};
+    ItemTypeBuilder.itemCache.forEach((val, key) => {
+      obj[key] = val;
+    });
+    try {
+      fs.writeFileSync(
+        ItemTypeBuilder.cacheFile,
+        JSON.stringify(obj, null, 2),
+        "utf8",
+      );
+    } catch (e) {
+      console.warn("Failed to save itemTypeBuilder cache:", e);
+    }
+  }
+
+  private static computeHash(
+    body: SimpleSchemaTypes.ItemTypeCreateSchema,
+    fields: SimpleSchemaTypes.FieldCreateSchema[],
+  ): string {
+    const sorted = [...fields].sort((a, b) =>
+      a.api_key.localeCompare(b.api_key),
+    );
+    const serialized = JSON.stringify({ body, fields: sorted });
+    return createHash("sha256").update(serialized).digest("hex");
+  }
+
+  private static getCache(
+    apiKey: string,
+  ): { hash: string; id: string } | undefined {
+    ItemTypeBuilder.loadCache();
+    return ItemTypeBuilder.itemCache.get(apiKey);
+  }
+
+  private static setCache(apiKey: string, hash: string, id: string): void {
+    ItemTypeBuilder.loadCache();
+    ItemTypeBuilder.itemCache.set(apiKey, { hash, id });
+    ItemTypeBuilder.saveCache();
+  }
+
+  private getDefinitionHash(): string {
+    const defs = this.fields.map((f) => f.build());
+    return ItemTypeBuilder.computeHash(this.body, defs);
+  }
+
   private mergeConfig(
     builderConfig: ItemTypeBuilderConfig,
   ): Required<ItemTypeBuilderConfig> {
@@ -124,6 +197,7 @@ export default abstract class ItemTypeBuilder {
         builderConfig.overwriteExistingFields ??
         globalConfig.overwriteExistingFields ??
         false,
+      debug: builderConfig.debug ?? globalConfig.debug ?? false,
     };
   }
 
@@ -572,18 +646,12 @@ export default abstract class ItemTypeBuilder {
     );
   }
 
-  /**
-   * Synchronize fields: create, update (if override), and delete
-   *
-   * @param itemTypeId ID to sync against
-   */
   private async syncFields(itemTypeId: string): Promise<void> {
     const existing = await this.api.call(() =>
       this.client.fields.list(itemTypeId),
     );
     const desired = this.fields.map((f) => f.build());
 
-    // Create new
     const toCreate = desired.filter(
       (d) => !existing.some((e) => e.api_key === d.api_key),
     );
@@ -594,7 +662,6 @@ export default abstract class ItemTypeBuilder {
     );
 
     if (this.config.overwriteExistingFields) {
-      // Update existing fields
       const updates = existing.flatMap((e) => {
         const def = desired.find((d) => d.api_key === e.api_key);
         return def
@@ -603,7 +670,6 @@ export default abstract class ItemTypeBuilder {
       });
       await Promise.all(updates);
 
-      // Delete removed
       const toDelete = existing.filter(
         (e) => !desired.some((d) => d.api_key === e.api_key),
       );
@@ -616,28 +682,92 @@ export default abstract class ItemTypeBuilder {
   }
 
   public async create(): Promise<string> {
-    const item = await this.api.call(() =>
-      this.client.itemTypes.create(this.body),
-    );
-    await this.syncFields(item.id);
+    if (this.config.debug) {
+      console.info(`Creating item type \"${this.name}\"...`);
+    }
 
-    console.info(`Created item type "${this.name}" (id=${item.id})`);
+    const apiKey = this.body.api_key;
+    const hash = this.getDefinitionHash();
+    const cached = ItemTypeBuilder.getCache(apiKey);
+    if (cached && cached.hash === hash) {
+      console.info(
+        `Create skipped: \"${this.name}\" unchanged (id=${cached.id})`,
+      );
+      return cached.id;
+    }
 
-    return item.id;
+    try {
+      const item = await this.api.call(() =>
+        this.client.itemTypes.create(this.body),
+      );
+      await this.syncFields(item.id);
+      console.info(`Created item type \"${this.name}\" (id=${item.id})`);
+
+      ItemTypeBuilder.setCache(apiKey, hash, item.id);
+
+      if (this.config.debug) {
+        console.info(
+          `Item type \"${this.name}\" cached (id=${item.id}, hash=${hash})`,
+        );
+      }
+      return item.id;
+    } catch (error: unknown) {
+      if (error instanceof GenericDatoError) {
+        console.error(
+          `Failed to create item type \"${this.name}\": ${error.message}`,
+        );
+      }
+      throw error;
+    }
   }
 
   public async update(): Promise<string> {
-    const item = await this.api.call(() =>
-      this.client.itemTypes.update(this.body.api_key, this.body),
-    );
-    await this.syncFields(item.id);
+    if (this.config.debug) {
+      console.info(`Updating item type \"${this.name}\"...`);
+    }
 
-    console.info(`Updated item type "${this.name}" (id=${item.id})`);
+    const apiKey = this.body.api_key;
+    const hash = this.getDefinitionHash();
+    const cached = ItemTypeBuilder.getCache(apiKey);
+    if (cached && cached.hash === hash) {
+      console.info(
+        `Update skipped: \"${this.name}\" unchanged (id=${cached.id})`,
+      );
+      return cached.id;
+    }
 
-    return item.id;
+    try {
+      const item = await this.api.call(() =>
+        this.client.itemTypes.update(apiKey, this.body),
+      );
+
+      await this.syncFields(item.id);
+      console.info(`Updated item type \"${this.name}\" (id=${item.id})`);
+
+      ItemTypeBuilder.setCache(apiKey, hash, item.id);
+
+      if (this.config.debug) {
+        console.info(
+          `Item type \"${this.name}\" cached (id=${item.id}, hash=${hash})`,
+        );
+      }
+
+      return item.id;
+    } catch (error: unknown) {
+      if (error instanceof GenericDatoError) {
+        console.error(
+          `Failed to update item type \"${this.name}\": ${error.message}`,
+        );
+      }
+      throw error;
+    }
   }
 
   public async upsert(): Promise<string> {
+    if (this.config.debug) {
+      console.info(`Upserting item type \"${this.name}\"...`);
+    }
+
     try {
       await this.api.call(() => this.client.itemTypes.find(this.body.api_key));
 
