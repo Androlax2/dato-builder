@@ -1,3 +1,10 @@
+# [1.2.0](https://github.com/Androlax2/dato-builder/compare/v1.1.0...v1.2.0) (2025-05-04)
+
+
+### Features
+
+* **build:** add declaration files and README documentation ([8915739](https://github.com/Androlax2/dato-builder/commit/8915739826d55a45a5183c86ad47b7b321f6a11d))
+
 # [1.1.0](https://github.com/Androlax2/dato-builder/compare/v1.0.0...v1.1.0) (2025-05-04)
 
 
