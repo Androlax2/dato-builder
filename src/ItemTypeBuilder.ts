@@ -5,7 +5,6 @@ import type * as SimpleSchemaTypes from "@datocms/cma-client/src/generated/Simpl
 import DatoApi from "./Api/DatoApi";
 import GenericDatoError from "./Api/Error/GenericDatoError";
 import NotFoundError from "./Api/Error/NotFoundError";
-import UniquenessError from "./Api/Error/UniquenessError";
 import AssetGallery, { type AssetGalleryConfig } from "./Fields/AssetGallery";
 import BooleanField, { type BooleanConfig } from "./Fields/Boolean";
 import BooleanRadioGroup, {
@@ -852,22 +851,6 @@ export default abstract class ItemTypeBuilder {
     }
   }
 
-  private async itemExists(
-    apiKey: string,
-  ): Promise<{ exists: boolean; id?: string }> {
-    try {
-      const item = await this.api.call(() =>
-        this.client.itemTypes.find(apiKey),
-      );
-      return { exists: true, id: item.id };
-    } catch (error) {
-      if (error instanceof NotFoundError) {
-        return { exists: false };
-      }
-      throw error;
-    }
-  }
-
   public async create(): Promise<string> {
     const apiKey = this.body.api_key;
     const hash = this.getDefinitionHash();
@@ -914,38 +897,6 @@ export default abstract class ItemTypeBuilder {
         }
         return item.id;
       } catch (error: unknown) {
-        // Handle uniqueness errors by fetching the existing item
-        if (error instanceof UniquenessError) {
-          console.info(
-            `Uniqueness error creating "${this.name}", fetching existing...`,
-          );
-          try {
-            // Wait a moment for the API to stabilize
-            await new Promise((resolve) => setTimeout(resolve, 500));
-
-            // Try to find the item by API key
-            const item = await this.api.call(() =>
-              this.client.itemTypes.find(apiKey),
-            );
-
-            // Successfully found the item, update the cache
-            await ItemTypeBuilder.setCache(apiKey, hash, item.id);
-            console.info(
-              `Found existing item type "${this.name}" (id=${item.id})`,
-            );
-
-            // Now update the fields
-            await this.syncFields(item.id);
-            return item.id;
-          } catch (error: unknown) {
-            // If we can't find the item, rethrow the original error
-            console.error(
-              `Failed to find existing item type "${this.name}" after uniqueness error`,
-            );
-            throw error;
-          }
-        }
-
         if (error instanceof GenericDatoError) {
           console.error(
             `Failed to create item type "${this.name}": ${error.message}`,
@@ -1006,17 +957,6 @@ export default abstract class ItemTypeBuilder {
         }
         return item.id;
       } catch (err: unknown) {
-        // If it doesn't exist, fall back to create
-        if (err instanceof NotFoundError) {
-          if (this.config.debug) {
-            console.info(
-              `Item "${this.name}" not found on update, creating instead...`,
-            );
-          }
-          return this.create();
-        }
-
-        // Log other Dato errors
         if (err instanceof GenericDatoError) {
           console.error(
             `Failed to update item type "${this.name}": ${err.message}`,
