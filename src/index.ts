@@ -1,17 +1,13 @@
 import BlockBuilder from "./BlockBuilder";
 
 const TestBlock = new BlockBuilder("Block yolo")
-    .addMarkdown({
-        label: "Markdown",
-        toolbar: ["link"],
-    })
-    .addWysiwyg({
-        label: "Wysiwyg",
-        toolbar: ["link"],
-    })
-    .addTextarea({
-        label: "Textarea",
-        placeholder: "Placeholder",
-    });
+  .addBoolean({
+    label: "Boolean",
+  })
+  .addBooleanRadioGroup({
+    label: "Boolean Radio Group",
+    positive_radio: { label: "Yes" },
+    negative_radio: { label: "No" },
+  });
 
 void TestBlock.upsert();
