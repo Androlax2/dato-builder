@@ -459,6 +459,18 @@ export default abstract class ItemTypeBuilder {
     );
   }
 
+  public addImage({ label, body }: SingleAssetConfig): this {
+    return this.addField(
+      new SingleAsset({
+        label,
+        body: {
+          ...body,
+          position: body?.position ?? this.getNewFieldPosition(),
+        },
+      }),
+    );
+  }
+
   public addAssetGallery({ label, body }: AssetGalleryConfig): this {
     return this.addField(
       new AssetGallery({
