@@ -6,8 +6,12 @@
   "author": "Théo Benoit <theo.benoit16@gmail.com>",
   "main": "build/index.js",
   "types": "build/index.d.ts",
+  "bin": {
+    "dato-builder": "./bin/cli.js"
+  },
   "exports": {
     ".": {
+      "require": "./build/index.js",
       "import": "./build/index.js",
       "types": "./build/index.d.ts"
     }

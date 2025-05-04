@@ -45,6 +45,38 @@ module.exports = config;
 
 ## Simple Example
 
+`/datocms/blocks/test-block.ts`
+```typescript
+import { BlockBuilder } from "dato-builder";
 
+const TestBlock = new BlockBuilder("Test Block")
+  .addHeading({
+    label: "Title",
+  })
+  .addTextarea({
+    label: "Description",
+  })
+  .addImage({
+    label: "Image",
+    body: {
+      validators: {
+        required: true,
+      },
+    },
+  });
 
+void TestBlock.create();
+```
+
+This will create a new block in DatoCMS with the name "Test Block" and the following fields:
+
+- Title: A heading field
+- Description: A textarea field
+- Image: An image field with a required validator
+
+To run it you can use the following command:
+
+```bash
+npx dato-builder run datocms/blocks/test-block.ts
+```
 
