@@ -36,7 +36,6 @@
     "@commitlint/cli": "^19.8.0",
     "@commitlint/config-conventional": "^19.8.0",
     "@cspell/dict-software-terms": "^5.0.7",
-    "@datocms/cma-client-node": "^4.0.1",
     "@jest/globals": "^29.7.0",
     "@semantic-release/changelog": "^6.0.3",
     "@semantic-release/git": "^10.0.1",
@@ -50,5 +49,8 @@
     "ts-jest": "^29.3.2",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3"
+  },
+  "dependencies": {
+    "@datocms/cma-client-node": "^4.0.1"
   }
 }

@@ -62,9 +62,6 @@ function runFile(filePath) {
   if (isTs) {
     // For TypeScript files with ESM syntax in a CommonJS project
     if (hasESMSyntax && !useESM) {
-      console.log(
-        "📦 Detected ESM syntax in a CommonJS project, using special handling",
-      );
       // Set ts-node to transpile to CommonJS but allow ESM syntax
       env.TS_NODE_COMPILER_OPTIONS = JSON.stringify({
         module: "CommonJS",
@@ -89,12 +86,6 @@ function runFile(filePath) {
     console.error("❌ Only .ts and .js files are supported.");
     process.exit(1);
   }
-
-  console.log(
-    `🚀 Running ${filePath} ${
-      hasESMSyntax ? "with ESM syntax" : "with CommonJS syntax"
-    }`,
-  );
 
   const child = spawn("node", nodeArgs.concat(args.slice(2)), {
     stdio: "inherit",
