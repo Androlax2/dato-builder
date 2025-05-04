@@ -1,3 +1,10 @@
+# [1.1.0](https://github.com/Androlax2/dato-builder/compare/v1.0.0...v1.1.0) (2025-05-04)
+
+
+### Features
+
+* **release:** add npm plugin to semantic-release config ([1551e37](https://github.com/Androlax2/dato-builder/commit/1551e37efa672284a2421958ba761e1be049b0c2))
+
 # 1.0.0 (2025-05-04)
 
 
