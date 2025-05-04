@@ -10,18 +10,14 @@ export default class LengthValidator implements Validator {
     key = "length";
 
     constructor(private config: LengthValidatorConfig) {
-        if (config.min === null && config.max === null && config.eq === null) {
+        if (!config.min && !config.eq && !config.max) {
             throw new Error(
-                "At least one of the parameters must be specified for length.",
+                "At least one of min, eq, or max parameters must be specified for length.",
             );
         }
     }
 
     build() {
-        return {
-            min: this.config.min,
-            max: this.config.max,
-            eq: this.config.eq,
-        };
+        return this.config;
     }
 }

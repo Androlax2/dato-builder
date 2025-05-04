@@ -8,14 +8,16 @@ export default class EnumValidator implements Validator {
     key = "enum";
 
     constructor(private config: EnumValidatorConfig) {
-        if (config.values.length === 0) {
-            throw new Error("At least one value must be specified for enum.");
+        if (
+            !config.values ||
+            !Array.isArray(config.values) ||
+            config.values.length === 0
+        ) {
+            throw new Error("values parameter must be a non-empty array for enum.");
         }
     }
 
     build() {
-        return {
-            values: this.config.values,
-        };
+        return this.config;
     }
 }

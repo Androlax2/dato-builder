@@ -9,17 +9,14 @@ export default class NumberRangeValidator implements Validator {
     key = "number_range";
 
     constructor(private config: NumberRangeValidatorConfig) {
-        if (config.min == null && config.max == null) {
+        if (!config.min && !config.max) {
             throw new Error(
-                "At least one of the parameters must be specified for number_range.",
+                "At least one of min or max parameters must be specified for number_range.",
             );
         }
     }
 
     build() {
-        return {
-            min: this.config.min,
-            max: this.config.max,
-        };
+        return this.config;
     }
 }
