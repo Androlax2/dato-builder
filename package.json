@@ -4,6 +4,7 @@
   "description": "A DatoCMS configuration builder",
   "license": "MIT",
   "author": "Théo Benoit <theo.benoit16@gmail.com>",
+  "files": ["build"],
   "scripts": {
     "dev": "npx nodemon",
     "build": "rimraf ./build && tsc",

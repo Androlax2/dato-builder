@@ -11,6 +11,8 @@
   "compilerOptions": {
     "target": "es5",
     "module": "commonjs",
+    "declaration": true,
+    "emitDeclarationOnly": false,
     "lib": ["es6"],
     "allowJs": true,
     "outDir": "build",
