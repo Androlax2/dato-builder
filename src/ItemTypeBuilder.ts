@@ -21,6 +21,7 @@ import MultiLineText, {
   type MultiLineTextConfig,
 } from "./Fields/MultiLineText";
 import Seo, { type SeoConfig } from "./Fields/Seo";
+import SingleAsset, { type SingleAssetConfig } from "./Fields/SingleAsset";
 import SingleLineString, {
   type SingleLineStringConfig,
 } from "./Fields/SingleLineString";
@@ -426,6 +427,18 @@ export default abstract class ItemTypeBuilder {
   public addExternalVideo({ label, body }: ExternalVideoConfig): this {
     return this.addField(
       new ExternalVideo({
+        label,
+        body: {
+          ...body,
+          position: body?.position ?? this.getNewFieldPosition(),
+        },
+      }),
+    );
+  }
+
+  public addSingleAsset({ label, body }: SingleAssetConfig): this {
+    return this.addField(
+      new SingleAsset({
         label,
         body: {
           ...body,

@@ -32,6 +32,9 @@ const TestBlock = new BlockBuilder("Block yolo")
         required: true,
       },
     },
+  })
+  .addSingleAsset({
+    label: "Single Asset",
   });
 
 void TestBlock.upsert();
