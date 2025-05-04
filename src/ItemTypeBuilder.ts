@@ -12,6 +12,7 @@ import type Field from "./Fields/Field";
 import Float, { type FloatConfig } from "./Fields/Float";
 import Integer, { type IntegerConfig } from "./Fields/Integer";
 import Json, { type JsonConfig } from "./Fields/Json";
+import Location, { type LocationConfig } from "./Fields/Location";
 import Markdown, { type MarkdownConfig } from "./Fields/Markdown";
 import MultiLineText, {
   type MultiLineTextConfig,
@@ -369,6 +370,18 @@ export default abstract class ItemTypeBuilder {
       new StringCheckboxGroup({
         label,
         options,
+        body: {
+          ...body,
+          position: body?.position ?? this.getNewFieldPosition(),
+        },
+      }),
+    );
+  }
+
+  public addLocation({ label, body }: LocationConfig): this {
+    return this.addField(
+      new Location({
+        label,
         body: {
           ...body,
           position: body?.position ?? this.getNewFieldPosition(),
