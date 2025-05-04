@@ -108,6 +108,7 @@ export default abstract class ItemTypeBuilder {
       ...body,
       api_key: apiKey,
       modular_block: this.type === "block",
+      collection_appearance: body.collection_appearance || "table",
     };
   }
 
