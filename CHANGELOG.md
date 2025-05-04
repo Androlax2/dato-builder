@@ -1,3 +1,10 @@
+# [1.4.0](https://github.com/Androlax2/dato-builder/compare/v1.3.0...v1.4.0) (2025-05-04)
+
+
+### Features
+
+* **api:** add ModelBuilder export and enhance README documentation ([c481a63](https://github.com/Androlax2/dato-builder/commit/c481a63d49e2717117f41cb4b6e9ad6c93293aa4))
+
 # [1.3.0](https://github.com/Androlax2/dato-builder/compare/v1.2.0...v1.3.0) (2025-05-04)
 
 
