@@ -1,7 +1,7 @@
 import type { ValidatorConfig } from "../Validators/Validators";
 import Field, { type FieldBody } from "./Field";
 
-export type SeoBody = Omit<FieldBody, "label"> & {
+export type SeoBody = Omit<FieldBody, "label" | "validators"> & {
   validators?: Pick<
     ValidatorConfig,
     | "required_seo_fields"

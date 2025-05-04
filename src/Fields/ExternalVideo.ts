@@ -1,7 +1,7 @@
 import type { ValidatorConfig } from "../Validators/Validators";
 import Field, { type FieldBody } from "./Field";
 
-export type ExternalVideoBody = Omit<FieldBody, "label"> & {
+export type ExternalVideoBody = Omit<FieldBody, "label" | "validators"> & {
   validators?: Pick<ValidatorConfig, "required">;
 };
 

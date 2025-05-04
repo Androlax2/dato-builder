@@ -1,7 +1,7 @@
 import type { ValidatorConfig } from "../Validators/Validators";
 import Field, { type FieldBody } from "./Field";
 
-export type SlugBody = Omit<FieldBody, "label"> & {
+export type SlugBody = Omit<FieldBody, "label" | "validators"> & {
   validators?: Pick<
     ValidatorConfig,
     "required" | "length" | "slug_format" | "slug_title_field"

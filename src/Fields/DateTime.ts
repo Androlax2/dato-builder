@@ -1,7 +1,7 @@
 import type { ValidatorConfig } from "../Validators/Validators";
 import Field, { type FieldBody } from "./Field";
 
-export type DateTimeBody = Omit<FieldBody, "label"> & {
+export type DateTimeBody = Omit<FieldBody, "label" | "validators"> & {
   validators?: Pick<ValidatorConfig, "required" | "date_time_range">;
 };
 

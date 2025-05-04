@@ -1,6 +1,6 @@
 import Field, { type FieldBody } from "./Field";
 
-export type BooleanBody = Omit<FieldBody, "label">;
+export type BooleanBody = Omit<FieldBody, "label" | "validators">;
 
 export type BooleanConfig = {
   label: string;

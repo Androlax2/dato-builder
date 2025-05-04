@@ -1,7 +1,7 @@
 import type { ValidatorConfig } from "../Validators/Validators";
 import Field, { type FieldBody } from "./Field"; //size, file_size, image_dimensions, image_aspect_ratio, extension, required_alt_title
 
-export type AssetGalleryBody = Omit<FieldBody, "label"> & {
+export type AssetGalleryBody = Omit<FieldBody, "label" | "validators"> & {
   validators?: Pick<
     ValidatorConfig,
     | "size"
