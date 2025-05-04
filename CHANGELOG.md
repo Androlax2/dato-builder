@@ -1,3 +1,10 @@
+# [1.3.0](https://github.com/Androlax2/dato-builder/compare/v1.2.0...v1.3.0) (2025-05-04)
+
+
+### Features
+
+* **package,config:** enhance module exports and tweak defaults ([62791c3](https://github.com/Androlax2/dato-builder/commit/62791c364f18fc132126c8f8715bbd12139b0673))
+
 # [1.2.0](https://github.com/Androlax2/dato-builder/compare/v1.1.0...v1.2.0) (2025-05-04)
 
 
