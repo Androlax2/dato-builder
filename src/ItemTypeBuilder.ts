@@ -1,5 +1,9 @@
+import { createHash } from "node:crypto";
+import fs from "node:fs";
+import path from "node:path";
 import type * as SimpleSchemaTypes from "@datocms/cma-client/src/generated/SimpleSchemaTypes";
 import DatoApi from "./Api/DatoApi";
+import GenericDatoError from "./Api/Error/GenericDatoError";
 import NotFoundError from "./Api/Error/NotFoundError";
 import AssetGallery, { type AssetGalleryConfig } from "./Fields/AssetGallery";
 import BooleanField, { type BooleanConfig } from "./Fields/Boolean";
@@ -73,7 +77,14 @@ export type ItemTypeBuilderConfig = {
    *   the DatoCMS dashboard.
    */
   overwriteExistingFields?: boolean;
+  debug?: boolean;
 };
+
+// For tracking in-progress operations
+interface PendingOperation {
+  promise: Promise<string>;
+  timestamp: number;
+}
 
 export default abstract class ItemTypeBuilder {
   protected api = new DatoApi(getDatoClient());
@@ -83,6 +94,22 @@ export default abstract class ItemTypeBuilder {
   readonly type: ItemTypeBuilderType;
   readonly fields: Field[] = [];
   readonly config: Required<ItemTypeBuilderConfig>;
+
+  // Persistent cache file for item definitions
+  private static cacheFile = path.resolve(
+    __dirname,
+    ".itemTypeBuilderCache.json",
+  );
+  private static cacheLoaded = false;
+  private static itemCache: Map<string, { hash: string; id: string }> =
+    new Map();
+
+  private static pendingOperations: Map<string, PendingOperation> = new Map();
+  private static lockFile = path.resolve(
+    __dirname,
+    ".itemTypeBuilderCache.lock",
+  );
+  private static readonly PENDING_OPERATION_TIMEOUT = 60000; // 60 seconds
 
   protected constructor(
     type: ItemTypeBuilderType,
@@ -113,8 +140,179 @@ export default abstract class ItemTypeBuilder {
   }
 
   /**
-   * Merge global config and builder-specific overrides into final config.
+   * Attempt to acquire a lock for cache operations
+   * Uses a simple file-based lock with exponential backoff
    */
+  private static async acquireLock(maxAttempts = 10): Promise<boolean> {
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      try {
+        if (!fs.existsSync(ItemTypeBuilder.lockFile)) {
+          // Create the lock file
+          fs.writeFileSync(
+            ItemTypeBuilder.lockFile,
+            String(Date.now()),
+            "utf8",
+          );
+          return true;
+        }
+
+        // Check if the lock is stale (more than 30 seconds old)
+        const lockTime = Number.parseInt(
+          fs.readFileSync(ItemTypeBuilder.lockFile, "utf8"),
+        );
+        if (Date.now() - lockTime > 30000) {
+          // Lock is stale, override it
+          fs.writeFileSync(
+            ItemTypeBuilder.lockFile,
+            String(Date.now()),
+            "utf8",
+          );
+          return true;
+        }
+
+        // Wait with exponential backoff
+        const waitTime = Math.min(100 * 2 ** attempt, 2000);
+        await new Promise((resolve) => setTimeout(resolve, waitTime));
+      } catch (err) {
+        console.warn(`Failed to acquire lock on attempt ${attempt + 1}:`, err);
+      }
+    }
+
+    return false;
+  }
+
+  /**
+   * Release the lock for cache operations
+   */
+  private static releaseLock(): void {
+    try {
+      if (fs.existsSync(ItemTypeBuilder.lockFile)) {
+        fs.unlinkSync(ItemTypeBuilder.lockFile);
+      }
+    } catch (err) {
+      console.warn("Failed to release lock:", err);
+    }
+  }
+
+  /**
+   * Clean up stale pending operations
+   */
+  private static cleanPendingOperations(): void {
+    const now = Date.now();
+    ItemTypeBuilder.pendingOperations.forEach((operation, key) => {
+      if (
+        now - operation.timestamp >
+        ItemTypeBuilder.PENDING_OPERATION_TIMEOUT
+      ) {
+        ItemTypeBuilder.pendingOperations.delete(key);
+      }
+    });
+  }
+
+  private static async loadCache(): Promise<void> {
+    if (ItemTypeBuilder.cacheLoaded) return;
+
+    try {
+      await ItemTypeBuilder.acquireLock();
+
+      if (fs.existsSync(ItemTypeBuilder.cacheFile)) {
+        try {
+          const data = fs.readFileSync(ItemTypeBuilder.cacheFile, "utf8");
+          const obj = JSON.parse(data) as Record<
+            string,
+            { hash: string; id: string }
+          >;
+          ItemTypeBuilder.itemCache = new Map(Object.entries(obj));
+        } catch (e) {
+          console.warn("Failed to load itemTypeBuilder cache:", e);
+        }
+      }
+      ItemTypeBuilder.cacheLoaded = true;
+    } finally {
+      ItemTypeBuilder.releaseLock();
+    }
+  }
+
+  public static clearCache(): void {
+    // Clear in-memory cache
+    ItemTypeBuilder.itemCache.clear();
+    ItemTypeBuilder.cacheLoaded = false;
+
+    if (fs.existsSync(ItemTypeBuilder.cacheFile)) {
+      try {
+        fs.unlinkSync(ItemTypeBuilder.cacheFile);
+        console.log("✅ ItemTypeBuilder cache file removed.");
+      } catch (e) {
+        console.warn("⚠️  Failed to delete cache file:", e);
+      }
+    } else {
+      console.log("⚠️  No cache file found, nothing to clear.");
+    }
+  }
+
+  private static async saveCache(): Promise<void> {
+    try {
+      const locked = await ItemTypeBuilder.acquireLock();
+      if (!locked) {
+        console.warn(
+          "Failed to acquire lock for saving cache, will try again later",
+        );
+        return;
+      }
+
+      const obj: Record<string, { hash: string; id: string }> = {};
+      ItemTypeBuilder.itemCache.forEach((val, key) => {
+        obj[key] = val;
+      });
+
+      try {
+        fs.writeFileSync(
+          ItemTypeBuilder.cacheFile,
+          JSON.stringify(obj, null, 2),
+          "utf8",
+        );
+      } catch (e) {
+        console.warn("Failed to save itemTypeBuilder cache:", e);
+      }
+    } finally {
+      ItemTypeBuilder.releaseLock();
+    }
+  }
+
+  private static computeHash(
+    body: SimpleSchemaTypes.ItemTypeCreateSchema,
+    fields: SimpleSchemaTypes.FieldCreateSchema[],
+    config: ItemTypeBuilderConfig = {},
+  ): string {
+    const sorted = [...fields].sort((a, b) =>
+      a.api_key.localeCompare(b.api_key),
+    );
+    const serialized = JSON.stringify({ body, fields: sorted, config });
+    return createHash("sha256").update(serialized).digest("hex");
+  }
+
+  private static async getCache(
+    apiKey: string,
+  ): Promise<{ hash: string; id: string } | undefined> {
+    await ItemTypeBuilder.loadCache();
+    return ItemTypeBuilder.itemCache.get(apiKey);
+  }
+
+  private static async setCache(
+    apiKey: string,
+    hash: string,
+    id: string,
+  ): Promise<void> {
+    await ItemTypeBuilder.loadCache();
+    ItemTypeBuilder.itemCache.set(apiKey, { hash, id });
+    await ItemTypeBuilder.saveCache();
+  }
+
+  private getDefinitionHash(): string {
+    const defs = this.fields.map((f) => f.build());
+    return ItemTypeBuilder.computeHash(this.body, defs, this.config);
+  }
+
   private mergeConfig(
     builderConfig: ItemTypeBuilderConfig,
   ): Required<ItemTypeBuilderConfig> {
@@ -124,6 +322,7 @@ export default abstract class ItemTypeBuilder {
         builderConfig.overwriteExistingFields ??
         globalConfig.overwriteExistingFields ??
         false,
+      debug: builderConfig.debug ?? globalConfig.debug ?? false,
     };
   }
 
@@ -572,18 +771,57 @@ export default abstract class ItemTypeBuilder {
     );
   }
 
-  /**
-   * Synchronize fields: create, update (if override), and delete
-   *
-   * @param itemTypeId ID to sync against
-   */
+  private static async handlePendingOperation(
+    apiKey: string,
+    operationPromise: Promise<string>,
+  ): Promise<string> {
+    const operation: PendingOperation = {
+      promise: operationPromise,
+      timestamp: Date.now(),
+    };
+
+    // Register this operation
+    ItemTypeBuilder.pendingOperations.set(apiKey, operation);
+
+    try {
+      return await operationPromise;
+    } finally {
+      // Clean up only if this operation is still the current one
+      const currentOp = ItemTypeBuilder.pendingOperations.get(apiKey);
+      if (currentOp && currentOp.promise === operation.promise) {
+        ItemTypeBuilder.pendingOperations.delete(apiKey);
+      }
+
+      // Clean up any stale operations
+      ItemTypeBuilder.cleanPendingOperations();
+    }
+  }
+
+  private async waitForPendingOperation(
+    apiKey: string,
+  ): Promise<string | undefined> {
+    const pendingOp = ItemTypeBuilder.pendingOperations.get(apiKey);
+    if (pendingOp) {
+      try {
+        if (this.config.debug) {
+          console.info(`Waiting for pending operation on "${this.name}"...`);
+        }
+        return await pendingOp.promise;
+      } catch (error) {
+        // If the pending operation failed, we'll try our own operation
+        console.warn(`Pending operation for "${this.name}" failed:`, error);
+        return undefined;
+      }
+    }
+    return undefined;
+  }
+
   private async syncFields(itemTypeId: string): Promise<void> {
     const existing = await this.api.call(() =>
       this.client.fields.list(itemTypeId),
     );
     const desired = this.fields.map((f) => f.build());
 
-    // Create new
     const toCreate = desired.filter(
       (d) => !existing.some((e) => e.api_key === d.api_key),
     );
@@ -594,7 +832,6 @@ export default abstract class ItemTypeBuilder {
     );
 
     if (this.config.overwriteExistingFields) {
-      // Update existing fields
       const updates = existing.flatMap((e) => {
         const def = desired.find((d) => d.api_key === e.api_key);
         return def
@@ -603,7 +840,6 @@ export default abstract class ItemTypeBuilder {
       });
       await Promise.all(updates);
 
-      // Delete removed
       const toDelete = existing.filter(
         (e) => !desired.some((d) => d.api_key === e.api_key),
       );
@@ -616,28 +852,129 @@ export default abstract class ItemTypeBuilder {
   }
 
   public async create(): Promise<string> {
-    const item = await this.api.call(() =>
-      this.client.itemTypes.create(this.body),
-    );
-    await this.syncFields(item.id);
+    const apiKey = this.body.api_key;
+    const hash = this.getDefinitionHash();
 
-    console.info(`Created item type "${this.name}" (id=${item.id})`);
+    // First check for any pending operations
+    const pendingResult = await this.waitForPendingOperation(apiKey);
+    if (pendingResult) {
+      if (this.config.debug) {
+        console.info(
+          `Using result from pending operation for "${this.name}": ${pendingResult}`,
+        );
+      }
+      return pendingResult;
+    }
 
-    return item.id;
+    // Check if already in cache with matching hash
+    const cached = await ItemTypeBuilder.getCache(apiKey);
+    if (cached && cached.hash === hash) {
+      console.info(
+        `Create skipped: "${this.name}" unchanged (id=${cached.id})`,
+      );
+      return cached.id;
+    }
+
+    if (this.config.debug) {
+      console.info(`Creating item type "${this.name}"...`);
+    }
+
+    // Create a new operation and register it
+    const operation = async (): Promise<string> => {
+      try {
+        // Create the item
+        const item = await this.api.call(() =>
+          this.client.itemTypes.create(this.body),
+        );
+        await this.syncFields(item.id);
+        await ItemTypeBuilder.setCache(apiKey, hash, item.id);
+        console.info(`Created item type "${this.name}" (id=${item.id})`);
+
+        if (this.config.debug) {
+          console.info(
+            `Item type "${this.name}" cached (id=${item.id}, hash=${hash})`,
+          );
+        }
+        return item.id;
+      } catch (error: unknown) {
+        if (error instanceof GenericDatoError) {
+          console.error(
+            `Failed to create item type "${this.name}": ${error.message}`,
+          );
+        }
+        throw error;
+      }
+    };
+
+    return ItemTypeBuilder.handlePendingOperation(apiKey, operation());
   }
 
   public async update(): Promise<string> {
-    const item = await this.api.call(() =>
-      this.client.itemTypes.update(this.body.api_key, this.body),
-    );
-    await this.syncFields(item.id);
+    const apiKey = this.body.api_key;
+    const hash = this.getDefinitionHash();
 
-    console.info(`Updated item type "${this.name}" (id=${item.id})`);
+    // First check for any pending operations
+    const pending = await this.waitForPendingOperation(apiKey);
+    if (pending) {
+      if (this.config.debug) {
+        console.info(
+          `Using result from pending operation for "${this.name}": ${pending}`,
+        );
+      }
+      return pending;
+    }
 
-    return item.id;
+    // Check cache: skip if nothing changed
+    const cached = await ItemTypeBuilder.getCache(apiKey);
+    if (cached && cached.hash === hash) {
+      console.info(
+        `Update skipped: "${this.name}" unchanged (id=${cached.id})`,
+      );
+      return cached.id;
+    }
+
+    if (this.config.debug) {
+      console.info(`Updating item type "${this.name}"...`);
+    }
+
+    // Wrap the actual API call in an operation promise
+    const operation = async (): Promise<string> => {
+      try {
+        // Attempt the update
+        const item = await this.api.call(() =>
+          this.client.itemTypes.update(apiKey, this.body),
+        );
+        await this.syncFields(item.id);
+
+        // Persist to cache
+        await ItemTypeBuilder.setCache(apiKey, hash, item.id);
+
+        console.info(`Updated item type "${this.name}" (id=${item.id})`);
+        if (this.config.debug) {
+          console.info(
+            `Item type "${this.name}" cached (id=${item.id}, hash=${hash})`,
+          );
+        }
+        return item.id;
+      } catch (err: unknown) {
+        if (err instanceof GenericDatoError) {
+          console.error(
+            `Failed to update item type "${this.name}": ${err.message}`,
+          );
+        }
+        throw err;
+      }
+    };
+
+    // Register & return a single in‐flight promise
+    return ItemTypeBuilder.handlePendingOperation(apiKey, operation());
   }
 
   public async upsert(): Promise<string> {
+    if (this.config.debug) {
+      console.info(`Upserting item type \"${this.name}\"...`);
+    }
+
     try {
       await this.api.call(() => this.client.itemTypes.find(this.body.api_key));
 

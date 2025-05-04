@@ -105,4 +105,8 @@ function validateConfig(config: Partial<DatoBuilderConfig>): void {
   if (config.overwriteExistingFields === undefined) {
     config.overwriteExistingFields = false;
   }
+
+  if (config.debug === undefined) {
+    config.debug = false;
+  }
 }

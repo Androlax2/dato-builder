@@ -9,7 +9,7 @@ export type FieldBody = Omit<FieldCreateSchema, "field_type" | "api_key"> & {
 };
 
 export default abstract class Field {
-  protected readonly body: FieldCreateSchema;
+  readonly body: FieldCreateSchema;
 
   protected constructor(type: FieldType, body: FieldBody) {
     const apiKey = body.api_key || generateDatoApiKey(body.label);

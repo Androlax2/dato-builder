@@ -19,4 +19,9 @@ export interface DatoBuilderConfig {
    *   the DatoCMS dashboard.
    */
   overwriteExistingFields?: boolean;
+
+  /**
+   * Activate the "debug" mode. This will log more information to the console.
+   */
+  debug?: boolean;
 }

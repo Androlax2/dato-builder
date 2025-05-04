@@ -55,6 +55,9 @@ describe("ItemTypeBuilder", () => {
   let mockClientFields: any;
 
   beforeEach(() => {
+    // Wipe both the in-memory and on-disk caches
+    ItemTypeBuilder.clearCache();
+
     // Clear all mocks
     jest.clearAllMocks();
 
@@ -144,11 +147,13 @@ describe("ItemTypeBuilder", () => {
       // Test default config
       expect(builder.config).toEqual({
         overwriteExistingFields: false,
+        debug: false,
       });
 
       // Test with global config override
       (configLoader.loadDatoBuilderConfig as jest.Mock).mockReturnValueOnce({
         overwriteExistingFields: true,
+        debug: true,
       });
 
       const globalConfigBuilder = new TestItemTypeBuilder("model", {
@@ -161,6 +166,7 @@ describe("ItemTypeBuilder", () => {
 
       expect(globalConfigBuilder.config).toEqual({
         overwriteExistingFields: true,
+        debug: true,
       });
 
       // Test with builder-specific config
@@ -175,11 +181,13 @@ describe("ItemTypeBuilder", () => {
         },
         {
           overwriteExistingFields: true,
+          debug: false,
         },
       );
 
       expect(specificConfigBuilder.config).toEqual({
         overwriteExistingFields: true,
+        debug: false,
       });
     });
   });
@@ -283,7 +291,7 @@ describe("ItemTypeBuilder", () => {
 
       const result = await builder.create();
 
-      expect(mockApiCall).toHaveBeenCalledTimes(3); // One for create, one for field list, one for field sync
+      expect(mockApiCall).toHaveBeenCalledTimes(3);
       expect(mockClientItemTypes.create).toHaveBeenCalledWith(builder.body);
       expect(mockClientFields.list).toHaveBeenCalledWith("item-123");
       expect(mockClientFields.create).toHaveBeenCalledWith("item-123", {
