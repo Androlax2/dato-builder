@@ -16,6 +16,7 @@ import type Field from "./Fields/Field";
 import Float, { type FloatConfig } from "./Fields/Float";
 import Integer, { type IntegerConfig } from "./Fields/Integer";
 import Json, { type JsonConfig } from "./Fields/Json";
+import Link, { type LinkConfig } from "./Fields/Link";
 import Location, { type LocationConfig } from "./Fields/Location";
 import Markdown, { type MarkdownConfig } from "./Fields/Markdown";
 import MultiLineText, {
@@ -452,6 +453,18 @@ export default abstract class ItemTypeBuilder {
   public addAssetGallery({ label, body }: AssetGalleryConfig): this {
     return this.addField(
       new AssetGallery({
+        label,
+        body: {
+          ...body,
+          position: body?.position ?? this.getNewFieldPosition(),
+        },
+      }),
+    );
+  }
+
+  public addLink({ label, body }: LinkConfig): this {
+    return this.addField(
+      new Link({
         label,
         body: {
           ...body,
