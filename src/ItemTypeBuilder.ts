@@ -28,6 +28,7 @@ import MultiLineText, {
 } from "./Fields/MultiLineText";
 import Seo, { type SeoConfig } from "./Fields/Seo";
 import SingleAsset, { type SingleAssetConfig } from "./Fields/SingleAsset";
+import SingleBlock, { type SingleBlockConfig } from "./Fields/SingleBlock";
 import SingleLineString, {
   type SingleLineStringConfig,
 } from "./Fields/SingleLineString";
@@ -500,6 +501,25 @@ export default abstract class ItemTypeBuilder {
     return this.addField(
       new ModularContent({
         label,
+        start_collapsed,
+        body: {
+          ...body,
+          position: body?.position ?? this.getNewFieldPosition(),
+        },
+      }),
+    );
+  }
+
+  public addSingleBlock({
+    label,
+    type,
+    start_collapsed,
+    body,
+  }: SingleBlockConfig): this {
+    return this.addField(
+      new SingleBlock({
+        label,
+        type,
         start_collapsed,
         body: {
           ...body,

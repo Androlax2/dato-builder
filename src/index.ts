@@ -54,6 +54,18 @@ async function main() {
           },
         },
       },
+    })
+    .addSingleBlock({
+      label: "single block",
+      type: "frameless_single_block",
+      start_collapsed: true,
+      body: {
+        validators: {
+          single_block_blocks: {
+            item_types: [BlockForModularContentId],
+          },
+        },
+      },
     });
 
   void TestBlock.upsert();
