@@ -10,14 +10,21 @@
     "start": "npm run build && node build/index.js",
     "test": "jest --detectOpenHandles --forceExit",
     "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage"
+    "test:coverage": "jest --coverage",
+    "typecheck": "tsc --noEmit",
+    "spellcheck": "cspell \"**/*.{js,ts,md,json,yml,yaml}\""
   },
   "devDependencies": {
     "@biomejs/biome": "1.9.4",
+    "@commitlint/cli": "^19.8.0",
+    "@commitlint/config-conventional": "^19.8.0",
+    "@cspell/dict-software-terms": "^5.0.7",
     "@datocms/cma-client-node": "^4.0.1",
     "@jest/globals": "^29.7.0",
     "@types/node": "^22.15.3",
+    "cspell": "^8.19.3",
     "jest": "^29.7.0",
+    "lefthook": "^1.11.11",
     "nodemon": "^3.1.10",
     "rimraf": "^6.0.1",
     "ts-jest": "^29.3.2",

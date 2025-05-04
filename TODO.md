@@ -6,8 +6,6 @@
 - Add documentation
 - Add examples
 - Add a semantic versioning
-- Add lefthook
-- Add cspell
 - Add pull_request_template
 - Add issue templates
 - Set up workflow for release
