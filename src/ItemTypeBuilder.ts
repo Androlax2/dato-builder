@@ -6,6 +6,7 @@ import BooleanRadioGroup, {
   type BooleanRadioGroupConfig,
 } from "./Fields/BooleanRadioGroup";
 import type Field from "./Fields/Field";
+import Float, { type FloatConfig } from "./Fields/Float";
 import Integer, { type IntegerConfig } from "./Fields/Integer";
 import Markdown, { type MarkdownConfig } from "./Fields/Markdown";
 import MultiLineText, {
@@ -257,6 +258,18 @@ export default abstract class ItemTypeBuilder {
         label,
         positive_radio,
         negative_radio,
+        body: {
+          ...body,
+          position: body?.position ?? this.getNewFieldPosition(),
+        },
+      }),
+    );
+  }
+
+  public addFloat({ label, body }: FloatConfig): this {
+    return this.addField(
+      new Float({
+        label,
         body: {
           ...body,
           position: body?.position ?? this.getNewFieldPosition(),
