@@ -22,6 +22,19 @@ async function main() {
           },
         },
       },
+    })
+    .addLinks({
+      label: "Links",
+      appearance: "expanded",
+      body: {
+        validators: {
+          items_item_type: {
+            item_types: [ModelId],
+            on_publish_with_unpublished_references_strategy:
+              "publish_references",
+          },
+        },
+      },
     });
 
   void TestBlock.upsert();

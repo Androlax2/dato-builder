@@ -17,6 +17,7 @@ import Float, { type FloatConfig } from "./Fields/Float";
 import Integer, { type IntegerConfig } from "./Fields/Integer";
 import Json, { type JsonConfig } from "./Fields/Json";
 import Link, { type LinkConfig } from "./Fields/Link";
+import Links, { type LinksConfig } from "./Fields/Links";
 import Location, { type LocationConfig } from "./Fields/Location";
 import Markdown, { type MarkdownConfig } from "./Fields/Markdown";
 import MultiLineText, {
@@ -465,6 +466,19 @@ export default abstract class ItemTypeBuilder {
   public addLink({ label, appearance, body }: LinkConfig): this {
     return this.addField(
       new Link({
+        label,
+        appearance,
+        body: {
+          ...body,
+          position: body?.position ?? this.getNewFieldPosition(),
+        },
+      }),
+    );
+  }
+
+  public addLinks({ label, appearance, body }: LinksConfig): this {
+    return this.addField(
+      new Links({
         label,
         appearance,
         body: {
