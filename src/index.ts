@@ -11,6 +11,19 @@ const TestBlock = new BlockBuilder("Block yolo")
   })
   .addSeo({
     label: "SEO",
+  })
+  .addSlug({
+    label: "Slug",
+    url_prefix: "/",
+    placeholder: "slug",
+    body: {
+      validators: {
+        required: true,
+        slug_format: {
+          predefined_pattern: "webpage_slug",
+        },
+      },
+    },
   });
 
 void TestBlock.upsert();

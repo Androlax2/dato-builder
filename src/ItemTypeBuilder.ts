@@ -21,6 +21,7 @@ import Seo, { type SeoConfig } from "./Fields/Seo";
 import SingleLineString, {
   type SingleLineStringConfig,
 } from "./Fields/SingleLineString";
+import Slug, { type SlugConfig } from "./Fields/Slug";
 import StringCheckboxGroup, {
   type StringCheckboxGroupConfig,
 } from "./Fields/StringCheckboxGroup";
@@ -397,6 +398,20 @@ export default abstract class ItemTypeBuilder {
         label,
         fields,
         previews,
+        body: {
+          ...body,
+          position: body?.position ?? this.getNewFieldPosition(),
+        },
+      }),
+    );
+  }
+
+  public addSlug({ label, url_prefix, placeholder, body }: SlugConfig): this {
+    return this.addField(
+      new Slug({
+        label,
+        url_prefix,
+        placeholder,
         body: {
           ...body,
           position: body?.position ?? this.getNewFieldPosition(),
