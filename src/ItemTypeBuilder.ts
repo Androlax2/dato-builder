@@ -43,6 +43,9 @@ import StringRadioGroup, {
   type StringRadioGroupConfig,
 } from "./Fields/StringRadioGroup";
 import StringSelect, { type StringSelectConfig } from "./Fields/StringSelect";
+import StructuredText, {
+  type StructuredTextConfig,
+} from "./Fields/StructuredText";
 import Textarea, { type TextareaConfig } from "./Fields/Textarea";
 import Wysiwyg, { type WysiwygConfig } from "./Fields/Wysiwyg";
 import { getDatoClient } from "./config";
@@ -521,6 +524,33 @@ export default abstract class ItemTypeBuilder {
         label,
         type,
         start_collapsed,
+        body: {
+          ...body,
+          position: body?.position ?? this.getNewFieldPosition(),
+        },
+      }),
+    );
+  }
+
+  public addStructuredText({
+    label,
+    nodes,
+    marks,
+    heading_levels,
+    blocks_start_collapsed,
+    show_links_target_blank,
+    show_links_meta_editor,
+    body,
+  }: StructuredTextConfig): this {
+    return this.addField(
+      new StructuredText({
+        label,
+        nodes,
+        marks,
+        heading_levels,
+        blocks_start_collapsed,
+        show_links_target_blank,
+        show_links_meta_editor,
         body: {
           ...body,
           position: body?.position ?? this.getNewFieldPosition(),

@@ -1,25 +1,25 @@
-import type {Validator} from "./types";
+import type { Validator } from "./types";
 
 export type StructuredTextInlineBlocksValidatorConfig = {
-    item_types: string[];
+  item_types: string[];
 };
 
 export default class StructuredTextInlineBlocksValidator implements Validator {
-    key = "structured_text_inline_blocks";
+  key = "structured_text_inline_blocks";
 
-    constructor(private config: StructuredTextInlineBlocksValidatorConfig) {
-        if (
-            !config.item_types ||
-            !Array.isArray(config.item_types) ||
-            config.item_types.length === 0
-        ) {
-            throw new Error(
-                "item_types parameter must be a non-empty array for structured_text_inline_blocks.",
-            );
-        }
+  constructor(private config: StructuredTextInlineBlocksValidatorConfig) {
+    if (
+      !config.item_types ||
+      !Array.isArray(config.item_types) ||
+      config.item_types.some(() => false)
+    ) {
+      throw new Error(
+        "item_types must be an array of strings for structured_text_inline_blocks.",
+      );
     }
+  }
 
-    build() {
-        return this.config;
-    }
+  build() {
+    return this.config;
+  }
 }

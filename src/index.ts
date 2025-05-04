@@ -66,6 +66,16 @@ async function main() {
           },
         },
       },
+    })
+    .addStructuredText({
+      label: "Structured Text",
+      body: {
+        validators: {
+          structured_text_blocks: {
+            item_types: [BlockForModularContentId],
+          },
+        },
+      },
     });
 
   void TestBlock.upsert();
