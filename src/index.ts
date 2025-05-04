@@ -6,6 +6,14 @@ async function main() {
 
   const ModelId = await Model.upsert();
 
+  const BlockForModularContent = new BlockBuilder(
+    "Block for modular content",
+  ).addHeading({
+    label: "title",
+  });
+
+  const BlockForModularContentId = await BlockForModularContent.upsert();
+
   const TestBlock = new BlockBuilder("Block yolo")
     .addAssetGallery({
       label: "Asset Gallery",
@@ -32,6 +40,17 @@ async function main() {
             item_types: [ModelId],
             on_publish_with_unpublished_references_strategy:
               "publish_references",
+          },
+        },
+      },
+    })
+    .addModularContent({
+      label: "content",
+      start_collapsed: true,
+      body: {
+        validators: {
+          rich_text_blocks: {
+            item_types: [BlockForModularContentId],
           },
         },
       },

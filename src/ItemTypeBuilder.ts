@@ -20,6 +20,9 @@ import Link, { type LinkConfig } from "./Fields/Link";
 import Links, { type LinksConfig } from "./Fields/Links";
 import Location, { type LocationConfig } from "./Fields/Location";
 import Markdown, { type MarkdownConfig } from "./Fields/Markdown";
+import ModularContent, {
+  type ModularContentConfig,
+} from "./Fields/ModularContent";
 import MultiLineText, {
   type MultiLineTextConfig,
 } from "./Fields/MultiLineText";
@@ -481,6 +484,23 @@ export default abstract class ItemTypeBuilder {
       new Links({
         label,
         appearance,
+        body: {
+          ...body,
+          position: body?.position ?? this.getNewFieldPosition(),
+        },
+      }),
+    );
+  }
+
+  public addModularContent({
+    label,
+    start_collapsed,
+    body,
+  }: ModularContentConfig) {
+    return this.addField(
+      new ModularContent({
+        label,
+        start_collapsed,
         body: {
           ...body,
           position: body?.position ?? this.getNewFieldPosition(),
