@@ -899,22 +899,6 @@ export default abstract class ItemTypeBuilder {
     // Create a new operation and register it
     const operation = async (): Promise<string> => {
       try {
-        // Check if the item already exists first to handle race conditions
-        const existingCheck = await this.itemExists(apiKey);
-        if (existingCheck.exists) {
-          console.info(
-            `Item "${this.name}" already exists, updating instead...`,
-          );
-          // Use update logic instead
-          const item = await this.api.call(() =>
-            this.client.itemTypes.update(apiKey, this.body),
-          );
-          await this.syncFields(item.id);
-          await ItemTypeBuilder.setCache(apiKey, hash, item.id);
-          console.info(`Updated item type "${this.name}" (id=${item.id})`);
-          return item.id;
-        }
-
         // Create the item
         const item = await this.api.call(() =>
           this.client.itemTypes.create(this.body),
