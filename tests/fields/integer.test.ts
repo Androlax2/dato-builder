@@ -43,11 +43,11 @@ describe("Integer", () => {
         });
 
         expect(integerField.build().validators).toEqual({
-            required: {},
             number_range: {
                 min: 18,
                 max: 100,
             },
+            required: {},
         });
     });
 
