@@ -24,6 +24,14 @@ const TestBlock = new BlockBuilder("Block yolo")
         },
       },
     },
+  })
+  .addExternalVideo({
+    label: "External Video",
+    body: {
+      validators: {
+        required: true,
+      },
+    },
   });
 
 void TestBlock.upsert();

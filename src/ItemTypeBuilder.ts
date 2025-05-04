@@ -8,6 +8,9 @@ import BooleanRadioGroup, {
 import ColorPicker, { type ColorPickerConfig } from "./Fields/ColorPicker";
 import DateField, { type DateConfig } from "./Fields/Date";
 import DateTime, { type DateTimeConfig } from "./Fields/DateTime";
+import ExternalVideo, {
+  type ExternalVideoConfig,
+} from "./Fields/ExternalVideo";
 import type Field from "./Fields/Field";
 import Float, { type FloatConfig } from "./Fields/Float";
 import Integer, { type IntegerConfig } from "./Fields/Integer";
@@ -412,6 +415,18 @@ export default abstract class ItemTypeBuilder {
         label,
         url_prefix,
         placeholder,
+        body: {
+          ...body,
+          position: body?.position ?? this.getNewFieldPosition(),
+        },
+      }),
+    );
+  }
+
+  public addExternalVideo({ label, body }: ExternalVideoConfig): this {
+    return this.addField(
+      new ExternalVideo({
+        label,
         body: {
           ...body,
           position: body?.position ?? this.getNewFieldPosition(),
