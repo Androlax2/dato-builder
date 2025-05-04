@@ -1,3 +1,30 @@
+# [2.0.0](https://github.com/Androlax2/dato-builder/compare/v1.7.0...v2.0.0) (2025-05-04)
+
+
+### Features
+
+* **caching:** Implement caching created/updated models/blocks ([#3](https://github.com/Androlax2/dato-builder/issues/3)) ([dbc2eba](https://github.com/Androlax2/dato-builder/commit/dbc2ebaaa7c7da21ada97142f8cb9ec6d118f709))
+
+
+### BREAKING CHANGES
+
+* **caching:** Modified cache behavior and introduced locking mechanism affecting cache-dependent operations.
+
+* refactor(ItemTypeBuilder): simplify item creation logic and improve configuration handling in tests
+
+- Removed redundant logic for checking and updating existing items, streamlining item creation flow.
+- Enhanced test cases to include global and builder-specific configuration validation.
+- Added clearing of cache in `beforeEach` for consistent test setup.
+- Adjusted import formatting for consistency.
+
+* refactor(ItemTypeBuilder): remove unused code and simplify error handling
+
+The following changes were made:
+- Removed unused `itemExists` method.
+- Simplified error handling by eliminating redundancy related to handling uniqueness and not-found errors during item creation and updates.
+
+This refactor improves code maintainability and reduces complexity without altering functionality.
+
 # [1.7.0](https://github.com/Androlax2/dato-builder/compare/v1.6.2...v1.7.0) (2025-05-04)
 
 
