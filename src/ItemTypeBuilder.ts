@@ -17,6 +17,7 @@ import Markdown, { type MarkdownConfig } from "./Fields/Markdown";
 import MultiLineText, {
   type MultiLineTextConfig,
 } from "./Fields/MultiLineText";
+import Seo, { type SeoConfig } from "./Fields/Seo";
 import SingleLineString, {
   type SingleLineStringConfig,
 } from "./Fields/SingleLineString";
@@ -382,6 +383,20 @@ export default abstract class ItemTypeBuilder {
     return this.addField(
       new Location({
         label,
+        body: {
+          ...body,
+          position: body?.position ?? this.getNewFieldPosition(),
+        },
+      }),
+    );
+  }
+
+  public addSeo({ label, fields, previews, body }: SeoConfig): this {
+    return this.addField(
+      new Seo({
+        label,
+        fields,
+        previews,
         body: {
           ...body,
           position: body?.position ?? this.getNewFieldPosition(),

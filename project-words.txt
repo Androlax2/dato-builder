@@ -2,3 +2,4 @@ commitlint
 cli
 datocms
 UTCISO
+seo
