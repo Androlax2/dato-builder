@@ -20,6 +20,18 @@ const TestBlock = new BlockBuilder("Block yolo")
         },
       },
     },
+  })
+  .addDate({
+    label: "Date",
+    body: {
+      validators: {
+        required: true,
+        date_range: {
+          min: new Date("2023-01-01"),
+          max: new Date("2023-12-31"),
+        },
+      },
+    },
   });
 
 void TestBlock.upsert();

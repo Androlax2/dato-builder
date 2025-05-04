@@ -5,6 +5,7 @@ import BooleanField, { type BooleanConfig } from "./Fields/Boolean";
 import BooleanRadioGroup, {
   type BooleanRadioGroupConfig,
 } from "./Fields/BooleanRadioGroup";
+import DateField, { type DateConfig } from "./Fields/Date";
 import type Field from "./Fields/Field";
 import Float, { type FloatConfig } from "./Fields/Float";
 import Integer, { type IntegerConfig } from "./Fields/Integer";
@@ -269,6 +270,18 @@ export default abstract class ItemTypeBuilder {
   public addFloat({ label, body }: FloatConfig): this {
     return this.addField(
       new Float({
+        label,
+        body: {
+          ...body,
+          position: body?.position ?? this.getNewFieldPosition(),
+        },
+      }),
+    );
+  }
+
+  public addDate({ label, body }: DateConfig): this {
+    return this.addField(
+      new DateField({
         label,
         body: {
           ...body,
