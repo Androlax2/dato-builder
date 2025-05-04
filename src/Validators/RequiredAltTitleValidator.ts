@@ -1,22 +1,22 @@
-import type {Validator} from "./types";
+import type { Validator } from "./types";
 
 export type RequiredAltTitleValidatorConfig = {
-    title?: boolean;
-    alt?: boolean;
+  title?: boolean;
+  alt?: boolean;
 };
 
 export default class RequiredAltTitleValidator implements Validator {
-    key = "required_alt_title";
+  key = "required_alt_title";
 
-    constructor(private config: RequiredAltTitleValidatorConfig) {
-        if (!config.title && !config.alt) {
-            throw new Error(
-                "At least one of title or alt parameters must be specified for required_alt_title.",
-            );
-        }
+  constructor(private config: RequiredAltTitleValidatorConfig) {
+    if (!config.title && !config.alt) {
+      throw new Error(
+        "At least one of title or alt parameters must be specified for required_alt_title.",
+      );
     }
+  }
 
-    build() {
-        return this.config;
-    }
+  build() {
+    return this.config;
+  }
 }

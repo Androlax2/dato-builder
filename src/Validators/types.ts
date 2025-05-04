@@ -1,5 +1,5 @@
 export interface Validator {
-    key: string;
+  key: string;
 
-    build(): object | undefined;
+  build(): object | undefined;
 }

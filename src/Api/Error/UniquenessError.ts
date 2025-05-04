@@ -1,12 +1,12 @@
-import type {ParsedError} from "../ParsedError";
+import type { ParsedError } from "../ParsedError";
 import GenericDatoError from "./GenericDatoError";
 
 export default class UniquenessError extends GenericDatoError {
-    constructor(info: ParsedError) {
-        super(info);
-        this.name = "UniquenessError";
+  constructor(info: ParsedError) {
+    super(info);
+    this.name = "UniquenessError";
 
-        // restore correct [[Prototype]]
-        Object.setPrototypeOf(this, new.target.prototype);
-    }
+    // restore correct [[Prototype]]
+    Object.setPrototypeOf(this, new.target.prototype);
+  }
 }
