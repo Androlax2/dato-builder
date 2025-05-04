@@ -1,3 +1,10 @@
+## [1.6.2](https://github.com/Androlax2/dato-builder/compare/v1.6.1...v1.6.2) (2025-05-04)
+
+
+### Bug Fixes
+
+* **cli:** remove redundant newline in file type check ([73491af](https://github.com/Androlax2/dato-builder/commit/73491afb0f901bedd974f93b8cfcf09ad252ab16))
+
 # [1.6.0](https://github.com/Androlax2/dato-builder/compare/v1.5.0...v1.6.0) (2025-05-04)
 
 
