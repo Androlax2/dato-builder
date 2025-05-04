@@ -9,14 +9,33 @@ export type LinkBody = Omit<FieldBody, "label"> & {
 
 export type LinkConfig = {
   label: string;
+  /**
+   * The appearance of the link field.
+   *
+   * @default "compact"
+   */
+  appearance?: "compact" | "expanded";
   body: LinkBody;
 };
 
+const appearanceToEditor: Record<
+  Exclude<LinkConfig["appearance"], undefined>,
+  "link_select" | "link_embed"
+> = {
+  compact: "link_select",
+  expanded: "link_embed",
+};
+
 export default class Link extends Field {
-  constructor({ label, body }: LinkConfig) {
+  constructor({ label, appearance = "compact", body }: LinkConfig) {
     super("link", {
       ...body,
       label,
+      appearance: {
+        editor: appearanceToEditor[appearance],
+        parameters: {},
+        addons: [],
+      },
     });
   }
 }

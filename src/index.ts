@@ -11,7 +11,8 @@ async function main() {
       label: "Asset Gallery",
     })
     .addLink({
-      label: "Link",
+      label: "Link 2",
+      appearance: "expanded",
       body: {
         validators: {
           item_item_type: {

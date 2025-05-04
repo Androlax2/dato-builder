@@ -462,10 +462,11 @@ export default abstract class ItemTypeBuilder {
     );
   }
 
-  public addLink({ label, body }: LinkConfig): this {
+  public addLink({ label, appearance, body }: LinkConfig): this {
     return this.addField(
       new Link({
         label,
+        appearance,
         body: {
           ...body,
           position: body?.position ?? this.getNewFieldPosition(),
