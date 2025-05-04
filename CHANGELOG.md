@@ -1,3 +1,10 @@
+# [1.7.0](https://github.com/Androlax2/dato-builder/compare/v1.6.2...v1.7.0) (2025-05-04)
+
+
+### Features
+
+* **cli:** add directory support for `run` command ([113a828](https://github.com/Androlax2/dato-builder/commit/113a82848b2d2e5af73c92969304653403419b30))
+
 ## [1.6.2](https://github.com/Androlax2/dato-builder/compare/v1.6.1...v1.6.2) (2025-05-04)
 
 
