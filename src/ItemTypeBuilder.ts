@@ -5,6 +5,7 @@ import BooleanField, { type BooleanConfig } from "./Fields/Boolean";
 import BooleanRadioGroup, {
   type BooleanRadioGroupConfig,
 } from "./Fields/BooleanRadioGroup";
+import ColorPicker, { type ColorPickerConfig } from "./Fields/ColorPicker";
 import DateField, { type DateConfig } from "./Fields/Date";
 import DateTime, { type DateTimeConfig } from "./Fields/DateTime";
 import type Field from "./Fields/Field";
@@ -296,6 +297,25 @@ export default abstract class ItemTypeBuilder {
     return this.addField(
       new DateTime({
         label,
+        body: {
+          ...body,
+          position: body?.position ?? this.getNewFieldPosition(),
+        },
+      }),
+    );
+  }
+
+  public addColorPicker({
+    label,
+    enable_alpha,
+    preset_colors,
+    body,
+  }: ColorPickerConfig) {
+    return this.addField(
+      new ColorPicker({
+        label,
+        enable_alpha,
+        preset_colors,
         body: {
           ...body,
           position: body?.position ?? this.getNewFieldPosition(),
