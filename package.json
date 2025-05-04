@@ -4,7 +4,14 @@
   "description": "A DatoCMS configuration builder",
   "license": "MIT",
   "author": "Théo Benoit <theo.benoit16@gmail.com>",
-  "files": ["build"],
+  "main": "build/index.js",
+  "types": "build/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./build/index.js",
+      "types": "./build/index.d.ts"
+    }
+  },
   "scripts": {
     "dev": "npx nodemon",
     "build": "rimraf ./build && tsc",

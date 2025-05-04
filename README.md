@@ -18,7 +18,7 @@ import type {DatoBuilderConfig} from "./src/config/types";
 
 const config: DatoBuilderConfig = {
     apiToken: "4138815ad42637c8ad7268e303618e",
-    overwriteExistingFields: true,
+    overwriteExistingFields: false,
 };
 
 export default config;
