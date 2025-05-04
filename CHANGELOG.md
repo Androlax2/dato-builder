@@ -1,3 +1,10 @@
+# [1.5.0](https://github.com/Androlax2/dato-builder/compare/v1.4.0...v1.5.0) (2025-05-04)
+
+
+### Features
+
+* **ItemTypeBuilder:** add support for single image field ([8c5260d](https://github.com/Androlax2/dato-builder/commit/8c5260d93f38539b88784f215afb2c9a284597b4))
+
 # [1.4.0](https://github.com/Androlax2/dato-builder/compare/v1.3.0...v1.4.0) (2025-05-04)
 
 
