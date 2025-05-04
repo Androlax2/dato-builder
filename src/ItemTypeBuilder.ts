@@ -11,6 +11,7 @@ import DateTime, { type DateTimeConfig } from "./Fields/DateTime";
 import type Field from "./Fields/Field";
 import Float, { type FloatConfig } from "./Fields/Float";
 import Integer, { type IntegerConfig } from "./Fields/Integer";
+import Json, { type JsonConfig } from "./Fields/Json";
 import Markdown, { type MarkdownConfig } from "./Fields/Markdown";
 import MultiLineText, {
   type MultiLineTextConfig,
@@ -18,6 +19,12 @@ import MultiLineText, {
 import SingleLineString, {
   type SingleLineStringConfig,
 } from "./Fields/SingleLineString";
+import StringCheckboxGroup, {
+  type StringCheckboxGroupConfig,
+} from "./Fields/StringCheckboxGroup";
+import StringMultiSelect, {
+  type StringMultiSelectConfig,
+} from "./Fields/StringMultiSelect";
 import StringRadioGroup, {
   type StringRadioGroupConfig,
 } from "./Fields/StringRadioGroup";
@@ -316,6 +323,52 @@ export default abstract class ItemTypeBuilder {
         label,
         enable_alpha,
         preset_colors,
+        body: {
+          ...body,
+          position: body?.position ?? this.getNewFieldPosition(),
+        },
+      }),
+    );
+  }
+
+  public addJson({ label, body }: JsonConfig): this {
+    return this.addField(
+      new Json({
+        label,
+        body: {
+          ...body,
+          position: body?.position ?? this.getNewFieldPosition(),
+        },
+      }),
+    );
+  }
+
+  public addStringMultiSelect({
+    label,
+    options,
+    body,
+  }: StringMultiSelectConfig): this {
+    return this.addField(
+      new StringMultiSelect({
+        label,
+        options,
+        body: {
+          ...body,
+          position: body?.position ?? this.getNewFieldPosition(),
+        },
+      }),
+    );
+  }
+
+  public addStringCheckboxGroup({
+    label,
+    options,
+    body,
+  }: StringCheckboxGroupConfig): this {
+    return this.addField(
+      new StringCheckboxGroup({
+        label,
+        options,
         body: {
           ...body,
           position: body?.position ?? this.getNewFieldPosition(),
