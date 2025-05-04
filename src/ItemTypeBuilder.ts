@@ -1,6 +1,7 @@
 import type * as SimpleSchemaTypes from "@datocms/cma-client/src/generated/SimpleSchemaTypes";
 import DatoApi from "./Api/DatoApi";
 import NotFoundError from "./Api/Error/NotFoundError";
+import AssetGallery, { type AssetGalleryConfig } from "./Fields/AssetGallery";
 import BooleanField, { type BooleanConfig } from "./Fields/Boolean";
 import BooleanRadioGroup, {
   type BooleanRadioGroupConfig,
@@ -439,6 +440,18 @@ export default abstract class ItemTypeBuilder {
   public addSingleAsset({ label, body }: SingleAssetConfig): this {
     return this.addField(
       new SingleAsset({
+        label,
+        body: {
+          ...body,
+          position: body?.position ?? this.getNewFieldPosition(),
+        },
+      }),
+    );
+  }
+
+  public addAssetGallery({ label, body }: AssetGalleryConfig): this {
+    return this.addField(
+      new AssetGallery({
         label,
         body: {
           ...body,
