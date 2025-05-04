@@ -1,3 +1,4 @@
 export * from "./config/types";
-export * from "./BlockBuilder";
+export { default as BlockBuilder } from "./BlockBuilder";
+export { default as ModelBuilder } from "./ModelBuilder";
 export * from "./ItemTypeBuilder";
