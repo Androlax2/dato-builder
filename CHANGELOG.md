@@ -1,3 +1,10 @@
+# [3.1.0](https://github.com/Androlax2/dato-builder/compare/v3.0.0...v3.1.0) (2025-05-05)
+
+
+### Features
+
+* **debug:** builder informations ([31ddba0](https://github.com/Androlax2/dato-builder/commit/31ddba059c82490ea6a57551e84476e2e6902e26))
+
 # [3.0.0](https://github.com/Androlax2/dato-builder/compare/v2.0.0...v3.0.0) (2025-05-05)
 
 
