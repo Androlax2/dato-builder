@@ -1,3 +1,10 @@
+## [3.2.1](https://github.com/Androlax2/dato-builder/compare/v3.2.0...v3.2.1) (2025-05-05)
+
+
+### Bug Fixes
+
+* **validator:** fix required alt title boolean ([19f5825](https://github.com/Androlax2/dato-builder/commit/19f582513a59bb9c44fe2b3a74998539f9a30d21))
+
 # [3.2.0](https://github.com/Androlax2/dato-builder/compare/v3.1.0...v3.2.0) (2025-05-05)
 
 
