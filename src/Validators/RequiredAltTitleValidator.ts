@@ -30,10 +30,8 @@ export default class RequiredAltTitleValidator implements Validator {
     const { title, alt } = this.config;
 
     return {
-      required_alt_title: {
-        title: title ?? false,
-        alt: alt ?? false,
-      },
+      title: title ?? false,
+      alt: alt ?? false,
     };
   }
 }
