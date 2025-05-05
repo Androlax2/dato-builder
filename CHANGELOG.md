@@ -1,3 +1,10 @@
+## [3.2.4](https://github.com/Androlax2/dato-builder/compare/v3.2.3...v3.2.4) (2025-05-05)
+
+
+### Bug Fixes
+
+* **fields:** update body type to MultiLineTextBody ([02bc900](https://github.com/Androlax2/dato-builder/commit/02bc9006d20ec516cea22c77f0c193222576bd5f))
+
 ## [3.2.3](https://github.com/Androlax2/dato-builder/compare/v3.2.2...v3.2.3) (2025-05-05)
 
 
