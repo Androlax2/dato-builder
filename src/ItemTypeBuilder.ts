@@ -137,6 +137,20 @@ export default abstract class ItemTypeBuilder {
       modular_block: this.type === "block",
       collection_appearance: body.collection_appearance || "table",
     };
+
+    if (this.config.debug) {
+      console.info(
+        `ItemTypeBuilder initialized with type "${this.type}" and API key "${apiKey}"`,
+      );
+
+      console.info(
+        `ItemTypeBuilder body: ${JSON.stringify(this.body, null, 2)}`,
+      );
+
+      console.info(
+        `ItemTypeBuilder config: ${JSON.stringify(this.config, null, 2)}`,
+      );
+    }
   }
 
   /**
