@@ -1,3 +1,10 @@
+## [3.2.2](https://github.com/Androlax2/dato-builder/compare/v3.2.1...v3.2.2) (2025-05-05)
+
+
+### Bug Fixes
+
+* **validator:** add default values for title and alt in RequiredAltTitleValidator ([de55ff0](https://github.com/Androlax2/dato-builder/commit/de55ff0eeb4e68e82e4bd3ce75157f529cfef6fb))
+
 ## [3.2.1](https://github.com/Androlax2/dato-builder/compare/v3.2.0...v3.2.1) (2025-05-05)
 
 
