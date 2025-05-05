@@ -1,5 +1,5 @@
 import Field from "./Field";
-import type { SingleLineStringBody } from "./SingleLineString";
+import type { MultiLineTextBody } from "./MultiLineText";
 
 export type MarkdownConfig = {
   label: string;
@@ -16,7 +16,7 @@ export type MarkdownConfig = {
     | "image"
     | "fullscreen"
   >;
-  body?: SingleLineStringBody;
+  body?: MultiLineTextBody;
 };
 
 export default class Markdown extends Field {

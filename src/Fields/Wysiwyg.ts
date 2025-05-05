@@ -1,5 +1,5 @@
 import Field from "./Field";
-import type { SingleLineStringBody } from "./SingleLineString";
+import type { MultiLineTextBody } from "./MultiLineText";
 
 export type WysiwygConfig = {
   label: string;
@@ -26,7 +26,7 @@ export type WysiwygConfig = {
     | "indent"
     | "fullscreen"
   >;
-  body?: SingleLineStringBody;
+  body?: MultiLineTextBody;
 };
 
 export default class Wysiwyg extends Field {

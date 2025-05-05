@@ -1,10 +1,10 @@
 import Field from "./Field";
-import type { SingleLineStringBody } from "./SingleLineString";
+import type { MultiLineTextBody } from "./MultiLineText";
 
 export type TextareaConfig = {
   label: string;
   placeholder?: string;
-  body?: SingleLineStringBody;
+  body?: MultiLineTextBody;
 };
 
 export default class Textarea extends Field {
