@@ -1,3 +1,32 @@
+# [3.0.0](https://github.com/Androlax2/dato-builder/compare/v2.0.0...v3.0.0) (2025-05-05)
+
+
+### Bug Fixes
+
+* **alt validator:** fix required condition not working ([#6](https://github.com/Androlax2/dato-builder/issues/6)) ([0b759b4](https://github.com/Androlax2/dato-builder/commit/0b759b4cf8193e1a0a8cdb7a338fad78bf7d6bc9))
+
+
+### BREAKING CHANGES
+
+* **alt validator:** Modified cache behavior and introduced locking mechanism affecting cache-dependent operations.
+
+* refactor(ItemTypeBuilder): simplify item creation logic and improve configuration handling in tests
+
+- Removed redundant logic for checking and updating existing items, streamlining item creation flow.
+- Enhanced test cases to include global and builder-specific configuration validation.
+- Added clearing of cache in `beforeEach` for consistent test setup.
+- Adjusted import formatting for consistency.
+
+* refactor(ItemTypeBuilder): remove unused code and simplify error handling
+
+The following changes were made:
+- Removed unused `itemExists` method.
+- Simplified error handling by eliminating redundancy related to handling uniqueness and not-found errors during item creation and updates.
+
+This refactor improves code maintainability and reduces complexity without altering functionality.
+
+* fix(RequiredAltTitleValidator): fix required boolean that doesn't work
+
 # [2.0.0](https://github.com/Androlax2/dato-builder/compare/v1.7.0...v2.0.0) (2025-05-04)
 
 
