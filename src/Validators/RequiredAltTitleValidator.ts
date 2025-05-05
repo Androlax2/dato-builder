@@ -1,7 +1,13 @@
 import type { Validator } from "./types";
 
 export type RequiredAltTitleValidatorConfig = {
+  /**
+   * Whether the title for the asset must be specified
+   */
   title?: boolean;
+  /**
+   * Whether the alternate text for the asset must be specified
+   */
   alt?: boolean;
 };
 
@@ -17,9 +23,6 @@ export default class RequiredAltTitleValidator implements Validator {
   }
 
   build() {
-    return {
-      title: this.config.title === true ? {} : undefined,
-      alt: this.config.alt === true ? {} : undefined,
-    };
+    return this.config;
   }
 }
