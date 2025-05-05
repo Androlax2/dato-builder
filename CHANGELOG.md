@@ -1,3 +1,10 @@
+# [3.2.0](https://github.com/Androlax2/dato-builder/compare/v3.1.0...v3.2.0) (2025-05-05)
+
+
+### Features
+
+* **debug:** field informations ([fcc2d32](https://github.com/Androlax2/dato-builder/commit/fcc2d3231cd31aaf4916229432981df29d4c5908))
+
 # [3.1.0](https://github.com/Androlax2/dato-builder/compare/v3.0.0...v3.1.0) (2025-05-05)
 
 
