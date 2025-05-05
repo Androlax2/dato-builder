@@ -350,6 +350,15 @@ export default abstract class ItemTypeBuilder {
     if (this.fields.some((f) => f.build().api_key === key)) {
       throw new Error(`Field with api_key "${key}" already exists.`);
     }
+
+    if (this.config.debug) {
+      console.info(`Adding field "${field.body.label}" with api_key "${key}"`);
+
+      console.info(
+        `Field definition: ${JSON.stringify(field.build(), null, 2)}`,
+      );
+    }
+
     this.fields.push(field);
     return this;
   }
