@@ -18,21 +18,8 @@ npm install --save-dev dato-builder
 
 ### Configuration
 
-Create a `dato-builder.config.js` or `dato-builder.config.ts` file in the root of your project with the following content:
+Create a `dato-builder.config.js` file in the root of your project with the following content:
 
-`dato-builder.config.ts`
-```typescript
-import type { DatoBuilderConfig } from "dato-builder";
-
-const config: DatoBuilderConfig = {
-    apiToken: "YOUR_DATO_CMA_TOKEN",
-    overwriteExistingFields: false,
-};
-
-export default config;
-```
-
-`dato-builder.config.js`
 ```javascript
 /**
  * @type {import("dato-builder").DatoBuilderConfig}
