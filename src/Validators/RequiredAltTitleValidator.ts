@@ -17,6 +17,9 @@ export default class RequiredAltTitleValidator implements Validator {
   }
 
   build() {
-    return this.config;
+    return {
+      title: this.config.title === true ? {} : undefined,
+      alt: this.config.alt === true ? {} : undefined,
+    };
   }
 }
