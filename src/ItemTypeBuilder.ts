@@ -454,6 +454,14 @@ export default abstract class ItemTypeBuilder {
     });
   }
 
+  public addText({ label, body, options }: SingleLineStringConfig): this {
+    return this.addSingleLineString({
+      label,
+      body,
+      options,
+    });
+  }
+
   public addStringRadioGroup({ label, radios, body }: StringRadioGroupConfig) {
     return this.addField(
       new StringRadioGroup({
