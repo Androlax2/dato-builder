@@ -834,12 +834,12 @@ builder.addSingleAsset({
 
 **Parameters:**
 
-| Name                                            | Type                                   | Required | Description                                          |     |     |
-| ----------------------------------------------- | -------------------------------------- | -------- | ---------------------------------------------------- | --- | --- |
-| item_types                                      | `Array<string>`                        | ✅       | IDs of allowed model types                           |     |     |
-| on_publish_with_unpublished_references_strategy | 'fail', 'publish_references'           | No       | Strategy when publishing with unpublished references |
-| on_reference_unpublish_strategy                 | 'fail','unpublish','delete_references' | No       | Strategy when referenced record is unpublished       |
-| on_reference_delete_strategy                    | 'fail', 'delete_references'            | No       | Strategy when referenced record is deleted           |
+| Name                                            | Type                                   | Required | Description                                          |
+| ----------------------------------------------- | -------------------------------------- | -------- | ---------------------------------------------------- |
+| item_types                                      | `Array<string>`                        | ✅       | IDs of allowed model types                           |
+| on_publish_with_unpublished_references_strategy | `fail`, `publish_references`           | No       | Strategy when publishing with unpublished references |
+| on_reference_unpublish_strategy                 | `fail`,`unpublish`,`delete_references` | No       | Strategy when referenced record is unpublished       |
+| on_reference_delete_strategy                    | `fail`, `delete_references`            | No       | Strategy when referenced record is deleted           |
 
 **Example:**
 
