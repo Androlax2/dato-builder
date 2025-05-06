@@ -1,3 +1,10 @@
+## [3.2.6](https://github.com/Androlax2/dato-builder/compare/v3.2.5...v3.2.6) (2025-05-06)
+
+
+### Bug Fixes
+
+* **validators:** required seo fields  ([#13](https://github.com/Androlax2/dato-builder/issues/13)) ([a65c820](https://github.com/Androlax2/dato-builder/commit/a65c820a88f822743d1fee0972e0548c37fa54be))
+
 ## [3.2.5](https://github.com/Androlax2/dato-builder/compare/v3.2.4...v3.2.5) (2025-05-06)
 
 
