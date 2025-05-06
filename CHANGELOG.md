@@ -1,3 +1,10 @@
+## [3.2.5](https://github.com/Androlax2/dato-builder/compare/v3.2.4...v3.2.5) (2025-05-06)
+
+
+### Bug Fixes
+
+* **sanitization:** remove sanitization from Validators ([af11889](https://github.com/Androlax2/dato-builder/commit/af1188979ee2580d1d4cb3ad943a7ff5874ff902))
+
 ## [3.2.4](https://github.com/Androlax2/dato-builder/compare/v3.2.3...v3.2.4) (2025-05-05)
 
 
