@@ -954,7 +954,6 @@ export default abstract class ItemTypeBuilder {
         }
         return item.id;
       } catch (error: unknown) {
-        console.log({ error });
         if (error instanceof GenericDatoError) {
           console.error(
             `Failed to create item type "${this.name}": ${error.message}`,
