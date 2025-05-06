@@ -13,6 +13,7 @@ import BooleanRadioGroup, {
 import ColorPicker, { type ColorPickerConfig } from "./Fields/ColorPicker";
 import DateField, { type DateConfig } from "./Fields/Date";
 import DateTime, { type DateTimeConfig } from "./Fields/DateTime";
+import Email, { type EmailConfig } from "./Fields/Email";
 import ExternalVideo, {
   type ExternalVideoConfig,
 } from "./Fields/ExternalVideo";
@@ -740,6 +741,18 @@ export default abstract class ItemTypeBuilder {
   public addUrl({ label, body }: UrlConfig): this {
     return this.addField(
       new Url({
+        label,
+        body: {
+          ...body,
+          position: body?.position ?? this.getNewFieldPosition(),
+        },
+      }),
+    );
+  }
+
+  public addEmail({ label, body }: EmailConfig): this {
+    return this.addField(
+      new Email({
         label,
         body: {
           ...body,
