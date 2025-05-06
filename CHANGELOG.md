@@ -1,3 +1,12 @@
+# [3.4.0](https://github.com/Androlax2/dato-builder/compare/v3.3.0...v3.4.0) (2025-05-06)
+
+
+### Features
+
+* **fields:** add Email field type ([5ffc073](https://github.com/Androlax2/dato-builder/commit/5ffc0730e7e52700fabb9e9969811d5ed2b55fda))
+* **ItemTypeBuilder:** add addText method for single-line text fields ([0ccfed7](https://github.com/Androlax2/dato-builder/commit/0ccfed7e79bbb74e63e0f59bde07f88b0132ab67))
+* **url:** add Url field type with validation support ([e723cc4](https://github.com/Androlax2/dato-builder/commit/e723cc49e8ee2188e4ccb08509ab349082f8374b))
+
 # [3.3.0](https://github.com/Androlax2/dato-builder/compare/v3.2.6...v3.3.0) (2025-05-06)
 
 
