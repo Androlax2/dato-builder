@@ -697,12 +697,12 @@ builder.addSingleAsset({
 
 **Parameters:**
 
-| Name      | Type   | Required | Description             |     |                       |
-| --------- | ------ | -------- | ----------------------- | --- | --------------------- |
-| min_value | number | No       | Minimum file size value |     |                       |
-| min_unit  | 'B'    | 'KB'     | 'MB'                    | No  | Unit for minimum size |
-| max_value | number | No       | Maximum file size value |     |                       |
-| max_unit  | 'B'    | 'KB'     | 'MB'                    | No  | Unit for maximum size |
+| Name      | Type            | Required | Description             |
+| --------- | --------------- | -------- | ----------------------- |
+| min_value | `number`        | No       | Minimum file size value |
+| min_unit  | `B`, `KB`, `MB` | No       | Unit for minimum size   |
+| max_value | `number`        | No       | Maximum file size value |
+| max_unit  | `B`,`KB`,`MB`   | No       | Unit for maximum size   |
 
 > At least one value/unit pair must be specified.
 
