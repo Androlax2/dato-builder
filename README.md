@@ -932,8 +932,8 @@ builder.addFloat({
 **Example:**
 
 ```ts
-builder.addBoolean({
-  label: "Active",
+builder.addSingleLineString({
+  label: "Title",
   body: { validators: { required: true } },
 });
 ```
@@ -1097,6 +1097,7 @@ builder.addSingleBlock({
 ```ts
 builder.addMarkdown({
   label: "Notes",
+  toolbar: [],
   body: {
     validators: { sanitized_html: { sanitize_before_validation: true } },
   },
