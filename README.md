@@ -626,10 +626,10 @@ builder.addDate({
 
 **Parameters:**
 
-| Name | Type              | Required | Description      |
-| ---- | ----------------- | -------- | ---------------- |
-| min  | ISO 8601 datetime | No       | Minimum datetime |
-| max  | ISO 8601 datetime | No       | Maximum datetime |
+| Name | Type             | Required | Description      |
+| ---- | ---------------- | -------- | ---------------- |
+| min  | `Date`, `string` | No       | Minimum datetime |
+| max  | `Date`, `string` | No       | Maximum datetime |
 
 > At least one of `min` or `max` must be specified.
 
