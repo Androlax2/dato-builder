@@ -1,3 +1,10 @@
+# [3.3.0](https://github.com/Androlax2/dato-builder/compare/v3.2.6...v3.3.0) (2025-05-06)
+
+
+### Features
+
+* **logging:** enhance error handling for field operations ([88ec91e](https://github.com/Androlax2/dato-builder/commit/88ec91efece11c33529aaa7e5335b75052e17fef))
+
 ## [3.2.6](https://github.com/Androlax2/dato-builder/compare/v3.2.5...v3.2.6) (2025-05-06)
 
 
