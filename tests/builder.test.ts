@@ -211,6 +211,26 @@ describe("ItemTypeBuilder", () => {
     });
   });
 
+  describe("getField", () => {
+    it("should return the field by api_key", () => {
+      const mockField = {
+        build: jest.fn().mockReturnValue({ api_key: "test_field" }),
+      } as unknown as Field;
+
+      builder.addField(mockField);
+
+      const result = builder.getField("test_field");
+
+      expect(result).toBe(mockField);
+    });
+
+    it("should return undefined if the field does not exist", () => {
+      const result = builder.getField("non_existent_field");
+
+      expect(result).toBeUndefined();
+    });
+  });
+
   describe("addField", () => {
     it("should add a field and return this", () => {
       const mockField = {

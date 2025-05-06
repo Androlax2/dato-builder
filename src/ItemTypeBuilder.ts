@@ -51,6 +51,7 @@ import StructuredText, {
   type StructuredTextConfig,
 } from "./Fields/StructuredText";
 import Textarea, { type TextareaConfig } from "./Fields/Textarea";
+import Url, { type UrlConfig } from "./Fields/Url";
 import Wysiwyg, { type WysiwygConfig } from "./Fields/Wysiwyg";
 import { getDatoClient } from "./config";
 import { loadDatoBuilderConfig } from "./config/loader";
@@ -362,6 +363,10 @@ export default abstract class ItemTypeBuilder {
 
     this.fields.push(field);
     return this;
+  }
+
+  public getField(apiKey: string): Field | undefined {
+    return this.fields.find((f) => f.build().api_key === apiKey);
   }
 
   getNewFieldPosition(): number {
@@ -724,6 +729,18 @@ export default abstract class ItemTypeBuilder {
       new Links({
         label,
         appearance,
+        body: {
+          ...body,
+          position: body?.position ?? this.getNewFieldPosition(),
+        },
+      }),
+    );
+  }
+
+  public addUrl({ label, body }: UrlConfig): this {
+    return this.addField(
+      new Url({
+        label,
         body: {
           ...body,
           position: body?.position ?? this.getNewFieldPosition(),
