@@ -78,7 +78,6 @@ export type ValidatorConfig = Partial<{
   description_length: DescriptionLengthValidatorConfig;
   rich_text_blocks: RichTextBlocksValidatorConfig;
   single_block_blocks: SingleBlockBlocksValidatorConfig;
-  sanitization: SanitizedHtmlValidatorConfig;
   structured_text_blocks: StructuredTextBlocksValidatorConfig;
   structured_text_inline_blocks: StructuredTextInlineBlocksValidatorConfig;
   structured_text_links: StructuredTextLinksValidatorConfig;
@@ -172,10 +171,6 @@ export default class Validators {
       single_block_blocks: {
         ValidatorClass: SingleBlockBlocksValidator,
         config: config.single_block_blocks,
-      },
-      sanitization: {
-        ValidatorClass: SanitizedHtmlValidator,
-        config: config.sanitization,
       },
       structured_text_blocks: {
         ValidatorClass: StructuredTextBlocksValidator,
