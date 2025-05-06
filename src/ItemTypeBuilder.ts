@@ -54,6 +54,7 @@ import Textarea, { type TextareaConfig } from "./Fields/Textarea";
 import Wysiwyg, { type WysiwygConfig } from "./Fields/Wysiwyg";
 import { getDatoClient } from "./config";
 import { loadDatoBuilderConfig } from "./config/loader";
+import { executeWithErrorHandling } from "./utils/errors";
 import { generateDatoApiKey } from "./utils/utils";
 
 export type ItemTypeBuilderType = "model" | "block";
@@ -849,29 +850,62 @@ export default abstract class ItemTypeBuilder {
       (d) => !existing.some((e) => e.api_key === d.api_key),
     );
     await Promise.all(
-      toCreate.map((d) =>
-        this.api.call(() => this.client.fields.create(itemTypeId, d)),
-      ),
+      toCreate.map(async (fieldDef) => {
+        await executeWithErrorHandling(
+          "create",
+          () =>
+            this.api.call(() =>
+              this.client.fields.create(itemTypeId, fieldDef),
+            ),
+          "field",
+          fieldDef,
+        );
+      }),
     );
 
-    if (this.config.overwriteExistingFields) {
-      const updates = existing.flatMap((e) => {
-        const def = desired.find((d) => d.api_key === e.api_key);
-        return def
-          ? [this.api.call(() => this.client.fields.update(e.id, def))]
-          : [];
-      });
-      await Promise.all(updates);
-
-      const toDelete = existing.filter(
-        (e) => !desired.some((d) => d.api_key === e.api_key),
-      );
-      await Promise.all(
-        toDelete.map((e) =>
-          this.api.call(() => this.client.fields.destroy(e.id)),
-        ),
-      );
+    if (!this.config.overwriteExistingFields) {
+      // If not overwriting, we can skip the rest
+      return;
     }
+
+    // Update existing fields
+    const updatePromises = existing.flatMap((existingField) => {
+      const fieldDef = desired.find((d) => d.api_key === existingField.api_key);
+      if (!fieldDef) return [];
+
+      return [
+        executeWithErrorHandling(
+          "update",
+          () =>
+            this.api.call(() =>
+              this.client.fields.update(existingField.id, fieldDef),
+            ),
+          "field",
+          fieldDef,
+          existingField,
+        ),
+      ];
+    });
+
+    await Promise.all(updatePromises);
+
+    // Delete fields that are no longer needed
+    const toDelete = existing.filter(
+      (e) => !desired.some((d) => d.api_key === e.api_key),
+    );
+
+    await Promise.all(
+      toDelete.map(async (existingField) => {
+        await executeWithErrorHandling(
+          "delete",
+          () =>
+            this.api.call(() => this.client.fields.destroy(existingField.id)),
+          "field",
+          undefined,
+          existingField,
+        );
+      }),
+    );
   }
 
   public async create(): Promise<string> {
@@ -920,6 +954,7 @@ export default abstract class ItemTypeBuilder {
         }
         return item.id;
       } catch (error: unknown) {
+        console.log({ error });
         if (error instanceof GenericDatoError) {
           console.error(
             `Failed to create item type "${this.name}": ${error.message}`,
