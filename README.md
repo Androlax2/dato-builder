@@ -673,10 +673,10 @@ builder.addSingleLineString({
 
 **Parameters:**
 
-| Name            | Type          | Required              | Description             |            |     |                           |
-| --------------- | ------------- | --------------------- | ----------------------- | ---------- | --- | ------------------------- |
-| extensions      | Array<string> | No                    | Allowed file extensions |            |     |                           |
-| predefined_list | 'image'       | 'transformable_image' | 'video'                 | 'document' | No  | Predefined asset category |
+| Name            | Type                                                | Required | Description               |
+| --------------- | --------------------------------------------------- | -------- | ------------------------- |
+| extensions      | Array<string>                                       | No       | Allowed file extensions   |
+| predefined_list | 'image', 'transformable_image', 'video', 'document' | No       | Predefined asset category |
 
 > Only one of `extensions` or `predefined_list` must be specified.
 
