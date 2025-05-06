@@ -46,6 +46,7 @@ Quickly create Models, Blocks in DatoCMS from your source code.
   - [Aliases](#aliases)
   - [Validators Appendix](#validators-appendix)
     - [`date_range`](#date_range)
+    - [`date_time_range`](#date_time_range)
     - [`enum`](#enum)
     - [`extension`](#extension)
     - [`file_size`](#file_size)
@@ -603,7 +604,7 @@ Accepts dates only inside a specified range.
 
 **Example Usage:**
 
-````ts
+```ts
 builder.addDate({
   label: "Start Date",
   body: {
@@ -611,9 +612,9 @@ builder.addDate({
       date_range: {
         min: new Date("2025-01-01"),
         // max: new Date("2025-12-31"), // you can omit one side if you only care about an open-ended range
-      }
-    }
-  }
+      },
+    },
+  },
 });
 ```
 
@@ -639,7 +640,7 @@ builder.addDateTime({
   label: "Deadline",
   body: { validators: { date_time_range: { max: "2025-12-31T23:59:59Z" } } },
 });
-````
+```
 
 ---
 
