@@ -750,8 +750,8 @@ builder.addSingleLineString({
 
 | Name               | Type           | Required | Description            |
 | ------------------ | -------------- | -------- | ---------------------- |
-| custom_pattern     | RegExp         | No       | Custom regex for slug  |
-| predefined_pattern | 'webpage_slug' | No       | Predefined slug format |
+| custom_pattern     | `RegExp`       | No       | Custom regex for slug  |
+| predefined_pattern | `webpage_slug` | No       | Predefined slug format |
 
 > Only one of `custom_pattern` or `predefined_pattern` must be specified.
 
@@ -772,12 +772,12 @@ builder.addSlug({
 
 **Parameters:**
 
-| Name             | Type   | Required | Description    |
-| ---------------- | ------ | -------- | -------------- |
-| width_min_value  | number | No       | Minimum width  |
-| width_max_value  | number | No       | Maximum width  |
-| height_min_value | number | No       | Minimum height |
-| height_max_value | number | No       | Maximum height |
+| Name             | Type     | Required | Description    |
+| ---------------- | -------- | -------- | -------------- |
+| width_min_value  | `number` | No       | Minimum width  |
+| width_max_value  | `number` | No       | Maximum width  |
+| height_min_value | `number` | No       | Minimum height |
+| height_max_value | `number` | No       | Maximum height |
 
 > At least one width/height pair must be specified.
 
@@ -802,14 +802,14 @@ builder.addSingleAsset({
 
 **Parameters:**
 
-| Name               | Type   | Required | Description                      |
-| ------------------ | ------ | -------- | -------------------------------- |
-| min_ar_numerator   | number | No       | Minimum aspect ratio numerator   |
-| min_ar_denominator | number | No       | Minimum aspect ratio denominator |
-| eq_ar_numerator    | number | No       | Exact aspect ratio numerator     |
-| eq_ar_denominator  | number | No       | Exact aspect ratio denominator   |
-| max_ar_numerator   | number | No       | Maximum aspect ratio numerator   |
-| max_ar_denominator | number | No       | Maximum aspect ratio denominator |
+| Name               | Type     | Required | Description                      |
+| ------------------ | -------- | -------- | -------------------------------- |
+| min_ar_numerator   | `number` | No       | Minimum aspect ratio numerator   |
+| min_ar_denominator | `number` | No       | Minimum aspect ratio denominator |
+| eq_ar_numerator    | `number` | No       | Exact aspect ratio numerator     |
+| eq_ar_denominator  | `number` | No       | Exact aspect ratio denominator   |
+| max_ar_numerator   | `number` | No       | Maximum aspect ratio numerator   |
+| max_ar_denominator | `number` | No       | Maximum aspect ratio denominator |
 
 > At least one ratio pair must be specified.
 
@@ -834,12 +834,12 @@ builder.addSingleAsset({
 
 **Parameters:**
 
-| Name                                            | Type            | Required             | Description                |                                                      |                                                |
-| ----------------------------------------------- | --------------- | -------------------- | -------------------------- | ---------------------------------------------------- | ---------------------------------------------- |
-| item_types                                      | `Array<string>` | ✅                   | IDs of allowed model types |                                                      |                                                |
-| on_publish_with_unpublished_references_strategy | 'fail'          | 'publish_references' | No                         | Strategy when publishing with unpublished references |                                                |
-| on_reference_unpublish_strategy                 | 'fail'          | 'unpublish'          | 'delete_references'        | No                                                   | Strategy when referenced record is unpublished |
-| on_reference_delete_strategy                    | 'fail'          | 'delete_references'  | No                         | Strategy when referenced record is deleted           |                                                |
+| Name                                            | Type                                   | Required | Description                                          |     |     |
+| ----------------------------------------------- | -------------------------------------- | -------- | ---------------------------------------------------- | --- | --- |
+| item_types                                      | `Array<string>`                        | ✅       | IDs of allowed model types                           |     |     |
+| on_publish_with_unpublished_references_strategy | 'fail', 'publish_references'           | No       | Strategy when publishing with unpublished references |
+| on_reference_unpublish_strategy                 | 'fail','unpublish','delete_references' | No       | Strategy when referenced record is unpublished       |
+| on_reference_delete_strategy                    | 'fail', 'delete_references'            | No       | Strategy when referenced record is deleted           |
 
 **Example:**
 
