@@ -516,7 +516,7 @@ export default async function buildArticleModel() {
 
   const model = new ModelBuilder("Article Model").addStructuredText({
     label: "Content",
-    nodes: ["heading", "paragraph", "link"],
+    nodes: ["heading", "link"],
     marks: ["strong", "emphasis"],
     body: {
       validators: {
