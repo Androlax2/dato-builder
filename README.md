@@ -124,6 +124,8 @@ export default async function buildTestBlock() {
 
   return block.upsert();
 }
+
+void buildTestBlock();
 ```
 
 _Run it:_
