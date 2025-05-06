@@ -338,7 +338,7 @@ builder.addExternalVideo({
 ```ts
 builder.addLink({
   label: "Author",
-  body: { validators: { item_item_type: { item_types: ["author"] } } },
+  body: { validators: { item_item_type: { item_types: ["author_item_type_id"] } } },
 });
 ```
 
@@ -349,7 +349,7 @@ builder.addLinks({
   label: "Related Articles",
   body: {
     validators: {
-      items_item_type: { item_types: ["article"] },
+      items_item_type: { item_types: ["article_item_type_id"] },
       size: { min: 1, max: 5 },
     },
   },
@@ -851,7 +851,7 @@ builder.addLink({
   body: {
     validators: {
       item_item_type: {
-        item_types: ["author"],
+        item_types: ["author_item_type_id"],
         on_publish_with_unpublished_references_strategy: "fail",
       },
     },
@@ -872,7 +872,7 @@ _(Same parameters and strategies as `item_item_type`)_
 ```ts
 builder.addLinks({
   label: "Related Posts",
-  body: { validators: { items_item_type: { item_types: ["post"] } } },
+  body: { validators: { items_item_type: { item_types: ["post_item_type_id"] } } },
 });
 ```
 
@@ -1057,7 +1057,7 @@ builder.addSeo({
 ```ts
 builder.addModularContent({
   label: "Sections",
-  body: { validators: { rich_text_blocks: { item_types: ["section"] } } },
+  body: { validators: { rich_text_blocks: { item_types: ["section_item_type_id"] } } },
 });
 ```
 
@@ -1078,7 +1078,7 @@ builder.addModularContent({
 ```ts
 builder.addSingleBlock({
   label: "Hero",
-  body: { validators: { single_block_blocks: { item_types: ["heroBlock"] } } },
+  body: { validators: { single_block_blocks: { item_types: ["hero_block_item_type_id"] } } },
 });
 ```
 
@@ -1122,7 +1122,7 @@ builder.addMarkdown({
 ```ts
 builder.addStructuredText({
   label: "Content",
-  body: { validators: { structured_text_blocks: { item_types: ["quote"] } } },
+  body: { validators: { structured_text_blocks: { item_types: ["quote_item_type_id"] } } },
 });
 ```
 
@@ -1144,7 +1144,7 @@ builder.addStructuredText({
 builder.addStructuredText({
   label: "Content",
   body: {
-    validators: { structured_text_inline_blocks: { item_types: ["link"] } },
+    validators: { structured_text_inline_blocks: { item_types: ["link_item_type_id"] } },
   },
 });
 ```
@@ -1169,7 +1169,7 @@ builder.addStructuredText({
 ```ts
 builder.addStructuredText({
   label: "Content",
-  body: { validators: { structured_text_links: { item_types: ["author"] } } },
+  body: { validators: { structured_text_links: { item_types: ["author_item_type_id"] } } },
 });
 ```
 
