@@ -46,7 +46,6 @@ Quickly create Models, Blocks in DatoCMS from your source code.
   - [Aliases](#aliases)
   - [Validators Appendix](#validators-appendix)
     - [`date_range`](#date_range)
-    - [`date_time_range`](#date_time_range)
     - [`enum`](#enum)
     - [`extension`](#extension)
     - [`file_size`](#file_size)
@@ -589,25 +588,32 @@ Below is a detailed breakdown of each supported validator, including parameter d
 
 ### `date_range`
 
-**Description:** Accept dates only inside a specified date range.
+**Description:**  
+Accepts dates only inside a specified range. Throws an error at construction time if neither `min` nor `max` is provided.
 
 **Parameters:**
 
-| Name | Type          | Required | Description  |
-| ---- | ------------- | -------- | ------------ |
-| min  | ISO 8601 date | No       | Minimum date |
-| max  | ISO 8601 date | No       | Maximum date |
+| Name | Type   | Required | Description                                                 |
+| ---- | ------ | -------- | ----------------------------------------------------------- |
+| min  | `Date` | No       | Earliest allowed date (must be a JavaScript `Date` object). |
+| max  | `Date` | No       | Latest allowed date (must be a JavaScript `Date` object).   |
 
-> At least one of `min` or `max` must be specified.
+> ⚠️ At least one of `min` or `max` **must** be specified.
 
-**Example:**
+**Example Usage:**
 
-```ts
+````ts
 builder.addDate({
   label: "Start Date",
-  body: { validators: { date_range: { min: new Date("2025-01-01") } } },
+  body: {
+    validators: {
+      date_range: {
+        min: new Date("2025-01-01"),
+        // max: new Date("2025-12-31"), // you can omit one side if you only care about an open-ended range
+      }
+    }
+  }
 });
-```
 
 ---
 
@@ -631,7 +637,7 @@ builder.addDateTime({
   label: "Deadline",
   body: { validators: { date_time_range: { max: "2025-12-31T23:59:59Z" } } },
 });
-```
+````
 
 ---
 
