@@ -154,6 +154,8 @@ export default async function buildTestModel() {
 
   return model.upsert();
 }
+
+void buildTestModel();
 ```
 
 _Run it:_
@@ -411,6 +413,8 @@ export default async function buildTestModel() {
 
   return model.upsert();
 }
+
+void buildTestModel();
 ```
 
 > **Option B**: Hard-coded IDs
@@ -440,6 +444,8 @@ export default function buildTestModel() {
 
   return model.upsert();
 }
+
+void buildTestModel();
 ```
 
 ### SingleBlock
@@ -449,20 +455,6 @@ export default function buildTestModel() {
 > Capture the block ID from your builder before using it:
 
 ```typescript
-// datocms/blocks/HeroBlock.ts
-import { BlockBuilder } from "dato-builder";
-
-export default async function buildHeroBlock() {
-  const builder = new BlockBuilder("Hero Block").addSimpleField({
-    apiKey: "title",
-    label: "Title",
-    fieldType: "string",
-  });
-  const { apiKey: heroBlockId } = await builder.upsert();
-  return heroBlockId;
-}
-
-// Usage in model
 import { ModelBuilder } from "dato-builder";
 import buildHeroBlock from "../blocks/HeroBlock";
 
@@ -484,6 +476,8 @@ export default async function buildPageModel() {
 
   return model.upsert();
 }
+
+void buildPageModel();
 ```
 
 > **Option B**: Hard-coded IDs
@@ -512,20 +506,6 @@ builder.addSingleBlock({
 > Fetch block IDs before defining your structured text field:
 
 ```typescript
-// datocms/blocks/QuoteBlock.ts
-import { BlockBuilder } from "dato-builder";
-
-export default async function buildQuoteBlock() {
-  const builder = new BlockBuilder("Quote Block").addSimpleField({
-    apiKey: "quote",
-    label: "Quote",
-    fieldType: "text",
-  });
-  const { apiKey: quoteBlockId } = await builder.upsert();
-  return quoteBlockId;
-}
-
-// Usage in model
 import { ModelBuilder } from "dato-builder";
 import buildQuoteBlock from "../blocks/QuoteBlock";
 
@@ -547,6 +527,8 @@ export default async function buildArticleModel() {
 
   return model.upsert();
 }
+
+void buildArticleModel();
 ```
 
 > **Option B**: Hard-coded IDs
