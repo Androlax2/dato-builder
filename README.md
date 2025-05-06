@@ -882,11 +882,11 @@ builder.addLinks({
 
 **Parameters:**
 
-| Name | Type   | Required | Description    |
-| ---- | ------ | -------- | -------------- |
-| min  | number | No       | Minimum length |
-| eq   | number | No       | Exact length   |
-| max  | number | No       | Maximum length |
+| Name | Type     | Required | Description    |
+| ---- | -------- | -------- | -------------- |
+| min  | `number` | No       | Minimum length |
+| eq   | `number` | No       | Exact length   |
+| max  | `number` | No       | Maximum length |
 
 > At least one of `min`, `eq`, or `max` must be specified.
 
@@ -907,10 +907,10 @@ builder.addSingleLineString({
 
 **Parameters:**
 
-| Name | Type   | Required | Description   |
-| ---- | ------ | -------- | ------------- |
-| min  | number | No       | Minimum value |
-| max  | number | No       | Maximum value |
+| Name | Type     | Required | Description   |
+| ---- | -------- | -------- | ------------- |
+| min  | `number` | No       | Minimum value |
+| max  | `number` | No       | Maximum value |
 
 > At least one of `min` or `max` must be specified.
 
@@ -929,8 +929,6 @@ builder.addFloat({
 
 **Description:** Value must be specified or validation fails.
 
-_(No parameters—just `required: true` or omitted)_
-
 **Example:**
 
 ```ts
@@ -948,10 +946,10 @@ builder.addBoolean({
 
 **Parameters:**
 
-| Name  | Type    | Required | Description            |
-| ----- | ------- | -------- | ---------------------- |
-| title | boolean | No       | Require a custom title |
-| alt   | boolean | No       | Require alternate text |
+| Name  | Type      | Required | Description            |
+| ----- | --------- | -------- | ---------------------- |
+| title | `boolean` | No       | Require a custom title |
+| alt   | `boolean` | No       | Require alternate text |
 
 > At least one of `title` or `alt` must be true.
 
@@ -972,12 +970,12 @@ builder.addSingleAsset({
 
 **Parameters:**
 
-| Name         | Type    | Required | Description                  |
-| ------------ | ------- | -------- | ---------------------------- |
-| title        | boolean | No       | Require meta title           |
-| description  | boolean | No       | Require meta description     |
-| image        | boolean | No       | Require social sharing image |
-| twitter_card | boolean | No       | Require Twitter card type    |
+| Name         | Type      | Required | Description                  |
+| ------------ | --------- | -------- | ---------------------------- |
+| title        | `boolean` | No       | Require meta title           |
+| description  | `boolean` | No       | Require meta description     |
+| image        | `boolean` | No       | Require social sharing image |
+| twitter_card | `boolean` | No       | Require Twitter card type    |
 
 > At least one field must be true.
 
@@ -1000,10 +998,10 @@ builder.addSeo({
 
 **Parameters:**
 
-| Name | Type   | Required | Description    |
-| ---- | ------ | -------- | -------------- |
-| min  | number | No       | Minimum length |
-| max  | number | No       | Maximum length |
+| Name | Type     | Required | Description    |
+| ---- | -------- | -------- | -------------- |
+| min  | `number` | No       | Minimum length |
+| max  | `number` | No       | Maximum length |
 
 > At least one of `min` or `max` must be specified.
 
@@ -1024,10 +1022,10 @@ builder.addSeo({
 
 **Parameters:**
 
-| Name | Type   | Required | Description    |
-| ---- | ------ | -------- | -------------- |
-| min  | number | No       | Minimum length |
-| max  | number | No       | Maximum length |
+| Name | Type     | Required | Description    |
+| ---- | -------- | -------- | -------------- |
+| min  | `number` | No       | Minimum length |
+| max  | `number` | No       | Maximum length |
 
 > At least one of `min` or `max` must be specified.
 
@@ -1090,9 +1088,9 @@ builder.addSingleBlock({
 
 **Parameters:**
 
-| Name                       | Type    | Required | Description                        |
-| -------------------------- | ------- | -------- | ---------------------------------- |
-| sanitize_before_validation | boolean | ✅       | Sanitize content before validation |
+| Name                       | Type      | Required | Description                        |
+| -------------------------- | --------- | -------- | ---------------------------------- |
+| sanitize_before_validation | `boolean` | ✅       | Sanitize content before validation |
 
 **Example:**
 
@@ -1155,12 +1153,12 @@ builder.addStructuredText({
 
 **Parameters:**
 
-| Name                                            | Type            | Required             | Description           |                                                      |                                                |
-| ----------------------------------------------- | --------------- | -------------------- | --------------------- | ---------------------------------------------------- | ---------------------------------------------- |
-| item_types                                      | `Array<string>` | ✅                   | IDs of allowed models |                                                      |                                                |
-| on_publish_with_unpublished_references_strategy | 'fail'          | 'publish_references' | No                    | Strategy when publishing with unpublished references |                                                |
-| on_reference_unpublish_strategy                 | 'fail'          | 'unpublish'          | 'delete_references'   | No                                                   | Strategy when referenced record is unpublished |
-| on_reference_delete_strategy                    | 'fail'          | 'delete_references'  | No                    | Strategy when referenced record is deleted           |                                                |
+| Name                                            | Type                                       | Required | Description                                          |
+| ----------------------------------------------- | ------------------------------------------ | -------- | ---------------------------------------------------- |
+| item_types                                      | `Array<string>`                            | ✅       | IDs of allowed models                                |
+| on_publish_with_unpublished_references_strategy | `fail`, `publish_references`               | No       | Strategy when publishing with unpublished references |
+| on_reference_unpublish_strategy                 | `fail` , `unpublish` , `delete_references` | No       | Strategy when referenced record is unpublished       |
+| on_reference_delete_strategy                    | `fail` , `delete_references`               | No       | Strategy when referenced record is deleted           |
 
 **Example:**
 
