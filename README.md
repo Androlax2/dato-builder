@@ -723,11 +723,11 @@ builder.addSingleAsset({
 
 **Parameters:**
 
-| Name               | Type    | Required | Description                                         |                        |
-| ------------------ | ------- | -------- | --------------------------------------------------- | ---------------------- |
-| custom_pattern     | RegExp  | No       | Custom regex pattern                                |                        |
-| predefined_pattern | 'email' | 'url'    | No                                                  | Predefined format type |
-| description        | string  | No       | Hint shown on validation failure (only with custom) |                        |
+| Name               | Type           | Required | Description                                         |
+| ------------------ | -------------- | -------- | --------------------------------------------------- |
+| custom_pattern     | `RegExp`       | No       | Custom regex pattern                                |
+| predefined_pattern | `email` ,`url` | No       | Predefined format type                              |
+| description        | `string`       | No       | Hint shown on validation failure (only with custom) |
 
 > Only one of `custom_pattern` or `predefined_pattern` must be specified.
 
