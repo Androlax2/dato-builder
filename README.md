@@ -650,9 +650,9 @@ builder.addDateTime({
 
 **Parameters:**
 
-| Name   | Type          | Required | Description    |
-| ------ | ------------- | -------- | -------------- |
-| values | Array<string> | Yes      | Allowed values |
+| Name   | Type            | Required | Description    |
+| ------ | --------------- | -------- | -------------- |
+| values | `Array<string>` | Yes      | Allowed values |
 
 **Example:**
 
@@ -675,8 +675,8 @@ builder.addSingleLineString({
 
 | Name            | Type                                                | Required | Description               |
 | --------------- | --------------------------------------------------- | -------- | ------------------------- |
-| extensions      | Array<string>                                       | No       | Allowed file extensions   |
-| predefined_list | 'image', 'transformable_image', 'video', 'document' | No       | Predefined asset category |
+| extensions      | `Array<string>`                                     | No       | Allowed file extensions   |
+| predefined_list | `image`, `transformable_image`, `video`, `document` | No       | Predefined asset category |
 
 > Only one of `extensions` or `predefined_list` must be specified.
 
@@ -834,12 +834,12 @@ builder.addSingleAsset({
 
 **Parameters:**
 
-| Name                                            | Type          | Required             | Description                |                                                      |                                                |
-| ----------------------------------------------- | ------------- | -------------------- | -------------------------- | ---------------------------------------------------- | ---------------------------------------------- |
-| item_types                                      | Array<string> | ✅                   | IDs of allowed model types |                                                      |                                                |
-| on_publish_with_unpublished_references_strategy | 'fail'        | 'publish_references' | No                         | Strategy when publishing with unpublished references |                                                |
-| on_reference_unpublish_strategy                 | 'fail'        | 'unpublish'          | 'delete_references'        | No                                                   | Strategy when referenced record is unpublished |
-| on_reference_delete_strategy                    | 'fail'        | 'delete_references'  | No                         | Strategy when referenced record is deleted           |                                                |
+| Name                                            | Type            | Required             | Description                |                                                      |                                                |
+| ----------------------------------------------- | --------------- | -------------------- | -------------------------- | ---------------------------------------------------- | ---------------------------------------------- |
+| item_types                                      | `Array<string>` | ✅                   | IDs of allowed model types |                                                      |                                                |
+| on_publish_with_unpublished_references_strategy | 'fail'          | 'publish_references' | No                         | Strategy when publishing with unpublished references |                                                |
+| on_reference_unpublish_strategy                 | 'fail'          | 'unpublish'          | 'delete_references'        | No                                                   | Strategy when referenced record is unpublished |
+| on_reference_delete_strategy                    | 'fail'          | 'delete_references'  | No                         | Strategy when referenced record is deleted           |                                                |
 
 **Example:**
 
@@ -1048,9 +1048,9 @@ builder.addSeo({
 
 **Parameters:**
 
-| Name       | Type          | Required | Description                 |
-| ---------- | ------------- | -------- | --------------------------- |
-| item_types | Array<string> | ✅       | IDs of allowed block models |
+| Name       | Type            | Required | Description                 |
+| ---------- | --------------- | -------- | --------------------------- |
+| item_types | `Array<string>` | ✅       | IDs of allowed block models |
 
 **Example:**
 
@@ -1069,9 +1069,9 @@ builder.addModularContent({
 
 **Parameters:**
 
-| Name       | Type          | Required | Description                 |
-| ---------- | ------------- | -------- | --------------------------- |
-| item_types | Array<string> | ✅       | IDs of allowed block models |
+| Name       | Type            | Required | Description                 |
+| ---------- | --------------- | -------- | --------------------------- |
+| item_types | `Array<string>` | ✅       | IDs of allowed block models |
 
 **Example:**
 
@@ -1111,9 +1111,9 @@ builder.addMarkdown({
 
 **Parameters:**
 
-| Name       | Type          | Required | Description                 |
-| ---------- | ------------- | -------- | --------------------------- |
-| item_types | Array<string> | ✅       | IDs of allowed block models |
+| Name       | Type            | Required | Description                 |
+| ---------- | --------------- | -------- | --------------------------- |
+| item_types | `Array<string>` | ✅       | IDs of allowed block models |
 
 **Example:**
 
@@ -1132,9 +1132,9 @@ builder.addStructuredText({
 
 **Parameters:**
 
-| Name       | Type          | Required | Description                 |
-| ---------- | ------------- | -------- | --------------------------- |
-| item_types | Array<string> | ✅       | IDs of allowed block models |
+| Name       | Type            | Required | Description                 |
+| ---------- | --------------- | -------- | --------------------------- |
+| item_types | `Array<string>` | ✅       | IDs of allowed block models |
 
 **Example:**
 
@@ -1155,12 +1155,12 @@ builder.addStructuredText({
 
 **Parameters:**
 
-| Name                                            | Type          | Required             | Description           |                                                      |                                                |
-| ----------------------------------------------- | ------------- | -------------------- | --------------------- | ---------------------------------------------------- | ---------------------------------------------- |
-| item_types                                      | Array<string> | ✅                   | IDs of allowed models |                                                      |                                                |
-| on_publish_with_unpublished_references_strategy | 'fail'        | 'publish_references' | No                    | Strategy when publishing with unpublished references |                                                |
-| on_reference_unpublish_strategy                 | 'fail'        | 'unpublish'          | 'delete_references'   | No                                                   | Strategy when referenced record is unpublished |
-| on_reference_delete_strategy                    | 'fail'        | 'delete_references'  | No                    | Strategy when referenced record is deleted           |                                                |
+| Name                                            | Type            | Required             | Description           |                                                      |                                                |
+| ----------------------------------------------- | --------------- | -------------------- | --------------------- | ---------------------------------------------------- | ---------------------------------------------- |
+| item_types                                      | `Array<string>` | ✅                   | IDs of allowed models |                                                      |                                                |
+| on_publish_with_unpublished_references_strategy | 'fail'          | 'publish_references' | No                    | Strategy when publishing with unpublished references |                                                |
+| on_reference_unpublish_strategy                 | 'fail'          | 'unpublish'          | 'delete_references'   | No                                                   | Strategy when referenced record is unpublished |
+| on_reference_delete_strategy                    | 'fail'          | 'delete_references'  | No                    | Strategy when referenced record is deleted           |                                                |
 
 **Example:**
 
