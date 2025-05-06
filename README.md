@@ -588,8 +588,9 @@ Below is a detailed breakdown of each supported validator, including parameter d
 
 ### `date_range`
 
-**Description:**  
-Accepts dates only inside a specified range. Throws an error at construction time if neither `min` nor `max` is provided.
+**Description:**
+
+Accepts dates only inside a specified range.
 
 **Parameters:**
 
