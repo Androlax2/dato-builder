@@ -40,6 +40,8 @@ Quickly create Models, Blocks in DatoCMS from your source code.
     - [`Slug`](#slug)
     - [`Location`](#location)
     - [ModularContent](#modularcontent)
+    - [SingleBlock](#singleblock)
+    - [StructuredText](#structuredtext)
     - [`Seo`](#seo)
   - [Aliases](#aliases)
   - [Validators Appendix](#validators-appendix)
@@ -440,7 +442,7 @@ export default function buildTestModel() {
 }
 ```
 
-### SingleBlock
+### SingleBlock
 
 > **Option A**: Dynamic IDs via builder functions
 >
@@ -503,7 +505,7 @@ builder.addSingleBlock({
 });
 ```
 
-### StructuredText
+### StructuredText
 
 > **Option A**: Dynamic IDs via builder functions
 >
