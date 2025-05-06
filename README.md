@@ -39,6 +39,7 @@ Quickly create Models, Blocks in DatoCMS from your source code.
   - [Structural Fields](#structural-fields)
     - [`Slug`](#slug)
     - [`Location`](#location)
+    - [ModularContent](#modularcontent)
     - [`Seo`](#seo)
   - [Aliases](#aliases)
   - [Validators Appendix](#validators-appendix)
@@ -373,7 +374,7 @@ builder.addLocation({
 });
 ```
 
-### ModularContent
+### ModularContent
 
 > **Option A**: Dynamic IDs via builder functions
 > Run each builder first to get its generated API key (ID), then plug those IDs in.
