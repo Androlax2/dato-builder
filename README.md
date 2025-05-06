@@ -24,7 +24,7 @@ Quickly create Models, Blocks in DatoCMS from your source code.
     - [`Integer`](#integer)
     - [`Float`](#float)
   - [Boolean Fields](#boolean-fields)
-    - [`BooleanField`](#booleanfield)
+    - [`Boolean`](#boolean)
     - [`BooleanRadioGroup`](#booleanradiogroup)
   - [Date \& Time Fields](#date--time-fields)
     - [`DateField`](#datefield)
@@ -256,7 +256,7 @@ builder.addFloat({
 
 ## Boolean Fields
 
-### `BooleanField`
+### `Boolean`
 
 ```ts
 builder.addBoolean({
@@ -1175,21 +1175,21 @@ builder.addStructuredText({
 
 | Field Class                                | Validators Supported                                                                                   |
 | ------------------------------------------ | ------------------------------------------------------------------------------------------------------ |
-| SingleLineString                           | required, unique, length, format, enum                                                                 |
-| MultiLineText, Markdown, Wysiwyg, Textarea | required, length, format, sanitized_html                                                               |
-| Integer, Float                             | required, number_range                                                                                 |
-| BooleanField, BooleanRadioGroup            | required                                                                                               |
-| DateField                                  | required, date_range                                                                                   |
-| DateTime                                   | required, date_time_range                                                                              |
-| SingleAsset                                | required, extension, file_size, image_dimensions, image_aspect_ratio, required_alt_title               |
+| SingleLineString                           | [required](#required), unique, length, format, enum                                                    |
+| MultiLineText, Markdown, Wysiwyg, Textarea | [required](#required), length, format, sanitized_html                                                  |
+| Integer, Float                             | [required](#required), number_range                                                                    |
+| Boolean, BooleanRadioGroup                 | [required](#required)                                                                                  |
+| DateField                                  | [required](#required), date_range                                                                      |
+| DateTime                                   | [required](#required), date_time_range                                                                 |
+| SingleAsset                                | [required](#required), extension, file_size, image_dimensions, image_aspect_ratio, required_alt_title  |
 | AssetGallery                               | size, extension, file_size, image_dimensions, image_aspect_ratio, required_alt_title                   |
 | ExternalVideo                              | required                                                                                               |
-| Link                                       | item_item_type, required, unique                                                                       |
+| Link                                       | item_item_type, [required](#required), unique                                                          |
 | Links                                      | items_item_type, size                                                                                  |
-| Slug                                       | required, length, slug_format, slug_title_field                                                        |
-| Location                                   | required                                                                                               |
+| Slug                                       | [required](#required), length, slug_format, slug_title_field                                           |
+| Location                                   | [required](#required)                                                                                  |
 | ModularContent                             | rich_text_blocks, size                                                                                 |
-| SingleBlock                                | single_block_blocks, required                                                                          |
+| SingleBlock                                | single_block_blocks, [required](#required)                                                             |
 | StructuredText                             | length, structured_text_blocks, structured_text_inline_blocks, structured_text_links                   |
 | Seo                                        | required_seo_fields, file_size, image_dimensions, image_aspect_ratio, title_length, description_length |
 
