@@ -65,7 +65,7 @@ Quickly create Models, Blocks in DatoCMS from your source code.
     - [`description_length`](#description_length)
     - [`rich_text_blocks`](#rich_text_blocks)
     - [`single_block_blocks`](#single_block_blocks)
-    - [`sanitization`](#sanitization)
+    - [`sanitized_html`](#sanitized_html)
     - [`structured_text_blocks`](#structured_text_blocks)
     - [`structured_text_inline_blocks`](#structured_text_inline_blocks)
     - [`structured_text_links`](#structured_text_links)
@@ -1082,7 +1082,7 @@ builder.addSingleBlock({
 
 ---
 
-### `sanitization`
+### `sanitized_html`
 
 **Description:** Checks for malicious code in HTML input fields.
 
@@ -1097,7 +1097,9 @@ builder.addSingleBlock({
 ```ts
 builder.addMarkdown({
   label: "Notes",
-  body: { validators: { sanitization: { sanitize_before_validation: true } } },
+  body: {
+    validators: { sanitized_html: { sanitize_before_validation: true } },
+  },
 });
 ```
 
@@ -1173,24 +1175,24 @@ builder.addStructuredText({
 
 ## Type Compatibility Matrix
 
-| Field Class                                | Validators Supported                                                                                   |
-| ------------------------------------------ | ------------------------------------------------------------------------------------------------------ |
-| SingleLineString                           | [required](#required), unique, length, format, enum                                                    |
-| MultiLineText, Markdown, Wysiwyg, Textarea | [required](#required), length, format, sanitized_html                                                  |
-| Integer, Float                             | [required](#required), number_range                                                                    |
-| Boolean, BooleanRadioGroup                 | [required](#required)                                                                                  |
-| DateField                                  | [required](#required), date_range                                                                      |
-| DateTime                                   | [required](#required), date_time_range                                                                 |
-| SingleAsset                                | [required](#required), extension, file_size, image_dimensions, image_aspect_ratio, required_alt_title  |
-| AssetGallery                               | size, extension, file_size, image_dimensions, image_aspect_ratio, required_alt_title                   |
-| ExternalVideo                              | required                                                                                               |
-| Link                                       | item_item_type, [required](#required), unique                                                          |
-| Links                                      | items_item_type, size                                                                                  |
-| Slug                                       | [required](#required), length, slug_format, slug_title_field                                           |
-| Location                                   | [required](#required)                                                                                  |
-| ModularContent                             | rich_text_blocks, size                                                                                 |
-| SingleBlock                                | single_block_blocks, [required](#required)                                                             |
-| StructuredText                             | length, structured_text_blocks, structured_text_inline_blocks, structured_text_links                   |
-| Seo                                        | required_seo_fields, file_size, image_dimensions, image_aspect_ratio, title_length, description_length |
+| Field Class                                | Validators Supported                                                                                                                                                                                                       |
+| ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| SingleLineString                           | [required](#required), [unique](#unique), [length](#length), [format](#format), [enum](#enum)                                                                                                                              |
+| MultiLineText, Markdown, Wysiwyg, Textarea | [required](#required), [length](#length), [format](#format), [sanitized_html](#sanitized_html)                                                                                                                             |
+| Integer, Float                             | [required](#required), [number_range](#number_range)                                                                                                                                                                       |
+| Boolean, BooleanRadioGroup                 | [required](#required)                                                                                                                                                                                                      |
+| DateField                                  | [required](#required), [date_range](#date_range)                                                                                                                                                                           |
+| DateTime                                   | [required](#required), [date_time_range](#date_time_range)                                                                                                                                                                 |
+| SingleAsset                                | [required](#required), [extension](extension), [file_size](file_size), [image_dimensions](image_dimensions), [image_aspect_ratio](image_aspect_ratio), [required_alt_title](required_alt_title)                            |
+| AssetGallery                               | [size](size), [extension](extension), [file_size](file_size), [image_dimensions](image_dimensions), [image_aspect_ratio](image_aspect_ratio), [required_alt_title](required_alt_title)                                     |
+| ExternalVideo                              | [required](required)                                                                                                                                                                                                       |
+| Link                                       | [item_item_type](item_item_type), [required](#required), [unique](#unique)                                                                                                                                                 |
+| Links                                      | [items_item_type](items_item_type), [size](size)                                                                                                                                                                           |
+| Slug                                       | [required](#required), [length](#length), [slug_format](slug_format), [slug_title_field](slug_title_field)                                                                                                                 |
+| Location                                   | [required](#required)                                                                                                                                                                                                      |
+| ModularContent                             | [rich_text_blocks](rich_text_blocks), [size](size)                                                                                                                                                                         |
+| SingleBlock                                | [single_block_blocks](single_block_blocks), [required](#required)                                                                                                                                                          |
+| StructuredText                             | [length](#length), [structured_text_blocks](structured_text_blocks), [structured_text_inline_blocks](structured_text_inline_blocks), [structured_text_links](structured_text_links)                                        |
+| Seo                                        | [required_seo_fields](required_seo_fields), [file_size](file_size), [image_dimensions](image_dimensions), [image_aspect_ratio](image_aspect_ratio), [title_length](title_length), [description_length](description_length) |
 
 ---
