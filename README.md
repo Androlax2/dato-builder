@@ -241,7 +241,7 @@ builder.addTextarea({
 ```ts
 builder.addInteger({
   label: "Quantity",
-  body: { validators: { number_range: { min: 0 } } },
+  body: { validators: { number_range: { min: 1 } } },
 });
 ```
 
@@ -437,7 +437,7 @@ export default function buildTestModel() {
         validators: {
           rich_text_blocks: {
             // replace these with the real API keys you got earlier
-            item_types: ["section_block_api_key", "highlight_model_api_key"],
+            item_types: ["section_block_item_type_id", "highlight_model_item_type_id"],
           },
           size: { min: 1 },
         },
@@ -494,7 +494,7 @@ builder.addSingleBlock({
   body: {
     validators: {
       single_block_blocks: {
-        item_types: ["heroBlock"],
+        item_types: ["hero_block_item_type_id"],
       },
     },
   },
@@ -545,7 +545,7 @@ builder.addStructuredText({
   body: {
     validators: {
       structured_text_blocks: {
-        item_types: ["quoteBlock"],
+        item_types: ["quote_block_item_type_id"],
       },
     },
   },
