@@ -4,13 +4,11 @@ Quickly create Models, Blocks in DatoCMS from your source code.
 
 ## Table of Contents
 
-- [Dato Builder](#dato-builder)
-  - [Table of Contents](#table-of-contents)
-  - [Installation](#installation)
-  - [Configuration](#configuration)
-  - [CLI Commands](#cli-commands)
-  - [Usage](#usage)
-    - [1. Define a Block](#1-define-a-block)
+- [Installation](#installation)
+- [Configuration](#configuration)
+- [CLI Commands](#cli-commands)
+- [Usage](#usage)
+  - [1. Define a Block](#1-define-a-block)
     - [2. Define a Model](#2-define-a-model)
     - [3. Build Everything](#3-build-everything)
 - [Comprehensive Field \& Validator Reference](#comprehensive-field--validator-reference)
