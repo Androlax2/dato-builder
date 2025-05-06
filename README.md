@@ -377,6 +377,7 @@ builder.addLocation({
 ### ModularContent
 
 > **Option A**: Dynamic IDs via builder functions
+>
 > Run each builder first to get its generated API key (ID), then plug those IDs in.
 
 ```typescript
@@ -411,6 +412,7 @@ export default async function buildTestModel() {
 ```
 
 > **Option B**: Hard-coded IDs
+>
 > If you already know the API keys (e.g. from a previous run), you can skip the async calls and just list them directly:
 
 ```typescript
@@ -441,6 +443,7 @@ export default function buildTestModel() {
 ### SingleBlock
 
 > **Option A**: Dynamic IDs via builder functions
+>
 > Capture the block ID from your builder before using it:
 
 ```typescript
@@ -482,6 +485,7 @@ export default async function buildPageModel() {
 ```
 
 > **Option B**: Hard-coded IDs
+>
 > If the block ID is known and stable:
 
 ```typescript
@@ -502,6 +506,7 @@ builder.addSingleBlock({
 ### StructuredText
 
 > **Option A**: Dynamic IDs via builder functions
+>
 > Fetch block IDs before defining your structured text field:
 
 ```typescript
@@ -543,6 +548,7 @@ export default async function buildArticleModel() {
 ```
 
 > **Option B**: Hard-coded IDs
+>
 > List known block IDs directly:
 
 ```typescript
