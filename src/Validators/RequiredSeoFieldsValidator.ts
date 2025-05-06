@@ -24,6 +24,13 @@ export default class RequiredSeoFieldsValidator implements Validator {
   }
 
   build() {
-    return this.config;
+    const { title, description, image, twitter_card } = this.config;
+
+    return {
+      title: title ?? false,
+      description: description ?? false,
+      image: image ?? false,
+      twitter_card: twitter_card ?? false,
+    };
   }
 }
