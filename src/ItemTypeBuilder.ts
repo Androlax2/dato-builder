@@ -5,6 +5,7 @@ import type * as SimpleSchemaTypes from "@datocms/cma-client/src/generated/Simpl
 import DatoApi from "./Api/DatoApi";
 import GenericDatoError from "./Api/Error/GenericDatoError";
 import NotFoundError from "./Api/Error/NotFoundError";
+import UniquenessError from "./Api/Error/UniquenessError";
 import AssetGallery, { type AssetGalleryConfig } from "./Fields/AssetGallery";
 import BooleanField, { type BooleanConfig } from "./Fields/Boolean";
 import BooleanRadioGroup, {
@@ -992,6 +993,21 @@ export default abstract class ItemTypeBuilder {
         }
         return item.id;
       } catch (error: unknown) {
+        if (error instanceof UniquenessError) {
+          // If the item already exists, we can just return its ID
+          const existing = await this.api.call(() =>
+            this.client.itemTypes.find(apiKey),
+          );
+
+          if (this.config.debug) {
+            console.info(
+              `Item type "${this.name}" already exists (id=${existing.id})`,
+            );
+          }
+
+          return existing.id;
+        }
+
         if (error instanceof GenericDatoError) {
           console.error(
             `Failed to create item type "${this.name}": ${error.message}`,
