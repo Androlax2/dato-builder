@@ -1,3 +1,10 @@
+# [3.5.0](https://github.com/Androlax2/dato-builder/compare/v3.4.0...v3.5.0) (2025-05-07)
+
+
+### Features
+
+* **item-type-builder:** handle uniqueness error during item type creation ([71b054b](https://github.com/Androlax2/dato-builder/commit/71b054b5e097c442cae20a44a21393fd53437cdb))
+
 # [3.4.0](https://github.com/Androlax2/dato-builder/compare/v3.3.0...v3.4.0) (2025-05-06)
 
 
