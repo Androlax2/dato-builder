@@ -1,3 +1,10 @@
+## [3.6.1](https://github.com/Androlax2/dato-builder/compare/v3.6.0...v3.6.1) (2025-05-07)
+
+
+### Bug Fixes
+
+* **generateDatoApiKey:** improve API flexibility and update tests ([145b17c](https://github.com/Androlax2/dato-builder/commit/145b17ca623fa73ae1c4d1ae176c1bc4038adbd0))
+
 # [3.6.0](https://github.com/Androlax2/dato-builder/compare/v3.5.0...v3.6.0) (2025-05-07)
 
 
