@@ -1,3 +1,11 @@
+# [3.6.0](https://github.com/Androlax2/dato-builder/compare/v3.5.0...v3.6.0) (2025-05-07)
+
+
+### Features
+
+* **builder:** add support for apiKeySuffix in config ([e82a401](https://github.com/Androlax2/dato-builder/commit/e82a401186f4f55d00102154b3beccc8d1522073))
+* **config,builder:** add support for model and block API key suffixes ([7124790](https://github.com/Androlax2/dato-builder/commit/71247904072d69ba2ea7a56ee06628af3f4b239a))
+
 # [3.5.0](https://github.com/Androlax2/dato-builder/compare/v3.4.0...v3.5.0) (2025-05-07)
 
 
