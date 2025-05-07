@@ -1,12 +1,5 @@
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 import Field, { type FieldBody } from "../../src/Fields/Field";
-import * as utils from "../../src/utils/utils";
-
-jest.mock("../../src/utils/utils", () => ({
-  generateDatoApiKey: jest.fn(
-    (label: string) => `mocked_${label.toLowerCase().replace(/\s+/g, "_")}`,
-  ),
-}));
 
 jest.mock("../../src/Validators/Validators", () => ({
   __esModule: true,
@@ -46,7 +39,7 @@ describe("Field", () => {
     expect(testField.build()).toEqual({
       label: "Test Field",
       field_type: "test_type",
-      api_key: "mocked_test_field",
+      api_key: "test_field",
       validators: {},
     });
   });
@@ -58,7 +51,6 @@ describe("Field", () => {
     });
 
     expect(testField.build().api_key).toBe("custom_api_key");
-    expect(utils.generateDatoApiKey).not.toHaveBeenCalled();
   });
 
   it("should generate an api_key if not provided", () => {
@@ -66,8 +58,15 @@ describe("Field", () => {
       label: "Test Field",
     });
 
-    expect(utils.generateDatoApiKey).toHaveBeenCalledWith("Test Field");
-    expect(testField.build().api_key).toBe("mocked_test_field");
+    expect(testField.build().api_key).toBe("test_field");
+  });
+
+  it("should generate a plural api_key if label is plural", () => {
+    const testField = new TestField({
+      label: "Test Fields",
+    });
+
+    expect(testField.build().api_key).toBe("test_fields");
   });
 
   it("should pass validators to the Validators class", () => {
@@ -96,7 +95,7 @@ describe("Field", () => {
     expect(testField.build()).toEqual({
       label: "Test Field",
       field_type: "test_type",
-      api_key: "mocked_test_field",
+      api_key: "test_field",
       hint: "This is a hint",
       appearance: { type: "custom", editor: "", parameters: {}, addons: [] },
       position: 1,

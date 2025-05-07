@@ -133,7 +133,12 @@ export default abstract class ItemTypeBuilder {
     this.config = this.mergeConfig(config);
 
     const apiKey =
-      body.api_key || generateDatoApiKey(body.name, this.resolveSuffix());
+      body.api_key ||
+      generateDatoApiKey({
+        name: body.name,
+        suffix: this.resolveSuffix(),
+        preservePlural: false,
+      });
 
     this.body = {
       ...body,

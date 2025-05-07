@@ -12,7 +12,7 @@ export default abstract class Field {
   readonly body: FieldCreateSchema;
 
   protected constructor(type: FieldType, body: FieldBody) {
-    const apiKey = body.api_key || generateDatoApiKey(body.label);
+    const apiKey = body.api_key || generateDatoApiKey({ name: body.label });
 
     this.body = {
       ...body,

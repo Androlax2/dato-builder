@@ -1,12 +1,6 @@
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 import Integer from "../../src/Fields/Integer";
 
-jest.mock("../../src/utils/utils", () => ({
-  generateDatoApiKey: jest.fn(
-    (label: string) => `mocked_${label.toLowerCase().replace(/\s+/g, "_")}`,
-  ),
-}));
-
 describe("Integer", () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -69,7 +63,7 @@ describe("Integer", () => {
     expect(integerField.build()).toEqual({
       label: "Age",
       field_type: "integer",
-      api_key: "mocked_age",
+      api_key: "age",
       hint: "Enter your age",
       position: 3,
       appearance: {

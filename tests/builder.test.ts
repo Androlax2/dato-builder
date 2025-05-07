@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 import DatoApi from "../src/Api/DatoApi";
 import NotFoundError from "../src/Api/Error/NotFoundError";
-import type Field from "../src/Fields/Field";
+import Field, { type FieldBody } from "../src/Fields/Field";
 import Integer from "../src/Fields/Integer";
 import Markdown from "../src/Fields/Markdown";
 import SingleLineString from "../src/Fields/SingleLineString";
@@ -315,6 +315,27 @@ describe("ItemTypeBuilder", () => {
       expect(() => {
         builder.addField(mockField);
       }).toThrow('Field with api_key "test_field" already exists.');
+    });
+
+    it("should keep the plural version of the name if the name is plural", () => {
+      class TestField extends Field {
+        constructor(body: FieldBody) {
+          // biome-ignore lint/suspicious/noExplicitAny: It's a test
+          super("test_type" as any, body);
+        }
+      }
+
+      const builder = new TestItemTypeBuilder("model", {
+        name: "Test",
+      });
+
+      builder.addField(
+        new TestField({
+          label: "Fields",
+        }),
+      );
+
+      expect(builder.fields[0].build().api_key).toBe("fields");
     });
   });
 
