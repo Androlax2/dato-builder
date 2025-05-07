@@ -211,6 +211,30 @@ describe("ItemTypeBuilder", () => {
     });
   });
 
+  describe("api key suffix", () => {
+    it("does not add a suffix to the api_key", () => {
+      const blockBuilder = new TestItemTypeBuilder("block", {
+        name: "Test",
+      });
+
+      expect(blockBuilder.body.api_key).toBe("mocked_test");
+    });
+
+    it("adds a suffix to the api_key", () => {
+      const blockBuilder = new TestItemTypeBuilder(
+        "block",
+        {
+          name: "Test",
+        },
+        {
+          apiKeySuffix: "suffix",
+        },
+      );
+
+      expect(blockBuilder.body.api_key).toBe("mocked_test_suffix");
+    });
+  });
+
   describe("getField", () => {
     it("should return the field by api_key", () => {
       const mockField = {

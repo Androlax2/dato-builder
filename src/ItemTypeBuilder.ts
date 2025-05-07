@@ -82,6 +82,7 @@ export type ItemTypeBuilderConfig = {
    */
   overwriteExistingFields?: boolean;
   debug?: boolean;
+  apiKeySuffix?: string;
 };
 
 // For tracking in-progress operations
@@ -129,11 +130,7 @@ export default abstract class ItemTypeBuilder {
     this.config = this.mergeConfig(config);
 
     const apiKey =
-      body.api_key ||
-      generateDatoApiKey(
-        body.name,
-        this.type === "block" ? "block" : undefined,
-      );
+      body.api_key || generateDatoApiKey(body.name, this.config.apiKeySuffix);
 
     this.body = {
       ...body,
@@ -341,6 +338,7 @@ export default abstract class ItemTypeBuilder {
         globalConfig.overwriteExistingFields ??
         false,
       debug: builderConfig.debug ?? globalConfig.debug ?? false,
+      apiKeySuffix: builderConfig.apiKeySuffix ?? "",
     };
   }
 
