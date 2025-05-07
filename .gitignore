@@ -2,7 +2,7 @@
 dato-builder.iml
 build/
 node_modules/
-dato-builder.config.ts
+dato-builder.config.*
 coverage/
 src/datocms/
 src/.itemTypeBuilderCache.json

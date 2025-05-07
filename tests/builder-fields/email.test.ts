@@ -1,5 +1,11 @@
-import { describe, expect, it } from "@jest/globals";
+import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 import ItemTypeBuilder from "../../src/ItemTypeBuilder";
+
+jest.mock("../../src/config/loader", () => ({
+  loadDatoBuilderConfig: jest.fn(() => ({
+    overwriteExistingFields: false,
+  })),
+}));
 
 class TestBuilder extends ItemTypeBuilder {
   constructor() {
@@ -8,6 +14,10 @@ class TestBuilder extends ItemTypeBuilder {
 }
 
 describe("addEmail", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
   it("should create a email field", () => {
     const builder = new TestBuilder();
 
