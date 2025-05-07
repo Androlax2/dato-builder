@@ -58,7 +58,6 @@ import Wysiwyg, { type WysiwygConfig } from "./Fields/Wysiwyg";
 import { getDatoClient } from "./config";
 import { loadDatoBuilderConfig } from "./config/loader";
 import { executeWithErrorHandling } from "./utils/errors";
-import { slugify } from "./utils/slugify";
 import { generateDatoApiKey } from "./utils/utils";
 
 export type ItemTypeBuilderType = "model" | "block";
@@ -133,13 +132,8 @@ export default abstract class ItemTypeBuilder {
     // Merge builder-specific and global config
     this.config = this.mergeConfig(config);
 
-    const resolvedSuffix = this.resolveSuffix();
     const apiKey =
-      body.api_key ||
-      generateDatoApiKey(
-        body.name,
-        resolvedSuffix ? slugify(resolvedSuffix, "_") : undefined,
-      );
+      body.api_key || generateDatoApiKey(body.name, this.resolveSuffix());
 
     this.body = {
       ...body,

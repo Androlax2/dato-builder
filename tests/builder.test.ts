@@ -21,14 +21,6 @@ jest.mock("../src/Fields/Textarea");
 jest.mock("../src/Fields/StringRadioGroup");
 jest.mock("../src/Fields/StringSelect");
 jest.mock("../src/Fields/MultiLineText");
-jest.mock("../src/utils/utils", () => ({
-  generateDatoApiKey: jest.fn((name: string, suffix: string) => {
-    if (suffix) {
-      return `mocked_${name.toLowerCase().replace(/\s+/g, "_")}_${suffix}`;
-    }
-    return `mocked_${name.toLowerCase().replace(/\s+/g, "_")}`;
-  }),
-}));
 jest.mock("../src/config/loader", () => ({
   loadDatoBuilderConfig: jest.fn(() => ({
     overwriteExistingFields: false,
@@ -112,7 +104,7 @@ describe("ItemTypeBuilder", () => {
         sortable: true,
         draft_mode_active: false,
         all_locales_required: true,
-        api_key: "mocked_test_model",
+        api_key: "test_model",
         modular_block: false,
       });
     });
@@ -140,7 +132,7 @@ describe("ItemTypeBuilder", () => {
       });
 
       expect(blockBuilder.body.modular_block).toBe(true);
-      expect(blockBuilder.body.api_key).toBe("mocked_test_block_block");
+      expect(blockBuilder.body.api_key).toBe("test_block");
     });
 
     it("should merge configs correctly", () => {
@@ -148,12 +140,16 @@ describe("ItemTypeBuilder", () => {
       expect(builder.config).toEqual({
         overwriteExistingFields: false,
         debug: false,
+        blockApiKeySuffix: "",
+        modelApiKeySuffix: "",
       });
 
       // Test with global config override
       (configLoader.loadDatoBuilderConfig as jest.Mock).mockReturnValueOnce({
         overwriteExistingFields: true,
         debug: true,
+        blockApiKeySuffix: "block_suffix",
+        modelApiKeySuffix: "model_suffix",
       });
 
       const globalConfigBuilder = new TestItemTypeBuilder("model", {
@@ -167,6 +163,8 @@ describe("ItemTypeBuilder", () => {
       expect(globalConfigBuilder.config).toEqual({
         overwriteExistingFields: true,
         debug: true,
+        blockApiKeySuffix: "block_suffix",
+        modelApiKeySuffix: "model_suffix",
       });
 
       // Test with builder-specific config
@@ -182,12 +180,16 @@ describe("ItemTypeBuilder", () => {
         {
           overwriteExistingFields: true,
           debug: false,
+          blockApiKeySuffix: "specific_block_suffix",
+          modelApiKeySuffix: "specific_model_suffix",
         },
       );
 
       expect(specificConfigBuilder.config).toEqual({
         overwriteExistingFields: true,
         debug: false,
+        blockApiKeySuffix: "specific_block_suffix",
+        modelApiKeySuffix: "specific_model_suffix",
       });
     });
   });
@@ -218,7 +220,7 @@ describe("ItemTypeBuilder", () => {
           name: "Test",
         });
 
-        expect(blockBuilder.body.api_key).toBe("mocked_test");
+        expect(blockBuilder.body.api_key).toBe("test");
       });
 
       it("adds a suffix to the api_key", () => {
@@ -232,7 +234,7 @@ describe("ItemTypeBuilder", () => {
           },
         );
 
-        expect(blockBuilder.body.api_key).toBe("mocked_test_my_super_suffix");
+        expect(blockBuilder.body.api_key).toBe("test_my_super_suffix");
       });
     });
 
@@ -242,7 +244,7 @@ describe("ItemTypeBuilder", () => {
           name: "Test",
         });
 
-        expect(modelBuilder.body.api_key).toBe("mocked_test");
+        expect(modelBuilder.body.api_key).toBe("test");
       });
 
       it("adds a suffix to the api_key", () => {
@@ -256,8 +258,18 @@ describe("ItemTypeBuilder", () => {
           },
         );
 
-        expect(modelBuilder.body.api_key).toBe("mocked_test_my_super_suffix");
+        expect(modelBuilder.body.api_key).toBe("test_my_super_suffix");
       });
+    });
+  });
+
+  describe("plural api key", () => {
+    it("should return the singular api_key of the item when the item name is plural", () => {
+      const pluralBuilder = new TestItemTypeBuilder("model", {
+        name: "Test Models",
+      });
+
+      expect(pluralBuilder.body.api_key).toBe("test_model");
     });
   });
 
@@ -386,7 +398,7 @@ describe("ItemTypeBuilder", () => {
 
       expect(mockApiCall).toHaveBeenCalledTimes(3);
       expect(mockClientItemTypes.update).toHaveBeenCalledWith(
-        "mocked_test_model",
+        "test_model",
         builder.body,
       );
       expect(mockClientFields.list).toHaveBeenCalledWith("item-123");
@@ -433,9 +445,7 @@ describe("ItemTypeBuilder", () => {
 
       const result = await builder.upsert();
 
-      expect(mockClientItemTypes.find).toHaveBeenCalledWith(
-        "mocked_test_model",
-      );
+      expect(mockClientItemTypes.find).toHaveBeenCalledWith("test_model");
       expect(updateSpy).toHaveBeenCalled();
       expect(createSpy).not.toHaveBeenCalled();
       expect(result).toBe("item-123");
@@ -460,9 +470,7 @@ describe("ItemTypeBuilder", () => {
 
       const result = await builder.upsert();
 
-      expect(mockClientItemTypes.find).toHaveBeenCalledWith(
-        "mocked_test_model",
-      );
+      expect(mockClientItemTypes.find).toHaveBeenCalledWith("test_model");
       expect(updateSpy).not.toHaveBeenCalled();
       expect(createSpy).toHaveBeenCalled();
       expect(result).toBe("item-456");
