@@ -24,4 +24,12 @@ export interface DatoBuilderConfig {
    * Activate the "debug" mode. This will log more information to the console.
    */
   debug?: boolean;
+  /**
+   * Model API Key Suffix
+   */
+  modelApiKeySuffix?: string;
+  /**
+   * Block API Key Suffix
+   */
+  blockApiKeySuffix?: string;
 }

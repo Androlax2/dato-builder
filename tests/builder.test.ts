@@ -212,26 +212,52 @@ describe("ItemTypeBuilder", () => {
   });
 
   describe("api key suffix", () => {
-    it("does not add a suffix to the api_key", () => {
-      const blockBuilder = new TestItemTypeBuilder("block", {
-        name: "Test",
+    describe("item type block", () => {
+      it("does not add a suffix to the api_key", () => {
+        const blockBuilder = new TestItemTypeBuilder("block", {
+          name: "Test",
+        });
+
+        expect(blockBuilder.body.api_key).toBe("mocked_test");
       });
 
-      expect(blockBuilder.body.api_key).toBe("mocked_test");
+      it("adds a suffix to the api_key", () => {
+        const blockBuilder = new TestItemTypeBuilder(
+          "block",
+          {
+            name: "Test",
+          },
+          {
+            blockApiKeySuffix: "my super suffix",
+          },
+        );
+
+        expect(blockBuilder.body.api_key).toBe("mocked_test_my_super_suffix");
+      });
     });
 
-    it("adds a suffix to the api_key", () => {
-      const blockBuilder = new TestItemTypeBuilder(
-        "block",
-        {
+    describe("item type model", () => {
+      it("does not add a suffix to the api_key", () => {
+        const modelBuilder = new TestItemTypeBuilder("model", {
           name: "Test",
-        },
-        {
-          apiKeySuffix: "suffix",
-        },
-      );
+        });
 
-      expect(blockBuilder.body.api_key).toBe("mocked_test_suffix");
+        expect(modelBuilder.body.api_key).toBe("mocked_test");
+      });
+
+      it("adds a suffix to the api_key", () => {
+        const modelBuilder = new TestItemTypeBuilder(
+          "model",
+          {
+            name: "Test",
+          },
+          {
+            modelApiKeySuffix: "my super suffix",
+          },
+        );
+
+        expect(modelBuilder.body.api_key).toBe("mocked_test_my_super_suffix");
+      });
     });
   });
 

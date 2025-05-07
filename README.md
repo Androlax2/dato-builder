@@ -85,6 +85,8 @@ module.exports = {
   apiToken: process.env.DATO_CMA_TOKEN, // your DatoCMS CMA token
   overwriteExistingFields: false, // create new fields only; existing fields remain untouched
   debug: false, // enable verbose logging
+  modelApiKeySuffix: undefined, // suffix for model API keys (e.g. "page" becomes "page_model")
+  blockApiKeySuffix: "block", // suffix for block API keys (e.g. "hero" becomes "hero_block")
 };
 ```
 
@@ -111,7 +113,7 @@ module.exports = {
 // datocms/blocks/TestBlock.ts
 import { BlockBuilder } from "dato-builder";
 
-export default async function buildTestBlock() {
+export default async function buildTestBlock(): Promise<string> {
   const block = new BlockBuilder("Test Block")
     .addHeading({ label: "Title" })
     .addTextarea({ label: "Description" })
@@ -139,7 +141,7 @@ npx dato-builder run datocms/blocks/TestBlock.ts
 import { ModelBuilder } from "dato-builder";
 import buildTestBlock from "../blocks/TestBlock";
 
-export default async function buildTestModel() {
+export default async function buildTestModel(): Promise<string> {
   const testBlockId = await buildTestBlock();
 
   const model = new ModelBuilder("Test Model")

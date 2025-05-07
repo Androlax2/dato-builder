@@ -58,6 +58,7 @@ import Wysiwyg, { type WysiwygConfig } from "./Fields/Wysiwyg";
 import { getDatoClient } from "./config";
 import { loadDatoBuilderConfig } from "./config/loader";
 import { executeWithErrorHandling } from "./utils/errors";
+import { slugify } from "./utils/slugify";
 import { generateDatoApiKey } from "./utils/utils";
 
 export type ItemTypeBuilderType = "model" | "block";
@@ -82,7 +83,10 @@ export type ItemTypeBuilderConfig = {
    */
   overwriteExistingFields?: boolean;
   debug?: boolean;
-  apiKeySuffix?: string;
+  /** Suffix to append to model API keys */
+  modelApiKeySuffix?: string;
+  /** Suffix to append to block API keys */
+  blockApiKeySuffix?: string;
 };
 
 // For tracking in-progress operations
@@ -129,8 +133,13 @@ export default abstract class ItemTypeBuilder {
     // Merge builder-specific and global config
     this.config = this.mergeConfig(config);
 
+    const resolvedSuffix = this.resolveSuffix();
     const apiKey =
-      body.api_key || generateDatoApiKey(body.name, this.config.apiKeySuffix);
+      body.api_key ||
+      generateDatoApiKey(
+        body.name,
+        resolvedSuffix ? slugify(resolvedSuffix, "_") : undefined,
+      );
 
     this.body = {
       ...body,
@@ -338,8 +347,22 @@ export default abstract class ItemTypeBuilder {
         globalConfig.overwriteExistingFields ??
         false,
       debug: builderConfig.debug ?? globalConfig.debug ?? false,
-      apiKeySuffix: builderConfig.apiKeySuffix ?? "",
+      modelApiKeySuffix:
+        builderConfig.modelApiKeySuffix ?? globalConfig.modelApiKeySuffix ?? "",
+      blockApiKeySuffix:
+        builderConfig.blockApiKeySuffix ?? globalConfig.blockApiKeySuffix ?? "",
     };
+  }
+
+  private resolveSuffix(): string | undefined {
+    switch (this.type) {
+      case "model":
+        return this.config.modelApiKeySuffix;
+      case "block":
+        return this.config.blockApiKeySuffix;
+      default:
+        throw new Error(`Unknown type "${this.type}"`);
+    }
   }
 
   public setOverrideExistingFields(value = true): this {
