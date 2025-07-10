@@ -12,8 +12,41 @@ class DatoBuilderCLI {
   constructor() {
     this.args = process.argv.slice(2);
     this.command = this.args[0];
+    this.options = this.parseOptions();
     this.ItemTypeBuilder = null;
     this.loadItemTypeBuilder();
+  }
+
+  /**
+   * Parse command line options
+   */
+  parseOptions() {
+    const options = {
+      concurrency: 1, // Default: sequential
+      maxConcurrency: 5, // Default max limit
+      timeout: 30000, // 30 seconds timeout per file
+    };
+
+    for (let i = 0; i < this.args.length; i++) {
+      const arg = this.args[i];
+
+      if (arg === "--concurrent" || arg === "-c") {
+        options.concurrency =
+          parseInt(this.args[i + 1]) || options.maxConcurrency;
+        this.args.splice(i, 2);
+        i--;
+      } else if (arg === "--timeout" || arg === "-t") {
+        options.timeout = parseInt(this.args[i + 1]) || options.timeout;
+        this.args.splice(i, 2);
+        i--;
+      } else if (arg === "--max-concurrent") {
+        options.concurrency = options.maxConcurrency;
+        this.args.splice(i, 1);
+        i--;
+      }
+    }
+
+    return options;
   }
 
   loadItemTypeBuilder() {
@@ -160,39 +193,69 @@ class DatoBuilderCLI {
   }
 
   /**
-   * Execute a single file
+   * Execute a single file with timeout
    */
   async runFile(filePath) {
     const { nodeArgs, env } = this.getExecutionStrategy(filePath);
 
     return new Promise((resolve, reject) => {
-      console.log(`🚀 Running: ${path.relative(process.cwd(), filePath)}`);
+      const relativePath = path.relative(process.cwd(), filePath);
+
+      // Only log start message in sequential mode to avoid cluttering
+      if (this.options.concurrency === 1) {
+        console.log(`🚀 Running: ${relativePath}`);
+      }
 
       const child = spawn(
         "node",
         [...nodeArgs, filePath, ...this.args.slice(2)],
         {
-          stdio: "inherit",
+          stdio: this.options.concurrency === 1 ? "inherit" : "pipe",
           env,
         },
       );
 
+      let stdout = "";
+      let stderr = "";
+
+      // Capture output for concurrent execution
+      if (this.options.concurrency > 1) {
+        child.stdout?.on("data", (data) => {
+          stdout += data.toString();
+        });
+        child.stderr?.on("data", (data) => {
+          stderr += data.toString();
+        });
+      }
+
+      // Add timeout
+      const timeout = setTimeout(() => {
+        child.kill("SIGTERM");
+        reject(
+          new Error(`File execution timed out after ${this.options.timeout}ms`),
+        );
+      }, this.options.timeout);
+
       child.on("exit", (code) => {
+        clearTimeout(timeout);
         if (code === 0) {
-          console.log(
-            `✅ Completed: ${path.relative(process.cwd(), filePath)}\n`,
-          );
-          resolve(code);
+          if (this.options.concurrency === 1) {
+            console.log(`✅ Completed: ${relativePath}\n`);
+          }
+          resolve({ code, stdout, stderr, file: relativePath });
         } else {
-          console.error(
-            `❌ Failed: ${path.relative(process.cwd(), filePath)} (exit code: ${code})\n`,
-          );
-          reject(new Error(`Process exited with code ${code}`));
+          const error = new Error(`Process exited with code ${code}`);
+          error.code = code;
+          error.stdout = stdout;
+          error.stderr = stderr;
+          error.file = relativePath;
+          reject(error);
         }
       });
 
       child.on("error", (error) => {
-        console.error(`❌ Error running ${filePath}:`, error.message);
+        clearTimeout(timeout);
+        error.file = relativePath;
         reject(error);
       });
     });
@@ -219,24 +282,20 @@ class DatoBuilderCLI {
         return;
       }
 
-      console.log(
-        `📁 Found ${files.length} file(s) to run in ${resolvedPath}\n`,
-      );
+      console.log(`📁 Found ${files.length} file(s) to run in ${resolvedPath}`);
 
-      let failedCount = 0;
-      for (const file of files) {
-        try {
-          await this.runFile(file);
-        } catch (_error) {
-          failedCount++;
-        }
-      }
+      // Determine optimal concurrency
+      const concurrency =
+        this.options.concurrency > 1
+          ? Math.min(this.options.concurrency, files.length)
+          : 1;
 
-      if (failedCount > 0) {
-        console.error(`❌ ${failedCount} file(s) failed to execute`);
-        process.exit(1);
+      if (concurrency > 1) {
+        console.log(`🚀 Running with concurrency limit of ${concurrency}\n`);
+        await this.runFilesWithSmartConcurrency(files, concurrency);
       } else {
-        console.log(`🎉 All ${files.length} file(s) executed successfully`);
+        console.log("🚀 Running sequentially\n");
+        await this.runFilesSequentially(files);
       }
     } else if (stat.isFile()) {
       if (!SUPPORTED_EXTENSIONS.some((ext) => resolvedPath.endsWith(ext))) {
@@ -249,12 +308,121 @@ class DatoBuilderCLI {
 
       try {
         await this.runFile(resolvedPath);
-      } catch (_error) {
+      } catch (error) {
+        console.error(`❌ Failed: ${error.file || resolvedPath}`);
+        if (error.stderr) {
+          console.error(error.stderr);
+        }
         process.exit(1);
       }
     } else {
       console.error(`❌ Unsupported path type: ${resolvedPath}`);
       process.exit(1);
+    }
+  }
+
+  /**
+   * Run files sequentially (original behavior)
+   */
+  async runFilesSequentially(files) {
+    let failedCount = 0;
+    const failedFiles = [];
+
+    for (const file of files) {
+      try {
+        await this.runFile(file);
+      } catch (error) {
+        failedCount++;
+        failedFiles.push({ file: error.file || file, error });
+      }
+    }
+
+    if (failedCount > 0) {
+      console.error(`❌ ${failedCount} file(s) failed to execute:`);
+      failedFiles.forEach(({ file, error }) => {
+        console.error(`  - ${file}: ${error.message}`);
+      });
+      process.exit(1);
+    } else {
+      console.log(`🎉 All ${files.length} file(s) executed successfully`);
+    }
+  }
+
+  /**
+   * Smart concurrency with proper error handling and progress tracking
+   */
+  async runFilesWithSmartConcurrency(files, concurrency) {
+    const startTime = Date.now();
+    let completed = 0;
+    let failed = 0;
+    const failedFiles = [];
+
+    const updateProgress = () => {
+      const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+      const total = completed + failed;
+      process.stdout.write(
+        `\r📊 Progress: ${total}/${files.length} processed (${completed} ✅, ${failed} ❌) - ${elapsed}s`,
+      );
+    };
+
+    const executeFile = async (file) => {
+      try {
+        const result = await this.runFile(file);
+        completed++;
+        updateProgress();
+        return { success: true, file, result };
+      } catch (error) {
+        failed++;
+        failedFiles.push({ file: error.file || file, error });
+        updateProgress();
+        return { success: false, file, error };
+      }
+    };
+
+    // Use controlled concurrency with a sliding window approach
+    const executing = new Set();
+    const results = [];
+
+    for (const file of files) {
+      // Wait if we've hit the concurrency limit
+      while (executing.size >= concurrency) {
+        await Promise.race([...executing]);
+      }
+
+      const promise = executeFile(file);
+      executing.add(promise);
+      results.push(promise);
+
+      // Remove from executing set when promise resolves
+      promise.finally(() => {
+        executing.delete(promise);
+      });
+    }
+
+    // Wait for all remaining promises
+    await Promise.all(results);
+
+    console.log("\n"); // New line after progress
+
+    const totalTime = ((Date.now() - startTime) / 1000).toFixed(1);
+
+    if (failed > 0) {
+      console.error(
+        `❌ ${failed} file(s) failed to execute (completed in ${totalTime}s):`,
+      );
+      failedFiles.forEach(({ file, error }) => {
+        console.error(`  - ${file}: ${error.message}`);
+        if (error.stderr) {
+          console.error(`    ${error.stderr.trim()}`);
+        }
+      });
+      process.exit(1);
+    } else {
+      console.log(
+        `🎉 All ${files.length} file(s) executed successfully in ${totalTime}s`,
+      );
+      const avgSpeed = (files.length / parseFloat(totalTime)).toFixed(1);
+      console.log(`⚡ Average: ${avgSpeed} files/second`);
     }
   }
 
@@ -279,13 +447,24 @@ class DatoBuilderCLI {
     console.log("");
     console.log("Usage:");
     console.log(
-      "  dato-builder run <file|directory>     Run a file or all files in a directory",
+      "  dato-builder run <file|directory> [options]     Run a file or all files in a directory",
     );
     console.log(
-      "  dato-builder clear-cache              Clear the ItemTypeBuilder cache",
+      "  dato-builder clear-cache                         Clear the ItemTypeBuilder cache",
     );
     console.log(
-      "  dato-builder help                     Show this help message",
+      "  dato-builder help                                Show this help message",
+    );
+    console.log("");
+    console.log("Options:");
+    console.log(
+      "  -c, --concurrent <number>     Run files concurrently (default: 1)",
+    );
+    console.log(
+      "  --max-concurrent              Run with maximum concurrency (5)",
+    );
+    console.log(
+      "  -t, --timeout <ms>            Timeout per file in milliseconds (default: 30000)",
     );
     console.log("");
     console.log("Supported file types:");
@@ -293,7 +472,9 @@ class DatoBuilderCLI {
     console.log("");
     console.log("Examples:");
     console.log("  dato-builder run ./scripts/build.ts");
-    console.log("  dato-builder run ./scripts/");
+    console.log("  dato-builder run ./scripts/ --concurrent 3");
+    console.log("  dato-builder run ./scripts/ --max-concurrent");
+    console.log("  dato-builder run ./scripts/ --timeout 60000");
     console.log("  dato-builder clear-cache");
   }
 

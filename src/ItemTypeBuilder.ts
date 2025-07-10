@@ -923,7 +923,9 @@ export default abstract class ItemTypeBuilder {
     );
 
     if (!this.config.overwriteExistingFields) {
-      // If not overwriting, we can skip the rest
+      console.info(
+        `Skipping update/delete of existing fields for "${this.name}" because overwriteExistingFields is set to false. Manual changes in the DatoCMS dashboard will not be overwritten.`,
+      );
       return;
     }
 
