@@ -32,7 +32,7 @@
     "spellcheck": "cspell \"**/*.{js,ts,md,json,yml,yaml}\""
   },
   "devDependencies": {
-    "@biomejs/biome": "2.0.6",
+    "@biomejs/biome": "2.1.1",
     "@commitlint/cli": "^19.8.0",
     "@commitlint/config-conventional": "^19.8.0",
     "@cspell/dict-software-terms": "^5.0.7",
@@ -53,6 +53,7 @@
   },
   "dependencies": {
     "@datocms/cma-client-node": "^4.0.1",
-    "pluralize": "^8.0.0"
+    "pluralize": "^8.0.0",
+    "tsconfig-paths": "^4.2.0"
   }
 }

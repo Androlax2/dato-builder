@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 import DatoApi from "../src/Api/DatoApi";
 import NotFoundError from "../src/Api/Error/NotFoundError";
+import * as configLoader from "../src/config/loader";
 import Field, { type FieldBody } from "../src/Fields/Field";
 import Integer from "../src/Fields/Integer";
 import Markdown from "../src/Fields/Markdown";
@@ -10,7 +11,6 @@ import StringSelect from "../src/Fields/StringSelect";
 import ItemTypeBuilder, {
   type ItemTypeBuilderType,
 } from "../src/ItemTypeBuilder";
-import * as configLoader from "../src/config/loader";
 
 jest.mock("../src/Api/DatoApi");
 jest.mock("../src/Fields/Integer");
@@ -357,6 +357,7 @@ describe("ItemTypeBuilder", () => {
         },
       });
 
+      // @ts-ignore
       expect(spy).toHaveBeenCalledWith(mockField);
     });
 
@@ -548,6 +549,7 @@ describe("ItemTypeBuilder", () => {
         options: undefined,
       });
 
+      // @ts-ignore
       expect(spy).toHaveBeenCalledWith(mockField);
     });
 
@@ -636,6 +638,7 @@ describe("ItemTypeBuilder", () => {
         },
       });
 
+      // @ts-ignore
       expect(spy).toHaveBeenCalledWith(mockField);
     });
   });
@@ -683,6 +686,7 @@ describe("ItemTypeBuilder", () => {
         body: undefined,
         options: {
           heading: true,
+          // @ts-ignore
           customOption: "value",
         },
       });
@@ -817,6 +821,7 @@ describe("ItemTypeBuilder", () => {
         },
       });
 
+      // @ts-ignore
       expect(spy).toHaveBeenCalledWith(mockField);
     });
 
@@ -845,6 +850,7 @@ describe("ItemTypeBuilder", () => {
         },
       });
 
+      // @ts-ignore
       expect(spy).toHaveBeenCalledWith(mockField);
     });
   });

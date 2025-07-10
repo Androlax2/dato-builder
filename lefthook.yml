@@ -6,6 +6,7 @@ commit-msg:
       runner: bash
 
 pre-commit:
+  parallel: true
   commands:
     check:
       glob: "*.{js,ts,cjs,mjs,d.cts,d.mts,json,jsonc}"
@@ -16,6 +17,7 @@ pre-commit:
       run: git diff --cached --name-only | npx cspell --no-summary --no-progress --no-must-find-files --file-list stdin
 
 pre-push:
+  parallel: true
   commands:
     typescriptCheck:
       glob: "*.{ts}"
