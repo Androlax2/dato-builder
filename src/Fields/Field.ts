@@ -1,6 +1,6 @@
 import type { FieldCreateSchema } from "@datocms/cma-client/src/generated/SimpleSchemaTypes";
-import Validators from "../Validators/Validators";
 import { generateDatoApiKey } from "../utils/utils";
+import Validators from "../Validators/Validators";
 
 type FieldType = Pick<FieldCreateSchema, "field_type">["field_type"];
 

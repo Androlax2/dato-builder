@@ -6,6 +6,8 @@ import DatoApi from "./Api/DatoApi";
 import GenericDatoError from "./Api/Error/GenericDatoError";
 import NotFoundError from "./Api/Error/NotFoundError";
 import UniquenessError from "./Api/Error/UniquenessError";
+import { getDatoClient } from "./config";
+import { loadDatoBuilderConfig } from "./config/loader";
 import AssetGallery, { type AssetGalleryConfig } from "./Fields/AssetGallery";
 import BooleanField, { type BooleanConfig } from "./Fields/Boolean";
 import BooleanRadioGroup, {
@@ -55,8 +57,6 @@ import StructuredText, {
 import Textarea, { type TextareaConfig } from "./Fields/Textarea";
 import Url, { type UrlConfig } from "./Fields/Url";
 import Wysiwyg, { type WysiwygConfig } from "./Fields/Wysiwyg";
-import { getDatoClient } from "./config";
-import { loadDatoBuilderConfig } from "./config/loader";
 import { executeWithErrorHandling } from "./utils/errors";
 import { generateDatoApiKey } from "./utils/utils";
 

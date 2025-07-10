@@ -52,8 +52,8 @@ import type { StructuredTextLinksValidatorConfig } from "./StructuredTextLinksVa
 import StructuredTextLinksValidator from "./StructuredTextLinksValidator";
 import type { TitleLengthValidatorConfig } from "./TitleLengthValidator";
 import TitleLengthValidator from "./TitleLengthValidator";
-import UniqueValidator, { type UniqueValidatorConfig } from "./UniqueValidator";
 import type { Validator } from "./types";
+import UniqueValidator, { type UniqueValidatorConfig } from "./UniqueValidator";
 
 export type ValidatorConfig = Partial<{
   required: RequiredValidatorConfig;

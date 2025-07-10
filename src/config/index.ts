@@ -1,6 +1,6 @@
 import {
-  type Client as DatoClient,
   buildClient,
+  type Client as DatoClient,
 } from "@datocms/cma-client-node";
 import { loadDatoBuilderConfig } from "./loader";
 import type { DatoBuilderConfig } from "./types";
