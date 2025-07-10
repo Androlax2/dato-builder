@@ -1,3 +1,10 @@
+# [3.7.0](https://github.com/Androlax2/dato-builder/compare/v3.6.2...v3.7.0) (2025-07-10)
+
+
+### Features
+
+* **cli:** add support for concurrency and timeout options ([#24](https://github.com/Androlax2/dato-builder/issues/24)) ([3b0c5fe](https://github.com/Androlax2/dato-builder/commit/3b0c5fedd3c06323bd32246ca4bb5d20bfb0adb6))
+
 ## [3.6.2](https://github.com/Androlax2/dato-builder/compare/v3.6.1...v3.6.2) (2025-07-10)
 
 
