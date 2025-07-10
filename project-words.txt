@@ -13,3 +13,4 @@ ESM
 upserting
 informations
 childrens
+npmignore
