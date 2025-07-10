@@ -87,7 +87,7 @@ describe("addEmail", () => {
           },
         },
       });
-    }).toThrowError(
+    }).toThrow(
       "The `predefined_pattern` for the format validator must be 'email' for Email fields.",
     );
   });
@@ -107,7 +107,7 @@ describe("addEmail", () => {
           },
         },
       });
-    }).not.toThrowError();
+    }).not.toThrow();
   });
 
   it("can pass additional validators", () => {

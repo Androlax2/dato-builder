@@ -87,7 +87,7 @@ describe("addUrl", () => {
           },
         },
       });
-    }).toThrowError(
+    }).toThrow(
       "The `predefined_pattern` for the format validator must be 'url' for Url fields.",
     );
   });
@@ -107,7 +107,7 @@ describe("addUrl", () => {
           },
         },
       });
-    }).not.toThrowError();
+    }).not.toThrow();
   });
 
   it("can pass additional validators", () => {

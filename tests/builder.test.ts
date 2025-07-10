@@ -357,6 +357,7 @@ describe("ItemTypeBuilder", () => {
         },
       });
 
+      // @ts-ignore
       expect(spy).toHaveBeenCalledWith(mockField);
     });
 
@@ -548,6 +549,7 @@ describe("ItemTypeBuilder", () => {
         options: undefined,
       });
 
+      // @ts-ignore
       expect(spy).toHaveBeenCalledWith(mockField);
     });
 
@@ -636,6 +638,7 @@ describe("ItemTypeBuilder", () => {
         },
       });
 
+      // @ts-ignore
       expect(spy).toHaveBeenCalledWith(mockField);
     });
   });
@@ -683,6 +686,7 @@ describe("ItemTypeBuilder", () => {
         body: undefined,
         options: {
           heading: true,
+          // @ts-ignore
           customOption: "value",
         },
       });
@@ -817,6 +821,7 @@ describe("ItemTypeBuilder", () => {
         },
       });
 
+      // @ts-ignore
       expect(spy).toHaveBeenCalledWith(mockField);
     });
 
@@ -845,6 +850,7 @@ describe("ItemTypeBuilder", () => {
         },
       });
 
+      // @ts-ignore
       expect(spy).toHaveBeenCalledWith(mockField);
     });
   });
