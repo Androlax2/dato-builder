@@ -1,3 +1,10 @@
+## [3.6.2](https://github.com/Androlax2/dato-builder/compare/v3.6.1...v3.6.2) (2025-07-10)
+
+
+### Bug Fixes
+
+* **cli:** refactor cli ([#23](https://github.com/Androlax2/dato-builder/issues/23)) ([17ed87f](https://github.com/Androlax2/dato-builder/commit/17ed87f6bf5beae6c83215a6548819bc2a7c2310))
+
 ## [3.6.1](https://github.com/Androlax2/dato-builder/compare/v3.6.0...v3.6.1) (2025-05-07)
 
 
