@@ -209,7 +209,18 @@ export default class Validators {
   build(): Record<string, object | undefined> {
     return this.validators.reduce(
       (result, validator) => {
-        result[validator.key] = validator.build();
+        const buildResult = validator.build();
+        if (buildResult instanceof Promise) {
+          // If it's a Promise, we need to handle it asynchronously
+          buildResult.then((value) => {
+            if (value !== undefined) {
+              result[validator.key] = value;
+            }
+          });
+        } else if (buildResult !== undefined) {
+          // If it's an object, we can directly assign it
+          result[validator.key] = buildResult;
+        }
         return result;
       },
       {} as Record<string, object | undefined>,
