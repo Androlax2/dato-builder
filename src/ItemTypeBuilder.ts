@@ -114,6 +114,8 @@ export default abstract class ItemTypeBuilder {
     this.name = body.name;
     this.api = new DatoApi(buildClient({ apiToken: config.apiToken }));
 
+    ItemTypeBuilder.clearCache();
+
     this.config = config;
 
     const apiKey =
