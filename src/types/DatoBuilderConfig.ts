@@ -1,3 +1,5 @@
+import type { LogLevel } from "../logger";
+
 export interface DatoBuilderConfig {
   /**
    * Your DatoCMS Content Management API token.
@@ -21,23 +23,39 @@ export interface DatoBuilderConfig {
   overwriteExistingFields?: boolean;
 
   /**
-   * Activate the "debug" mode. This will log more information to the console.
-   */
-  debug?: boolean;
-  /**
-   * Model API Key Suffix
+   * Model API Key Suffix.
+   *
+   * @default "model"
    */
   modelApiKeySuffix?: string | null;
+
   /**
-   * Block API Key Suffix
+   * Block API Key Suffix.
+   *
+   * @default "block"
    */
   blockApiKeySuffix?: string | null;
+
   /**
-   * The log level for the builder.
+   * File-system path or glob (relative to the project root) where the CLI
+   * should search for model definitions.
    *
-   * Can be 'info', 'warn', 'error', or 'debug'.
-   *
-   * @default 'info'
+   * @default "./datocms/models"
    */
-  logLevel?: "info" | "warn" | "error" | "debug" | null;
+  modelsPath?: string;
+
+  /**
+   * File-system path or glob (relative to the project root) where the CLI
+   * should search for block definitions.
+   *
+   * @default "./datocms/blocks"
+   */
+  blocksPath?: string;
+  /**
+   * Minimum level of messages to log.
+   * Higher levels suppress more verbose output.
+   *
+   * @default LogLevel.INFO
+   */
+  logLevel?: LogLevel;
 }

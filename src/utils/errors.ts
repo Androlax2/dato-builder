@@ -1,5 +1,4 @@
 import type GenericDatoError from "../Api/Error/GenericDatoError";
-
 /**
  * Operation types for error messaging
  */
@@ -55,11 +54,17 @@ export function createUserFriendlyErrorMessage(
     );
 
     // Add technical details for developers
-    message += `\n\nTechnical details: [${datoError.info.outerCode}/${datoError.info.innerCode || ""}] ${JSON.stringify(errorDetails)}`;
+    message += `\n\nTechnical details: [${datoError.info.outerCode}/${
+      datoError.info.innerCode || ""
+    }] ${JSON.stringify(errorDetails)}`;
 
     // Add resource definition as debug info for create/update operations
     if ((operation === "create" || operation === "update") && resourceDef) {
-      message += `\n\n${resourceType} definition: ${JSON.stringify(resourceDef, null, 2)}`;
+      message += `\n\n${resourceType} definition: ${JSON.stringify(
+        resourceDef,
+        null,
+        2,
+      )}`;
     }
 
     return message;

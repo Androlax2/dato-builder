@@ -1,4 +1,4 @@
-import type { ItemTypeCacheManager } from "../cache/ItemTypeCacheManager";
+import type { CacheManager } from "../cache/CacheManager";
 import type { ConsoleLogger } from "../logger";
 import type { DatoBuilderConfig } from "../types/DatoBuilderConfig";
 import { FileDiscoverer } from "./run/FileDiscover";
@@ -6,10 +6,8 @@ import type { FileInfo } from "./run/types";
 
 interface ListCommandOptions {
   config: Required<DatoBuilderConfig>;
-  cache: ItemTypeCacheManager;
+  cache: CacheManager;
   logger: ConsoleLogger;
-  blocksPath?: string | null;
-  modelsPath?: string | null;
 }
 
 interface ItemInfo {
@@ -23,24 +21,18 @@ interface ItemInfo {
 
 export class ListCommand {
   private readonly config: Required<DatoBuilderConfig>;
-  private readonly cache: ItemTypeCacheManager;
+  private readonly cache: CacheManager;
   private readonly logger: ConsoleLogger;
   private readonly fileDiscoverer: FileDiscoverer;
 
-  constructor({
-    config,
-    cache,
-    logger,
-    blocksPath,
-    modelsPath,
-  }: ListCommandOptions) {
+  constructor({ config, cache, logger }: ListCommandOptions) {
     this.config = config;
     this.cache = cache;
     this.logger = logger;
 
     this.fileDiscoverer = new FileDiscoverer(
-      blocksPath ?? "./datocms/blocks",
-      modelsPath ?? "./datocms/models",
+      this.config.blocksPath,
+      this.config.modelsPath,
       logger,
     );
   }
@@ -75,7 +67,6 @@ export class ListCommand {
       case "simple":
         this.displayAsSimple(filteredItems);
         break;
-      case "table":
       default:
         this.displayAsTable(filteredItems);
         break;
@@ -153,6 +144,10 @@ export class ListCommand {
   }
 
   private displayAsTable(items: ItemInfo[]): void {
+    this.logger.traceJson("Displaying items as table", {
+      itemCount: items.length,
+    });
+
     // Group by type for better organization
     const blocks = items.filter((item) => item.type === "block");
     const models = items.filter((item) => item.type === "model");
@@ -169,6 +164,10 @@ export class ListCommand {
   }
 
   private displayItemTable(items: ItemInfo[]): void {
+    this.logger.traceJson("Displaying items as table", {
+      itemCount: items.length,
+    });
+
     // Calculate column widths
     const nameWidth = Math.max(4, ...items.map((item) => item.name.length));
     const statusWidth = Math.max(6, ...items.map((item) => item.status.length));
@@ -178,11 +177,15 @@ export class ListCommand {
     );
 
     // Header
-    const header = `  ${"NAME".padEnd(nameWidth)} | ${"STATUS".padEnd(statusWidth)} | ${"ID".padEnd(idWidth)} | PATH`;
-    const separator = `  ${"-".repeat(nameWidth)}-+-${"-".repeat(statusWidth)}-+-${"-".repeat(idWidth)}-+-${"-".repeat(20)}`;
+    const header = `  ${"NAME".padEnd(nameWidth)} | ${"STATUS".padEnd(
+      statusWidth,
+    )} | ${"ID".padEnd(idWidth)} | PATH`;
+    const separator = `  ${"-".repeat(nameWidth)}-+-${"-".repeat(
+      statusWidth,
+    )}-+-${"-".repeat(idWidth)}-+-${"-".repeat(20)}`;
 
-    console.log(header);
-    console.log(separator);
+    this.logger.info(header);
+    this.logger.info(separator);
 
     // Rows
     items.forEach((item) => {
@@ -190,13 +193,19 @@ export class ListCommand {
       const status = `${statusIcon} ${item.status}`.padEnd(statusWidth);
       const id = (item.cacheId || "--").padEnd(idWidth);
 
-      console.log(
-        `  ${item.name.padEnd(nameWidth)} | ${status} | ${id} | ${item.filePath}`,
+      this.logger.info(
+        `  ${item.name.padEnd(nameWidth)} | ${status} | ${id} | ${
+          item.filePath
+        }`,
       );
     });
   }
 
   private displayAsSimple(items: ItemInfo[]): void {
+    this.logger.traceJson("Displaying items as simple list", {
+      itemCount: items.length,
+    });
+
     const blocks = items.filter((item) => item.type === "block");
     const models = items.filter((item) => item.type === "model");
 
@@ -204,7 +213,7 @@ export class ListCommand {
       this.logger.info("\nBlocks:");
       blocks.forEach((item) => {
         const status = this.getStatusIcon(item.status);
-        console.log(`  ${status} ${item.name}`);
+        this.logger.info(`  ${status} ${item.name}`);
       });
     }
 
@@ -212,19 +221,23 @@ export class ListCommand {
       this.logger.info("\nModels:");
       models.forEach((item) => {
         const status = this.getStatusIcon(item.status);
-        console.log(`  ${status} ${item.name}`);
+        this.logger.info(`  ${status} ${item.name}`);
       });
     }
   }
 
   private displayAsJson(items: ItemInfo[]): void {
+    this.logger.traceJson("Displaying items as JSON", {
+      itemCount: items.length,
+    });
+
     const output = {
       blocks: items.filter((item) => item.type === "block"),
       models: items.filter((item) => item.type === "model"),
       total: items.length,
     };
 
-    console.log(JSON.stringify(output, null, 2));
+    this.logger.info(JSON.stringify(output, null, 2));
   }
 
   private displaySummary(items: ItemInfo[]): void {

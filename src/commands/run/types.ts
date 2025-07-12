@@ -8,8 +8,7 @@ export interface FileInfo {
 export interface BuildResult {
   name: string;
   type: "block" | "model";
-  id: string;
   fromCache: boolean;
   success: boolean;
-  error?: Error;
+  error?: Error | string;
 }

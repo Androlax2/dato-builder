@@ -1,21 +1,18 @@
-import type { ItemTypeCacheManager } from "../../cache/ItemTypeCacheManager";
+import type { CacheManager } from "../../cache/CacheManager";
 import type { ConsoleLogger } from "../../logger";
 import type { BuilderContext } from "../../types/BuilderContext";
 import type { DatoBuilderConfig } from "../../types/DatoBuilderConfig";
 import { BuildExecutor } from "./BuildExecutor";
 import { DependencyAnalyzer } from "./DependencyAnalyzer";
 import { DependencyResolver } from "./DependencyResolver";
-import { ExecutionSummary } from "./ExecutionSummary";
 import { FileDiscoverer } from "./FileDiscover";
 import { ItemBuilder } from "./ItemBuilder";
-import type { FileInfo } from "./types";
+import type { BuildResult, FileInfo } from "./types";
 
 interface RunCommandOptions {
   config: Required<DatoBuilderConfig>;
-  cache: ItemTypeCacheManager;
+  cache: CacheManager;
   logger: ConsoleLogger;
-  blocksPath?: string | null;
-  modelsPath?: string | null;
 }
 
 // Custom error for item not found
@@ -33,31 +30,34 @@ export class ItemNotFoundError extends Error {
 
 export class RunCommand {
   private readonly config: Required<DatoBuilderConfig>;
-  private readonly cache: ItemTypeCacheManager;
+  private readonly cache: CacheManager;
   private readonly logger: ConsoleLogger;
   private readonly fileDiscoverer: FileDiscoverer;
   private readonly dependencyAnalyzer: DependencyAnalyzer;
   private readonly dependencyResolver: DependencyResolver;
   private readonly itemBuilder: ItemBuilder;
   private readonly buildExecutor: BuildExecutor;
-  private readonly executionSummary: ExecutionSummary;
 
   private fileMap: Map<string, FileInfo> | null = null;
 
-  constructor({
-    config,
-    cache,
-    logger,
-    blocksPath,
-    modelsPath,
-  }: RunCommandOptions) {
-    this.config = config;
-    this.cache = cache;
+  constructor({ config, cache, logger }: RunCommandOptions) {
     this.logger = logger;
 
+    this.logger.traceJson("Initializing RunCommand", {
+      config: {
+        logLevel: config.logLevel,
+        apiToken: config.apiToken ? "***" : "undefined",
+        blocksPath: config.blocksPath,
+        modelsPath: config.modelsPath,
+      },
+    });
+
+    this.config = config;
+    this.cache = cache;
+
     this.fileDiscoverer = new FileDiscoverer(
-      blocksPath ?? "./datocms/blocks",
-      modelsPath ?? "./datocms/models",
+      this.config.blocksPath,
+      this.config.modelsPath,
       logger,
     );
 
@@ -65,36 +65,118 @@ export class RunCommand {
     this.dependencyResolver = new DependencyResolver(logger);
     this.itemBuilder = new ItemBuilder(cache, logger, () => this.getContext());
     this.buildExecutor = new BuildExecutor(this.itemBuilder, logger);
-    this.executionSummary = new ExecutionSummary(logger);
+
+    this.logger.trace("RunCommand initialized successfully");
   }
 
   public async execute(): Promise<void> {
+    this.logger.trace("Starting RunCommand execution");
+
+    // File discovery with progress
     this.fileMap = await this.fileDiscoverer.discoverFiles();
+    this.logger.traceJson("File discovery completed", {
+      fileCount: this.fileMap.size,
+    });
 
     if (this.fileMap.size === 0) {
+      this.logger.info("No files found to process");
       return;
     }
 
+    // Dependency analysis with progress
+    this.logger.trace("Starting dependency analysis");
     await this.dependencyAnalyzer.analyzeDependencies(this.fileMap);
+    this.logger.trace("Dependency analysis completed");
 
+    // Build order resolution
+    this.logger.trace("Resolving build order");
     const buildOrder = this.dependencyResolver.topologicalSort(this.fileMap);
-    const results = await this.buildExecutor.executeBuild(
+    this.logger.traceJson("Build order resolved", {
+      buildOrder: buildOrder.map((key) => this.fileMap?.get(key)?.name || key),
+    });
+
+    // Build execution with progress
+    this.logger.trace("Starting build execution");
+
+    const results = await this.buildExecutorWithProgress(
       this.fileMap,
       buildOrder,
     );
 
-    results.forEach((result) => {
-      if (result.success && !result.fromCache) {
-        this.logger.success(
-          `${result.type.charAt(0).toUpperCase() + result.type.slice(1)} "${result.name}" built successfully`,
-        );
-      }
+    this.logger.traceJson("Build execution completed", {
+      resultCount: results.length,
     });
 
-    this.executionSummary.logSummary(results, this.fileMap);
+    // Process results
+    this.logger.trace("Processing build results");
+  }
+
+  /**
+   * Execute build with progress indication
+   */
+  private async buildExecutorWithProgress(
+    fileMap: Map<string, FileInfo>,
+    buildOrder: string[],
+  ): Promise<BuildResult[]> {
+    const results: BuildResult[] = [];
+    const total = buildOrder.length;
+    let current = 0;
+    let hasErrors = false;
+
+    for (const fileKey of buildOrder) {
+      const fileInfo = fileMap.get(fileKey);
+      if (!fileInfo) {
+        this.logger.warn(`File info not found for key: ${fileKey}`);
+        continue;
+      }
+
+      current++;
+
+      if (!hasErrors) {
+        // Show progress
+        this.logger.progress(
+          current,
+          total,
+          `${fileInfo.type}: ${fileInfo.name}`,
+        );
+      }
+
+      try {
+        // Build the item
+        const result = await this.buildExecutor.getOrBuildItem(
+          fileKey,
+          fileInfo,
+        );
+
+        results.push({
+          success: true,
+          fromCache: result.fromCache,
+          type: fileInfo.type,
+          name: fileInfo.name,
+        });
+      } catch (error: unknown) {
+        // Clear progress bar if this is the first error
+        if (!hasErrors) {
+          hasErrors = true;
+          // Add newline to separate from progress bar
+          process.stdout.write("\n");
+        }
+
+        results.push({
+          success: false,
+          fromCache: false,
+          type: fileInfo.type,
+          name: fileInfo.name,
+          error: error instanceof Error ? error : new Error(String(error)),
+        });
+      }
+    }
+
+    return results;
   }
 
   private getContext(): BuilderContext {
+    this.logger.trace("Creating builder context");
     return {
       config: this.config,
       getBlock: (name: string) => this.getItemId("block", name),
@@ -106,18 +188,35 @@ export class RunCommand {
     type: "block" | "model",
     name: string,
   ): Promise<string> {
+    this.logger.traceJson("Getting item ID", { type, name });
+
     const cacheKey = `${type}:${name}`;
     const cached = this.cache.get(cacheKey);
 
     if (cached) {
+      this.logger.traceJson("Item found in cache", {
+        type,
+        name,
+        id: cached.id,
+      });
       return cached.id;
     }
+
+    this.logger.traceJson("Item not in cache, attempting to build", {
+      type,
+      name,
+    });
 
     // If not in cache, try to build it using BuildExecutor
     if (this.fileMap) {
       const fileKey = this.findFileKeyByName(type, name);
 
       if (fileKey) {
+        this.logger.traceJson("Found file key for item", {
+          type,
+          name,
+          fileKey,
+        });
         const fileInfo = this.fileMap.get(fileKey);
 
         if (fileInfo) {
@@ -127,18 +226,36 @@ export class RunCommand {
               fileKey,
               fileInfo,
             );
+            this.logger.traceJson("Dependency built successfully", {
+              type,
+              name,
+              id: result.id,
+            });
             return result.id;
           } catch (error) {
             this.logger.error(
-              `Failed to build dependency ${type} "${name}": ${(error as Error).message}`,
+              `Failed to build dependency ${type} "${name}": ${
+                (error as Error).message
+              }`,
             );
             throw error;
           }
         }
+      } else {
+        this.logger.traceJson("No file key found for item", { type, name });
       }
+    } else {
+      this.logger.traceJson("No file map available for item lookup", {
+        type,
+        name,
+      });
     }
 
     // Generate helpful error message with available items
+    this.logger.traceJson("Generating error message for missing item", {
+      type,
+      name,
+    });
     const availableItems = this.getAvailableItems(type);
     const errorMessage = this.buildItemNotFoundMessage(
       type,
@@ -146,6 +263,7 @@ export class RunCommand {
       availableItems,
     );
 
+    this.logger.traceJson("Item not found", { type, name, availableItems });
     throw new ItemNotFoundError(errorMessage, type, name, availableItems);
   }
 
@@ -153,20 +271,27 @@ export class RunCommand {
     type: "block" | "model",
     name: string,
   ): string | null {
+    this.logger.traceJson("Finding file key by name", { type, name });
+
     if (!this.fileMap) {
+      this.logger.trace("No file map available for lookup");
       return null;
     }
 
     for (const [fileKey, fileInfo] of this.fileMap.entries()) {
       if (fileInfo.type === type && fileInfo.name === name) {
+        this.logger.traceJson("Found file key", { type, name, fileKey });
         return fileKey;
       }
     }
 
+    this.logger.traceJson("File key not found", { type, name });
     return null;
   }
 
   private getAvailableItems(type: "block" | "model"): string[] {
+    this.logger.traceJson("Getting available items", { type });
+
     const availableItems: string[] = [];
 
     // Get items from cache
@@ -183,7 +308,15 @@ export class RunCommand {
 
     // Combine and deduplicate
     availableItems.push(...cachedItems, ...fileMapItems);
-    return [...new Set(availableItems)].sort();
+    const result = [...new Set(availableItems)].sort();
+
+    this.logger.traceJson("Available items retrieved", {
+      type,
+      cachedCount: cachedItems.length,
+      fileMapCount: fileMapItems.length,
+      totalCount: result.length,
+    });
+    return result;
   }
 
   private buildItemNotFoundMessage(
@@ -191,9 +324,16 @@ export class RunCommand {
     name: string,
     availableItems: string[],
   ): string {
+    this.logger.traceJson("Building item not found message", {
+      type,
+      name,
+      availableItemsCount: availableItems.length,
+    });
+
     const baseMessage = `Cannot find ${type} with name "${name}".`;
 
     if (availableItems.length === 0) {
+      this.logger.trace("No available items for error message");
       return `${baseMessage} No ${type}s are available.`;
     }
 
@@ -201,9 +341,15 @@ export class RunCommand {
     const similarItems = this.findSimilarItems(name, availableItems);
 
     if (similarItems.length > 0) {
-      return `${baseMessage} Did you mean one of these: ${similarItems.join(", ")}? Available ${type}s: ${availableItems.join(", ")}`;
+      this.logger.traceJson("Found similar items for suggestion", {
+        similarItems,
+      });
+      return `${baseMessage} Did you mean one of these: ${similarItems.join(
+        ", ",
+      )}? Available ${type}s: ${availableItems.join(", ")}`;
     }
 
+    this.logger.trace("No similar items found, returning basic error message");
     return `${baseMessage} Available ${type}s: ${availableItems.join(", ")}`;
   }
 
@@ -218,25 +364,5 @@ export class RunCommand {
 
     // Sort by similarity (shorter matches first)
     return similar.sort((a, b) => a.length - b.length).slice(0, 3);
-  }
-
-  // Method to clear caches for development/testing
-  public clearCaches(): void {
-    this.itemBuilder.clearCaches();
-  }
-
-  // Method to get debug info
-  public getDebugInfo(): {
-    fileMapSize: number;
-    cacheStats: { moduleCache: number; hashCache: number };
-    availableBlocks: string[];
-    availableModels: string[];
-  } {
-    return {
-      fileMapSize: this.fileMap?.size ?? 0,
-      cacheStats: this.itemBuilder.getCacheStats(),
-      availableBlocks: this.getAvailableItems("block"),
-      availableModels: this.getAvailableItems("model"),
-    };
   }
 }
