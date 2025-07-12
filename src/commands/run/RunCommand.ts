@@ -1,8 +1,12 @@
+import { buildClient } from "@datocms/cma-client-node";
+import DatoApi from "../../Api/DatoApi";
 import type { CacheManager } from "../../cache/CacheManager";
 import type { ConsoleLogger } from "../../logger";
 import type { BuilderContext } from "../../types/BuilderContext";
 import type { DatoBuilderConfig } from "../../types/DatoBuilderConfig";
 import { BuildExecutor } from "./BuildExecutor";
+import { DeletionDetector } from "./DeletionDetector";
+import { DeletionManager } from "./DeletionManager";
 import { DependencyAnalyzer } from "./DependencyAnalyzer";
 import { DependencyResolver } from "./DependencyResolver";
 import { FileDiscoverer } from "./FileDiscover";
@@ -13,6 +17,8 @@ interface RunCommandOptions {
   config: Required<DatoBuilderConfig>;
   cache: CacheManager;
   logger: ConsoleLogger;
+  enableDeletion?: boolean;
+  skipDeletionConfirmation?: boolean;
 }
 
 // Custom error for item not found
@@ -37,10 +43,20 @@ export class RunCommand {
   private readonly dependencyResolver: DependencyResolver;
   private readonly itemBuilder: ItemBuilder;
   private readonly buildExecutor: BuildExecutor;
+  private readonly deletionDetector: DeletionDetector;
+  private readonly deletionManager: DeletionManager;
+  private readonly enableDeletion: boolean;
+  private readonly skipDeletionConfirmation: boolean;
 
   private fileMap: Map<string, FileInfo> | null = null;
 
-  constructor({ config, cache, logger }: RunCommandOptions) {
+  constructor({
+    config,
+    cache,
+    logger,
+    enableDeletion = true,
+    skipDeletionConfirmation = false,
+  }: RunCommandOptions) {
     this.logger = logger;
 
     this.logger.traceJson("Initializing RunCommand", {
@@ -50,10 +66,14 @@ export class RunCommand {
         blocksPath: config.blocksPath,
         modelsPath: config.modelsPath,
       },
+      enableDeletion,
+      skipDeletionConfirmation,
     });
 
     this.config = config;
     this.cache = cache;
+    this.enableDeletion = enableDeletion;
+    this.skipDeletionConfirmation = skipDeletionConfirmation;
 
     this.fileDiscoverer = new FileDiscoverer(
       this.config.blocksPath,
@@ -65,6 +85,10 @@ export class RunCommand {
     this.dependencyResolver = new DependencyResolver(logger);
     this.itemBuilder = new ItemBuilder(cache, logger, () => this.getContext());
     this.buildExecutor = new BuildExecutor(this.itemBuilder, logger);
+    this.deletionDetector = new DeletionDetector(cache, logger);
+
+    const datoApi = new DatoApi(buildClient({ apiToken: config.apiToken }));
+    this.deletionManager = new DeletionManager(datoApi, cache, logger);
 
     this.logger.trace("RunCommand initialized successfully");
   }
@@ -109,6 +133,11 @@ export class RunCommand {
 
     // Process results
     this.logger.trace("Processing build results");
+
+    if (this.enableDeletion) {
+      this.logger.trace("Starting deletion detection and handling");
+      await this.handleDeletions();
+    }
   }
 
   /**
@@ -352,5 +381,56 @@ export class RunCommand {
 
     // Sort by similarity (shorter matches first)
     return similar.sort((a, b) => a.length - b.length).slice(0, 3);
+  }
+
+  private async handleDeletions(): Promise<void> {
+    if (!this.fileMap) {
+      this.logger.warn("No file map available for deletion detection");
+      return;
+    }
+
+    this.logger.trace("Starting deletion detection");
+
+    const deletionSummary = this.deletionDetector.detectDeletions(this.fileMap);
+
+    if (deletionSummary.total === 0) {
+      this.logger.debug("No deletions detected");
+      return;
+    }
+
+    this.logger.traceJson("Deletions detected", {
+      total: deletionSummary.total,
+      blocks: deletionSummary.blocks.length,
+      models: deletionSummary.models.length,
+    });
+
+    const allCandidates = [
+      ...deletionSummary.blocks,
+      ...deletionSummary.models,
+    ];
+    const { safe, unsafe } = this.deletionDetector.filterSafeDeletions(
+      allCandidates,
+      this.fileMap,
+    );
+
+    const deletionOptions = {
+      skipConfirmation: this.skipDeletionConfirmation,
+    };
+
+    const results = await this.deletionManager.handleDeletions(
+      deletionSummary,
+      safe,
+      unsafe,
+      deletionOptions,
+    );
+
+    const successful = results.filter((r) => r.success).length;
+    const failed = results.filter((r) => !r.success).length;
+
+    if (results.length > 0) {
+      this.logger.info(
+        `Deletion process completed: ${successful} successful, ${failed} failed`,
+      );
+    }
   }
 }

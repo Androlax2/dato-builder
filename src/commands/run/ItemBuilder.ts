@@ -359,16 +359,4 @@ export class ItemBuilder {
       throw error;
     }
   }
-
-  public clearCaches(): void {
-    this.moduleCache.clear();
-    this.hashCache.clear();
-  }
-
-  public getCacheStats(): { moduleCache: number; hashCache: number } {
-    return {
-      moduleCache: this.moduleCache.size,
-      hashCache: this.hashCache.size,
-    };
-  }
 }

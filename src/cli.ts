@@ -12,6 +12,11 @@ interface BaseCommandOptions {
   logger: ConsoleLogger;
 }
 
+interface BuildCommandOptions {
+  enableDeletion?: boolean;
+  skipDeletionConfirmation?: boolean;
+}
+
 export class DatoBuilderCLI {
   private readonly config: Required<DatoBuilderConfig>;
   private readonly cache: CacheManager;
@@ -26,12 +31,14 @@ export class DatoBuilderCLI {
   /**
    * Execute the build command
    */
-  public async build(): Promise<void> {
+  public async build(options: BuildCommandOptions = {}): Promise<void> {
     this.logger.trace("Starting build command execution");
     await new RunCommand({
       config: this.config,
       cache: this.cache,
       logger: this.logger,
+      enableDeletion: options.enableDeletion,
+      skipDeletionConfirmation: options.skipDeletionConfirmation,
     }).execute();
     this.logger.trace("Build command execution completed");
   }
@@ -55,6 +62,11 @@ type GlobalOptions = {
   verbose: boolean;
   quiet: boolean;
   cache: boolean;
+};
+
+type BuildOptions = {
+  skipDeletion: boolean;
+  skipDeletionConfirmation: boolean;
 };
 
 // Setup Commander CLI
@@ -124,7 +136,17 @@ async function setupCLI(): Promise<void> {
   program
     .command("build")
     .description("Build DatoCMS types and blocks")
-    .action(async (_options, command) => {
+    .option(
+      "--skip-deletion",
+      "Skip deletion detection and removal of orphaned items",
+      false,
+    )
+    .option(
+      "--skip-deletion-confirmation",
+      "Skip confirmation prompts for deletions",
+      false,
+    )
+    .action(async (options: BuildOptions, command) => {
       try {
         const globalOptions = command.optsWithGlobals();
         const cli = await initializeCLI({
@@ -133,7 +155,10 @@ async function setupCLI(): Promise<void> {
           quiet: globalOptions.quiet,
           cache: globalOptions.cache,
         });
-        await cli.build();
+        await cli.build({
+          enableDeletion: !options.skipDeletion,
+          skipDeletionConfirmation: options.skipDeletionConfirmation,
+        });
       } catch (error) {
         const logger = new ConsoleLogger(LogLevel.ERROR);
         logger.error(`Build failed: ${(error as Error).message}`);
