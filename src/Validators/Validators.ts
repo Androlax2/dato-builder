@@ -92,7 +92,7 @@ export default class Validators {
 
   constructor(config: ValidatorConfig = {}) {
     this.logger = new ConsoleLogger(LogLevel.ERROR);
-    this.logger.trace("Initializing validators", {
+    this.logger.traceJson("Initializing validators", {
       configKeys: Object.keys(config),
     });
 
@@ -204,7 +204,7 @@ export default class Validators {
     ] of Object.entries(validatorMap)) {
       if (validatorConfig !== undefined) {
         try {
-          this.logger.trace("Creating validator", {
+          this.logger.traceJson("Creating validator", {
             key,
             config: validatorConfig,
           });
@@ -216,7 +216,7 @@ export default class Validators {
       }
     }
 
-    this.logger.trace("Validators initialization completed", {
+    this.logger.traceJson("Validators initialization completed", {
       validatorCount: this.validators.length,
     });
   }
@@ -230,7 +230,7 @@ export default class Validators {
       },
       {} as Record<string, object | undefined>,
     );
-    this.logger.trace("Validators configuration built", {
+    this.logger.traceJson("Validators configuration built", {
       validatorCount: Object.keys(result).length,
     });
     return result;

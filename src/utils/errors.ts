@@ -1,6 +1,4 @@
 import type GenericDatoError from "../Api/Error/GenericDatoError";
-import { ConsoleLogger, LogLevel } from "../logger";
-
 /**
  * Operation types for error messaging
  */
@@ -157,14 +155,7 @@ export async function executeWithErrorHandling<T>(
   resourceDef?: { api_key: string; [key: string]: any },
   existingResource?: ResourceWithKey,
 ): Promise<T> {
-  const logger = new ConsoleLogger(LogLevel.ERROR);
-
   try {
-    logger.trace("Executing API call", {
-      operation,
-      resourceType,
-      resourceKey: resourceDef?.api_key || existingResource?.api_key,
-    });
     return await apiCall();
   } catch (error: unknown) {
     const errorMessage = createUserFriendlyErrorMessage(
@@ -174,7 +165,7 @@ export async function executeWithErrorHandling<T>(
       resourceDef,
       existingResource,
     );
-    logger.error(errorMessage);
+    console.error(errorMessage);
     throw error;
   }
 }

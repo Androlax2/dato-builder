@@ -1,6 +1,6 @@
 import path from "node:path";
 import { Command } from "@commander-js/extra-typings";
-import { ItemTypeCacheManager } from "./cache/ItemTypeCacheManager";
+import { CacheManager } from "./cache/CacheManager";
 import { ListCommand } from "./commands/ListCommand";
 import { RunCommand } from "./commands/run/RunCommand";
 import { ConfigParser } from "./config/ConfigParser";
@@ -9,13 +9,13 @@ import type { DatoBuilderConfig } from "./types/DatoBuilderConfig";
 
 interface BaseCommandOptions {
   config: Required<DatoBuilderConfig>;
-  cache: ItemTypeCacheManager;
+  cache: CacheManager;
   logger: ConsoleLogger;
 }
 
 export class DatoBuilderCLI {
   private readonly config: Required<DatoBuilderConfig>;
-  private readonly cache: ItemTypeCacheManager;
+  private readonly cache: CacheManager;
   private readonly logger: ConsoleLogger;
 
   constructor(options: BaseCommandOptions) {
@@ -47,7 +47,7 @@ export class DatoBuilderCLI {
       showCached?: boolean;
     } = {},
   ): Promise<void> {
-    this.logger.trace("Starting list command execution", options);
+    this.logger.traceJson("Starting list command execution", options);
     const listCommand = new ListCommand({
       config: this.config,
       cache: this.cache,
@@ -147,9 +147,17 @@ async function setupCLI(): Promise<void> {
   ): Promise<DatoBuilderCLI> {
     const level = getLogLevelFromOptions(globalOptions);
 
-    const logger = new ConsoleLogger(level);
+    const logger = new ConsoleLogger(
+      level,
+      {},
+      {
+        timestamp: level === LogLevel.TRACE,
+        prefix: level === LogLevel.TRACE ? "dato-builder" : undefined,
+        prettyJson: true,
+      },
+    );
     const configParser = new ConfigParser(logger);
-    const cache = new ItemTypeCacheManager(
+    const cache = new CacheManager(
       path.join(process.cwd(), ".dato-builder-cache", "item-types.json"),
     );
 

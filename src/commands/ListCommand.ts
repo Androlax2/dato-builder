@@ -1,4 +1,4 @@
-import type { ItemTypeCacheManager } from "../cache/ItemTypeCacheManager";
+import type { CacheManager } from "../cache/CacheManager";
 import type { ConsoleLogger } from "../logger";
 import type { DatoBuilderConfig } from "../types/DatoBuilderConfig";
 import { FileDiscoverer } from "./run/FileDiscover";
@@ -6,7 +6,7 @@ import type { FileInfo } from "./run/types";
 
 interface ListCommandOptions {
   config: Required<DatoBuilderConfig>;
-  cache: ItemTypeCacheManager;
+  cache: CacheManager;
   logger: ConsoleLogger;
 }
 
@@ -21,7 +21,7 @@ interface ItemInfo {
 
 export class ListCommand {
   private readonly config: Required<DatoBuilderConfig>;
-  private readonly cache: ItemTypeCacheManager;
+  private readonly cache: CacheManager;
   private readonly logger: ConsoleLogger;
   private readonly fileDiscoverer: FileDiscoverer;
 
@@ -144,7 +144,9 @@ export class ListCommand {
   }
 
   private displayAsTable(items: ItemInfo[]): void {
-    this.logger.trace("Displaying items as table", { itemCount: items.length });
+    this.logger.traceJson("Displaying items as table", {
+      itemCount: items.length,
+    });
 
     // Group by type for better organization
     const blocks = items.filter((item) => item.type === "block");
@@ -162,7 +164,9 @@ export class ListCommand {
   }
 
   private displayItemTable(items: ItemInfo[]): void {
-    this.logger.trace("Displaying items as table", { itemCount: items.length });
+    this.logger.traceJson("Displaying items as table", {
+      itemCount: items.length,
+    });
 
     // Calculate column widths
     const nameWidth = Math.max(4, ...items.map((item) => item.name.length));
@@ -198,7 +202,7 @@ export class ListCommand {
   }
 
   private displayAsSimple(items: ItemInfo[]): void {
-    this.logger.trace("Displaying items as simple list", {
+    this.logger.traceJson("Displaying items as simple list", {
       itemCount: items.length,
     });
 
@@ -223,7 +227,9 @@ export class ListCommand {
   }
 
   private displayAsJson(items: ItemInfo[]): void {
-    this.logger.trace("Displaying items as JSON", { itemCount: items.length });
+    this.logger.traceJson("Displaying items as JSON", {
+      itemCount: items.length,
+    });
 
     const output = {
       blocks: items.filter((item) => item.type === "block"),

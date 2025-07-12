@@ -75,6 +75,13 @@ type ItemTypeBuilderOptions = {
   config: Required<DatoBuilderConfig>;
 };
 
+type HashableConfigKeys =
+  | "overwriteExistingFields"
+  | "modelApiKeySuffix"
+  | "blockApiKeySuffix";
+
+type HashableConfig = Pick<DatoBuilderConfig, HashableConfigKeys>;
+
 export default abstract class ItemTypeBuilder {
   protected logger: ConsoleLogger;
   protected api: DatoApi;
@@ -108,6 +115,14 @@ export default abstract class ItemTypeBuilder {
     };
   }
 
+  private getHashableConfig(): HashableConfig {
+    return {
+      overwriteExistingFields: this.config.overwriteExistingFields,
+      modelApiKeySuffix: this.config.modelApiKeySuffix,
+      blockApiKeySuffix: this.config.blockApiKeySuffix,
+    };
+  }
+
   public getHash(): string {
     return createHash("sha256")
       .update(
@@ -116,7 +131,7 @@ export default abstract class ItemTypeBuilder {
           fields: [...this.fields.map((f) => f.build())].sort((a, b) =>
             a.api_key.localeCompare(b.api_key),
           ),
-          config: this.config,
+          config: this.getHashableConfig(),
         }),
       )
       .digest("hex");

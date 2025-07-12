@@ -1,18 +1,18 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
 
-type ItemTypeCacheData = {
+type CacheData = {
   hash: string;
   id: string;
 };
 
-export class ItemTypeCacheManager {
-  private items: Map<string, ItemTypeCacheData> = new Map();
+export class CacheManager {
+  private items: Map<string, CacheData> = new Map();
 
   private readonly cachePath: string;
 
   private writeQueue: Array<{
-    data: ItemTypeCacheData;
+    data: CacheData;
     resolve: Function;
     reject: Function;
   }> = [];
@@ -38,14 +38,14 @@ export class ItemTypeCacheManager {
   /**
    * Get an item from the cache
    */
-  get(key: string): ItemTypeCacheData | undefined {
+  get(key: string): CacheData | undefined {
     return this.items.get(key);
   }
 
   /**
    * Set an item in the cache
    */
-  async set(key: string, data: ItemTypeCacheData): Promise<void> {
+  async set(key: string, data: CacheData): Promise<void> {
     this.items.set(key, data);
     return this.queueWrite(data);
   }
@@ -86,7 +86,7 @@ export class ItemTypeCacheManager {
   /**
    * Get all cache values
    */
-  values(): ItemTypeCacheData[] {
+  values(): CacheData[] {
     return Array.from(this.items.values());
   }
 
@@ -100,21 +100,21 @@ export class ItemTypeCacheManager {
   /**
    * Get cache entries as array of [key, value] pairs
    */
-  entries(): [string, ItemTypeCacheData][] {
+  entries(): [string, CacheData][] {
     return Array.from(this.items.entries());
   }
 
   /**
    * Find items by hash
    */
-  findByHash(hash: string): ItemTypeCacheData[] {
+  findByHash(hash: string): CacheData[] {
     return this.values().filter((item) => item.hash === hash);
   }
 
   /**
    * Find item by id
    */
-  findById(id: string): ItemTypeCacheData | undefined {
+  findById(id: string): CacheData | undefined {
     return this.values().find((item) => item.id === id);
   }
 
@@ -156,7 +156,7 @@ export class ItemTypeCacheManager {
   /**
    * Queue a write operation to avoid concurrent writes
    */
-  private async queueWrite(data: ItemTypeCacheData): Promise<void> {
+  private async queueWrite(data: CacheData): Promise<void> {
     return new Promise((resolve, reject) => {
       this.writeQueue.push({ data, resolve, reject });
       this.processWriteQueue();

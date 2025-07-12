@@ -251,7 +251,7 @@ export class ConsoleLogger {
     const timestamp = this.formatTimestamp();
     const context = this.formatContext();
     const prefixText = this.colorize(this.colors.dim, this.prefix);
-    const levelText = this.colorize(color + this.colors.bold, LogLevel[level]);
+    const levelText = this.colorize(color, LogLevel[level]);
 
     // Format the header
     const header = `${timestamp} ${prefixText} ${context}${levelText}: ${message}`;
@@ -288,6 +288,10 @@ export class ConsoleLogger {
 
   errorJson(message: string, obj: any) {
     this.json(message, obj, LogLevel.ERROR);
+  }
+
+  traceJson(message: string, obj: any) {
+    this.json(message, obj, LogLevel.TRACE);
   }
 
   time(label: string) {
