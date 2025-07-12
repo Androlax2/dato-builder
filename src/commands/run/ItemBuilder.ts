@@ -1,7 +1,7 @@
-import BlockBuilder from "../../BlockBuilder";
+import type BlockBuilder from "../../BlockBuilder";
 import type { CacheManager } from "../../cache/CacheManager";
 import type { ConsoleLogger } from "../../logger";
-import ModelBuilder from "../../ModelBuilder";
+import type ModelBuilder from "../../ModelBuilder";
 import type { BuilderContext } from "../../types/BuilderContext";
 import type { FileInfo } from "./types";
 
@@ -261,24 +261,60 @@ export class ItemBuilder {
       builderType: builder?.constructor?.name,
     });
 
-    if (fileInfo.type === "block" && !(builder instanceof BlockBuilder)) {
-      this.logger.errorJson("Invalid builder type for block", {
-        expected: "BlockBuilder",
-        actual: builder?.constructor?.name,
+    // Check if builder exists and is an object
+    if (!builder || typeof builder !== "object") {
+      this.logger.errorJson("Builder is not an object", {
+        type: fileInfo.type,
+        name: fileInfo.name,
+        builderType: typeof builder,
       });
       throw new Error(
-        `Block "${fileInfo.name}" must return an instance of BlockBuilder`,
+        `${fileInfo.type === "block" ? "Block" : "Model"} "${fileInfo.name}" must return a builder instance`,
       );
     }
 
-    if (fileInfo.type === "model" && !(builder instanceof ModelBuilder)) {
-      this.logger.errorJson("Invalid builder type for model", {
-        expected: "ModelBuilder",
-        actual: builder?.constructor?.name,
-      });
-      throw new Error(
-        `Model "${fileInfo.name}" must return an instance of ModelBuilder`,
+    const builderTypeName = builder.constructor?.name;
+
+    // Helper function to check if it's a valid builder
+    const isValidBuilder = (expectedType: string): boolean => {
+      // Check constructor name
+      if (builderTypeName !== expectedType) {
+        return false;
+      }
+
+      // Check for essential methods that builders should have
+      const expectedMethods = ["upsert"]; // Add other expected methods
+      return expectedMethods.every(
+        (method) => typeof builder[method] === "function",
       );
+    };
+
+    if (fileInfo.type === "block") {
+      if (!isValidBuilder("BlockBuilder")) {
+        this.logger.errorJson("Invalid builder type for block", {
+          expected: "BlockBuilder",
+          actual: builderTypeName,
+          hasBuildMethod: typeof builder.build === "function",
+          hasAddFieldMethod: typeof builder.addField === "function",
+        });
+        throw new Error(
+          `Block "${fileInfo.name}" must return an instance of BlockBuilder`,
+        );
+      }
+    }
+
+    if (fileInfo.type === "model") {
+      if (!isValidBuilder("ModelBuilder")) {
+        this.logger.errorJson("Invalid builder type for model", {
+          expected: "ModelBuilder",
+          actual: builderTypeName,
+          hasBuildMethod: typeof builder.build === "function",
+          hasAddFieldMethod: typeof builder.addField === "function",
+        });
+        throw new Error(
+          `Model "${fileInfo.name}" must return an instance of ModelBuilder`,
+        );
+      }
     }
 
     this.logger.trace("Builder type validation passed");
