@@ -6,23 +6,35 @@ import type { DatoBuilderConfig } from "./types";
 export class ConfigParser {
   private readonly logger: ConsoleLogger;
 
+  private static readonly DEFAULTS: Omit<
+    Required<DatoBuilderConfig>,
+    "apiToken"
+  > = {
+    overwriteExistingFields: false,
+    debug: false,
+    modelApiKeySuffix: null,
+    blockApiKeySuffix: null,
+  };
+
   constructor(logger: ConsoleLogger) {
     this.logger = logger;
   }
 
-  private async loadBaseConfig(): Promise<DatoBuilderConfig> {
+  public async loadConfig(): Promise<DatoBuilderConfig> {
     const configPath = await this.getConfigFilePath();
 
     this.logger.info(`Loading config from ${configPath}`);
 
-    this.logger.debug(`Checking if config file exists at ${configPath}`);
-    const baseConfig = await import(configPath);
+    const userConfig = await import(configPath);
 
-    if (!baseConfig.default) {
+    if (!userConfig.default) {
       throw new Error("Unable to load dato-builder config file");
     }
 
-    return baseConfig.default;
+    return await this.validateConfig({
+      ...ConfigParser.DEFAULTS,
+      ...userConfig.default,
+    });
   }
 
   /**
@@ -54,13 +66,5 @@ export class ConfigParser {
     }
 
     return config;
-  }
-
-  /**
-   * Load full config
-   */
-  async loadConfig(): Promise<DatoBuilderConfig> {
-    const baseConfig = await this.loadBaseConfig();
-    return await this.validateConfig(baseConfig);
   }
 }

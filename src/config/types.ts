@@ -27,9 +27,9 @@ export interface DatoBuilderConfig {
   /**
    * Model API Key Suffix
    */
-  modelApiKeySuffix?: string;
+  modelApiKeySuffix?: string | null;
   /**
    * Block API Key Suffix
    */
-  blockApiKeySuffix?: string;
+  blockApiKeySuffix?: string | null;
 }
