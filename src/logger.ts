@@ -46,7 +46,7 @@ export class ConsoleLogger {
 
     const formatted = this.colorize(
       this.colors.yellow,
-      `⚠️ ${this.prefix}  WARN: ${msg.join(" ")}`,
+      `⚠️ ${this.prefix} WARN: ${msg.join(" ")}`,
     );
 
     console.warn(formatted);
