@@ -22,6 +22,7 @@ export interface DatoBuilderConfig {
 
   /**
    * Activate the "debug" mode. This will log more information to the console.
+   * TODO: Handle by the log level now
    */
   debug?: boolean;
   /**
@@ -38,6 +39,7 @@ export interface DatoBuilderConfig {
    * Can be 'info', 'warn', 'error', or 'debug'.
    *
    * @default 'info'
+   * TODO: REmove, should be inside the CLI options
    */
   logLevel?: "info" | "warn" | "error" | "debug" | null;
 }

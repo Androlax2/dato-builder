@@ -46,9 +46,9 @@ export class DatoBuilderCLI {
 
     try {
       await runCommand.execute();
-      this.logger.success("✅ Build completed successfully!");
+      this.logger.success("Build completed successfully!");
     } catch (error) {
-      this.logger.error(`❌ Build failed: ${(error as Error).message}`);
+      this.logger.error(`Build failed: ${(error as Error).message}`);
       throw error;
     }
   }
@@ -170,7 +170,7 @@ export class BuildCommandRunner {
   await itemTypeCache.initialize();
 
   await runner.run({
-    command: "debug",
+    command: "build",
     config,
     modelsPath: `${process.cwd()}/src/datocms/models`,
     blocksPath: `${process.cwd()}/src/datocms/blocks`,
