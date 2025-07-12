@@ -75,12 +75,6 @@ type ItemTypeBuilderOptions = {
   config: Required<DatoBuilderConfig>;
 };
 
-// For tracking in-progress operations
-interface PendingOperation {
-  promise: Promise<string>;
-  timestamp: number;
-}
-
 export default abstract class ItemTypeBuilder {
   protected logger: ConsoleLogger;
   protected api: DatoApi;
@@ -89,9 +83,6 @@ export default abstract class ItemTypeBuilder {
   readonly type: ItemTypeBuilderType;
   readonly fields: Field[] = [];
   readonly config: Required<DatoBuilderConfig>;
-
-  private static pendingOperations: Map<string, PendingOperation> = new Map();
-  private static readonly PENDING_OPERATION_TIMEOUT = 60000; // 60 seconds
 
   protected constructor({ type, body, config }: ItemTypeBuilderOptions) {
     this.logger = new ConsoleLogger(getLogLevel(config.logLevel));
@@ -115,21 +106,6 @@ export default abstract class ItemTypeBuilder {
       modular_block: this.type === "block",
       collection_appearance: body.collection_appearance || "table",
     };
-  }
-
-  /**
-   * Clean up stale pending operations
-   */
-  private static cleanPendingOperations(): void {
-    const now = Date.now();
-    ItemTypeBuilder.pendingOperations.forEach((operation, key) => {
-      if (
-        now - operation.timestamp >
-        ItemTypeBuilder.PENDING_OPERATION_TIMEOUT
-      ) {
-        ItemTypeBuilder.pendingOperations.delete(key);
-      }
-    });
   }
 
   public getContentHash(): string {
@@ -639,47 +615,6 @@ export default abstract class ItemTypeBuilder {
     );
   }
 
-  private static async handlePendingOperation(
-    apiKey: string,
-    operationPromise: Promise<string>,
-  ): Promise<string> {
-    const operation: PendingOperation = {
-      promise: operationPromise,
-      timestamp: Date.now(),
-    };
-
-    // Register this operation
-    ItemTypeBuilder.pendingOperations.set(apiKey, operation);
-
-    try {
-      return await operationPromise;
-    } finally {
-      // Clean up only if this operation is still the current one
-      const currentOp = ItemTypeBuilder.pendingOperations.get(apiKey);
-      if (currentOp && currentOp.promise === operation.promise) {
-        ItemTypeBuilder.pendingOperations.delete(apiKey);
-      }
-
-      // Clean up any stale operations
-      ItemTypeBuilder.cleanPendingOperations();
-    }
-  }
-
-  private async waitForPendingOperation(
-    apiKey: string,
-  ): Promise<string | undefined> {
-    const pendingOp = ItemTypeBuilder.pendingOperations.get(apiKey);
-    if (pendingOp) {
-      try {
-        return await pendingOp.promise;
-      } catch (_error) {
-        // If the pending operation failed, we'll try our own operation
-        return undefined;
-      }
-    }
-    return undefined;
-  }
-
   private async syncFields(itemTypeId: string): Promise<void> {
     const contextLogger = this.logger.child({
       operation: "syncFields",
@@ -811,57 +746,42 @@ export default abstract class ItemTypeBuilder {
       itemType: apiKey,
     });
 
-    // First check for any pending operations
-    const pendingResult = await this.waitForPendingOperation(apiKey);
-    if (pendingResult) {
-      contextLogger.debug(
-        `Found pending operation, returning: ${pendingResult}`,
+    try {
+      const item = await this.api.call(() =>
+        this.api.client.itemTypes.create(this.body),
       );
-      return pendingResult;
-    }
+      contextLogger.debug(`Created itemType with id: ${item.id}`);
 
-    // Create a new operation and register it
-    const operation = async (): Promise<string> => {
-      try {
-        // Create the item
-        const item = await this.api.call(() =>
-          this.api.client.itemTypes.create(this.body),
+      await this.syncFields(item.id);
+
+      return item.id;
+    } catch (error: unknown) {
+      if (error instanceof UniquenessError) {
+        contextLogger.debug(
+          "UniquenessError encountered, fetching existing item",
         );
-        contextLogger.debug(`Created itemType with id: ${item.id}`);
 
-        await this.syncFields(item.id);
-
-        return item.id;
-      } catch (error: unknown) {
-        if (error instanceof UniquenessError) {
-          contextLogger.debug(
-            "UniquenessError encountered, fetching existing item",
+        // If the item already exists, we can just return its ID
+        try {
+          const existing = await this.api.call(() =>
+            this.api.client.itemTypes.find(apiKey),
           );
 
-          // If the item already exists, we can just return its ID
-          try {
-            const existing = await this.api.call(() =>
-              this.api.client.itemTypes.find(apiKey),
-            );
+          contextLogger.debug(
+            `Found existing itemType with id: ${existing.id}`,
+          );
 
-            contextLogger.debug(
-              `Found existing itemType with id: ${existing.id}`,
-            );
-
-            return existing.id;
-          } catch (findError: unknown) {
-            contextLogger.error(
-              `Failed to find existing itemType: ${(findError as Error).message}`,
-            );
-            throw findError;
-          }
+          return existing.id;
+        } catch (findError: unknown) {
+          contextLogger.error(
+            `Failed to find existing itemType: ${(findError as Error).message}`,
+          );
+          throw findError;
         }
-
-        throw error;
       }
-    };
 
-    return ItemTypeBuilder.handlePendingOperation(apiKey, operation());
+      throw error;
+    }
   }
 
   public async update(): Promise<string> {
@@ -872,28 +792,15 @@ export default abstract class ItemTypeBuilder {
       itemType: apiKey,
     });
 
-    // First check for any pending operations
-    const pending = await this.waitForPendingOperation(apiKey);
-    if (pending) {
-      contextLogger.debug(`Found pending operation, returning: ${pending}`);
-      return pending;
-    }
+    // Attempt the update
+    const item = await this.api.call(() =>
+      this.api.client.itemTypes.update(apiKey, this.body),
+    );
+    contextLogger.debug(`Updated itemType with id: ${item.id}`);
 
-    // Wrap the actual API call in an operation promise
-    const operation = async (): Promise<string> => {
-      // Attempt the update
-      const item = await this.api.call(() =>
-        this.api.client.itemTypes.update(apiKey, this.body),
-      );
-      contextLogger.debug(`Updated itemType with id: ${item.id}`);
+    await this.syncFields(item.id);
 
-      await this.syncFields(item.id);
-
-      return item.id;
-    };
-
-    // Register & return a single in‐flight promise
-    return ItemTypeBuilder.handlePendingOperation(apiKey, operation());
+    return item.id;
   }
 
   public async upsert(): Promise<string> {
