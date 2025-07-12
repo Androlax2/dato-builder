@@ -1,13 +1,13 @@
+import type { DatoBuilderConfig } from "./config/types";
 import ItemTypeBuilder, {
   type ItemTypeBuilderBody,
-  type ItemTypeBuilderConfig,
   type ItemTypeBuilderType,
 } from "./ItemTypeBuilder";
 
 type ModelBuilderOptions = {
   name: string;
   body?: Omit<ItemTypeBuilderBody, "name">;
-  config: ItemTypeBuilderConfig;
+  config: Required<DatoBuilderConfig>;
 };
 
 export default class ModelBuilder extends ItemTypeBuilder {

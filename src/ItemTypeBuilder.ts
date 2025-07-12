@@ -7,6 +7,7 @@ import DatoApi from "./Api/DatoApi";
 import GenericDatoError from "./Api/Error/GenericDatoError";
 import NotFoundError from "./Api/Error/NotFoundError";
 import UniquenessError from "./Api/Error/UniquenessError";
+import type { DatoBuilderConfig } from "./config/types";
 import AssetGallery, { type AssetGalleryConfig } from "./Fields/AssetGallery";
 import BooleanField, { type BooleanConfig } from "./Fields/Boolean";
 import BooleanRadioGroup, {
@@ -68,32 +69,12 @@ export type ItemTypeBuilderBody = Omit<
   api_key?: string;
 };
 
-export type ItemTypeBuilderConfig = {
-  apiToken: string;
-  /**
-   * Whether to overwrite existing fields in DatoCMS when syncing.
-   *
-   * - `false` (default): New fields will be created. All other fields
-   *  will be left untouched.
-   *
-   * - `true`: Fields with matching API keys will be updated to match
-   *   your code definitions, overwriting any manual changes made via
-   *   the DatoCMS dashboard.
-   */
-  overwriteExistingFields?: boolean;
-  debug?: boolean;
-  /** Suffix to append to model API keys */
-  modelApiKeySuffix?: string;
-  /** Suffix to append to block API keys */
-  blockApiKeySuffix?: string;
-};
-
 type ItemTypeBuilderOptions = {
   type: ItemTypeBuilderType;
   body: Omit<SimpleSchemaTypes.ItemTypeCreateSchema, "api_key"> & {
     api_key?: string;
   };
-  config: ItemTypeBuilderConfig;
+  config: Required<DatoBuilderConfig>;
 };
 
 // For tracking in-progress operations
@@ -108,16 +89,7 @@ export default abstract class ItemTypeBuilder {
   readonly name: string;
   readonly type: ItemTypeBuilderType;
   readonly fields: Field[] = [];
-  readonly config: Required<ItemTypeBuilderConfig>;
-
-  private static readonly DEFAULT_CONFIG: Required<
-    Omit<ItemTypeBuilderConfig, "apiToken">
-  > = {
-    overwriteExistingFields: false,
-    debug: false,
-    modelApiKeySuffix: "",
-    blockApiKeySuffix: "",
-  };
+  readonly config: Required<DatoBuilderConfig>;
 
   // Persistent cache file for item definitions
   private static cacheFile = path.resolve(
@@ -140,10 +112,7 @@ export default abstract class ItemTypeBuilder {
     this.name = body.name;
     this.api = new DatoApi(buildClient({ apiToken: config.apiToken }));
 
-    this.config = {
-      ...ItemTypeBuilder.DEFAULT_CONFIG,
-      ...config,
-    } as Required<ItemTypeBuilderConfig>;
+    this.config = config;
 
     const apiKey =
       body.api_key ||
@@ -321,7 +290,7 @@ export default abstract class ItemTypeBuilder {
   private static computeHash(
     body: SimpleSchemaTypes.ItemTypeCreateSchema,
     fields: SimpleSchemaTypes.FieldCreateSchema[],
-    config: ItemTypeBuilderConfig,
+    config: DatoBuilderConfig,
   ): string {
     const sorted = [...fields].sort((a, b) =>
       a.api_key.localeCompare(b.api_key),

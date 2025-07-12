@@ -1,7 +1,5 @@
-import ItemTypeBuilder, {
-  type ItemTypeBuilderConfig,
-  type ItemTypeBuilderType,
-} from "./ItemTypeBuilder";
+import type { DatoBuilderConfig } from "./config/types";
+import ItemTypeBuilder, { type ItemTypeBuilderType } from "./ItemTypeBuilder";
 
 type BlockBuilderBody = {
   /**
@@ -19,7 +17,7 @@ type BlockBuilderBody = {
 type BlockBuilderOptions = {
   name: string;
   options?: BlockBuilderBody;
-  config: ItemTypeBuilderConfig;
+  config: Required<DatoBuilderConfig>;
 };
 
 export default class BlockBuilder extends ItemTypeBuilder {
