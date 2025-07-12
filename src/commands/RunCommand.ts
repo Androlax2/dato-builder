@@ -41,8 +41,9 @@ export class RunCommand {
   private readonly logger: ConsoleLogger;
 
   private buildPromises = new Map<string, Promise<string>>();
-
   private fileMap = new Map<string, FileInfo>();
+
+  private builtFromCache = new Set<string>();
 
   constructor({
     config,
@@ -71,6 +72,8 @@ export class RunCommand {
 
     this.logger.debug(`Build order determined: ${buildOrder.join(" -> ")}`);
 
+    this.builtFromCache.clear();
+
     const results = await Promise.allSettled(
       buildOrder.map(async (fileKey) => {
         const fileInfo = this.fileMap.get(fileKey);
@@ -82,10 +85,18 @@ export class RunCommand {
           let result: string;
           if (fileInfo.type === "block") {
             result = await this.getOrCreateBlock(fileInfo.name);
-            this.logger.success(`Block "${fileInfo.name}" built successfully`);
+            if (!this.builtFromCache.has(`block:${fileInfo.name}`)) {
+              this.logger.success(
+                `Block "${fileInfo.name}" built successfully`,
+              );
+            }
           } else {
             result = await this.getOrCreateModel(fileInfo.name);
-            this.logger.success(`Model "${fileInfo.name}" built successfully`);
+            if (!this.builtFromCache.has(`model:${fileInfo.name}`)) {
+              this.logger.success(
+                `Model "${fileInfo.name}" built successfully`,
+              );
+            }
           }
 
           return result;
@@ -108,6 +119,9 @@ export class RunCommand {
         );
       }
     });
+
+    // Log execution summary
+    this.logExecutionSummary(results);
   }
 
   private async analyzeDependencies() {
@@ -231,8 +245,43 @@ export class RunCommand {
     // Return cached ID if already built
     const cachedBlock = this.cache.get(`block:${name}`);
     if (cachedBlock) {
-      contextLogger.debug(`Using cached block ID: ${cachedBlock.id}`);
-      return cachedBlock.id;
+      contextLogger.debug(
+        `Found cached block: ${cachedBlock.id}, comparing hashes...`,
+      );
+
+      try {
+        const fileInfo = this.fileMap.get(`block:${name}`);
+
+        if (fileInfo) {
+          // Import and build the block to get current hash
+          const createBlock = await import(fileInfo.filePath);
+          const buildFunction = createBlock.default;
+
+          if (typeof buildFunction === "function") {
+            const builder = await buildFunction(this.getContext());
+
+            if (builder instanceof BlockBuilder) {
+              const currentHash = builder.getHash();
+
+              if (currentHash === cachedBlock.hash) {
+                contextLogger.debug(
+                  `Using cached block ID: ${cachedBlock.id} (hash match)`,
+                );
+                this.builtFromCache.add(`block:${name}`);
+                return cachedBlock.id;
+              } else {
+                contextLogger.debug(
+                  `Cache invalidated for block "${name}" (hash mismatch)`,
+                );
+              }
+            }
+          }
+        }
+      } catch (error: unknown) {
+        contextLogger.warn(
+          `Failed to verify cache for block "${name}": ${(error as Error).message}`,
+        );
+      }
     }
 
     // Return existing promise if currently building (prevents duplicate builds)
@@ -265,8 +314,43 @@ export class RunCommand {
     // Return cached ID if already built
     const cachedModel = this.cache.get(`model:${name}`);
     if (cachedModel) {
-      contextLogger.debug(`Using cached model ID: ${cachedModel.id}`);
-      return cachedModel.id;
+      contextLogger.debug(
+        `Found cached model: ${cachedModel.id}, comparing hashes...`,
+      );
+
+      try {
+        const fileInfo = this.fileMap.get(`model:${name}`);
+
+        if (fileInfo) {
+          // Import and build the model to get current hash
+          const createModel = await import(fileInfo.filePath);
+          const buildFunction = createModel.default;
+
+          if (typeof buildFunction === "function") {
+            const builder = await buildFunction(this.getContext());
+
+            if (builder instanceof ModelBuilder) {
+              const currentHash = builder.getHash();
+
+              if (currentHash === cachedModel.hash) {
+                contextLogger.debug(
+                  `Using cached model ID: ${cachedModel.id} (hash match)`,
+                );
+                this.builtFromCache.add(`model:${name}`);
+                return cachedModel.id;
+              } else {
+                contextLogger.debug(
+                  `Cache invalidated for model "${name}" (hash mismatch)`,
+                );
+              }
+            }
+          }
+        }
+      } catch (error: unknown) {
+        contextLogger.warn(
+          `Failed to verify cache for model "${name}": ${(error as Error).message}`,
+        );
+      }
     }
 
     // Return existing promise if currently building (prevents duplicate builds)
@@ -437,9 +521,56 @@ export class RunCommand {
         `No blocks or models found. Please ensure you have files in "${this.blocksPath}" or "${this.modelsPath}".`,
       );
     } else {
-      this.logger.info(
+      this.logger.debug(
         `Discovered ${blockFiles.length} blocks and ${modelFiles.length} models`,
       );
+    }
+  }
+
+  private logExecutionSummary(results: PromiseSettledResult<string>[]) {
+    const totalItems = results.length;
+    const successful = results.filter((r) => r.status === "fulfilled").length;
+    const failed = results.filter((r) => r.status === "rejected").length;
+    const fromCache = this.builtFromCache.size;
+    const actuallyBuilt = successful - fromCache;
+
+    const blocks = Array.from(this.fileMap.values()).filter(
+      (f) => f.type === "block",
+    );
+    const models = Array.from(this.fileMap.values()).filter(
+      (f) => f.type === "model",
+    );
+
+    const blocksFromCache = Array.from(this.builtFromCache).filter((key) =>
+      key.startsWith("block:"),
+    ).length;
+    const modelsFromCache = Array.from(this.builtFromCache).filter((key) =>
+      key.startsWith("model:"),
+    ).length;
+
+    this.logger.info("=== Execution Summary ===");
+    this.logger.info(`Total items processed: ${totalItems}`);
+    this.logger.info(`Successful: ${successful} | Failed: ${failed}`);
+    this.logger.info(
+      `Built from cache: ${fromCache} | Actually built: ${actuallyBuilt}`,
+    );
+    this.logger.info(
+      `Blocks: ${blocks.length} total (${blocksFromCache} cached, ${blocks.length - blocksFromCache} built)`,
+    );
+    this.logger.info(
+      `Models: ${models.length} total (${modelsFromCache} cached, ${models.length - modelsFromCache} built)`,
+    );
+
+    if (failed > 0) {
+      this.logger.warn(`⚠️  ${failed} item(s) failed to build`);
+    }
+
+    if (fromCache > 0) {
+      this.logger.info(`⚡ ${fromCache} item(s) loaded from cache`);
+    }
+
+    if (actuallyBuilt > 0) {
+      this.logger.info(`🔨 ${actuallyBuilt} item(s) built successfully`);
     }
   }
 }
