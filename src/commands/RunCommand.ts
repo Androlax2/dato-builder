@@ -1,8 +1,10 @@
 import path from "node:path";
 import { glob } from "glob";
-import type { DatoBuilderConfig } from "../config/types";
-import type ItemTypeBuilder from "../ItemTypeBuilder";
+import type BlockBuilder from "../BlockBuilder";
 import type { ConsoleLogger } from "../logger";
+import type ModelBuilder from "../ModelBuilder";
+import type { BuilderContext } from "../types/BuilderContext";
+import type { DatoBuilderConfig } from "../types/DatoBuilderConfig";
 
 type RunCommandOptions = {
   config: Required<DatoBuilderConfig>;
@@ -48,22 +50,56 @@ export class RunCommand {
       return;
     }
 
-    /*const [blockFiles, modelFiles] = await Promise.all([
+    const [blockFiles, modelFiles] = await Promise.all([
       this.getBlockFiles(),
       this.getModelFiles(),
     ]);
 
-    // 3. Build everything (with automatic deduplication)
-    const context = {
+    // Process all files and execute their builders
+    const allFiles = [...blockFiles, ...modelFiles];
+    this.logger.info(`Processing ${allFiles.length} files...`);
+
+    const results = await Promise.allSettled(
+      allFiles.map(async (file) => {
+        const name = this.getNameFromFilePath(file);
+        const type = this.getTypeFromFilePath(file);
+
+        try {
+          if (type === "block") {
+            const result = await this.getOrCreateBlock(name);
+            this.logger.success(`Built block "${name}" with ID: ${result}`);
+            return result;
+          } else {
+            const result = await this.getOrCreateModel(name);
+            this.logger.success(`Built model "${name}" with ID: ${result}`);
+            return result;
+          }
+        } catch (error: unknown) {
+          this.logger.error(
+            `Failed to build ${type} "${name}": ${
+              (error as Error).message || "Unknown error"
+            }`,
+          );
+          throw error;
+        }
+      }),
+    );
+
+    // Report results
+    const successful = results.filter((r) => r.status === "fulfilled").length;
+    const failed = results.filter((r) => r.status === "rejected").length;
+
+    this.logger.info(
+      `Build completed: ${successful} successful, ${failed} failed`,
+    );
+  }
+
+  private getContext(): BuilderContext {
+    return {
       config: this.config,
       getBlock: (name: string) => this.getOrCreateBlock(name),
       getModel: (name: string) => this.getOrCreateModel(name),
-    };*/
-
-    /*// Process all files but don't execute builders yet
-    for (const file of [...blockFiles, ...modelFiles]) {
-      await this.loadFile(file, context);
-    }*/
+    };
   }
 
   private async getOrCreateBlock(name: string): Promise<string> {
@@ -132,17 +168,20 @@ export class RunCommand {
     }
 
     const createBlock = await import(filePath);
-    const builder = createBlock.default({
-      config: this.config,
-      getBlock: (n: string) => this.getOrCreateBlock(n),
-      getModel: (n: string) => this.getOrCreateModel(n),
-    }) as ItemTypeBuilder;
+    const buildFunction = createBlock.default;
+
+    if (typeof buildFunction !== "function") {
+      throw new Error(`Block "${name}" does not export a default function`);
+    }
+
+    const builder = (await buildFunction(this.getContext())) as BlockBuilder;
 
     return await builder.upsert();
   }
 
   private async buildModel(name: string): Promise<string> {
     const filePath = this.fileMap.get(`model:${name}`);
+
     if (!filePath) {
       throw new Error(
         `Model "${name}" not found. Available models: ${Array.from(
@@ -155,11 +194,13 @@ export class RunCommand {
     }
 
     const createModel = await import(filePath);
-    const builder = createModel.default({
-      config: this.config,
-      getBlock: (n: string) => this.getOrCreateBlock(n),
-      getModel: (n: string) => this.getOrCreateModel(n),
-    }) as ItemTypeBuilder;
+    const buildFunction = createModel.default;
+
+    if (typeof buildFunction !== "function") {
+      throw new Error(`Model "${name}" does not export a default function`);
+    }
+
+    const builder = (await buildFunction(this.getContext())) as ModelBuilder;
 
     return await builder.upsert();
   }
@@ -201,5 +242,19 @@ export class RunCommand {
     return Array.from(this.fileMap.entries())
       .filter(([key]) => key.startsWith("model:"))
       .map(([, filePath]) => filePath);
+  }
+
+  private getNameFromFilePath(filePath: string): string {
+    return path.basename(filePath, path.extname(filePath));
+  }
+
+  private getTypeFromFilePath(filePath: string): "block" | "model" {
+    const entry = Array.from(this.fileMap.entries()).find(
+      ([, path]) => path === filePath,
+    );
+
+    if (!entry) throw new Error(`File path not found: ${filePath}`);
+
+    return entry[0].startsWith("block:") ? "block" : "model";
   }
 }

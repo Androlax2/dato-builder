@@ -4,10 +4,8 @@ import path from "node:path";
 import type * as SimpleSchemaTypes from "@datocms/cma-client/src/generated/SimpleSchemaTypes";
 import { buildClient } from "@datocms/cma-client-node";
 import DatoApi from "./Api/DatoApi";
-import GenericDatoError from "./Api/Error/GenericDatoError";
 import NotFoundError from "./Api/Error/NotFoundError";
 import UniquenessError from "./Api/Error/UniquenessError";
-import type { DatoBuilderConfig } from "./config/types";
 import AssetGallery, { type AssetGalleryConfig } from "./Fields/AssetGallery";
 import BooleanField, { type BooleanConfig } from "./Fields/Boolean";
 import BooleanRadioGroup, {
@@ -57,6 +55,7 @@ import StructuredText, {
 import Textarea, { type TextareaConfig } from "./Fields/Textarea";
 import Url, { type UrlConfig } from "./Fields/Url";
 import Wysiwyg, { type WysiwygConfig } from "./Fields/Wysiwyg";
+import type { DatoBuilderConfig } from "./types/DatoBuilderConfig";
 import { executeWithErrorHandling } from "./utils/errors";
 import { generateDatoApiKey } from "./utils/utils";
 
@@ -136,37 +135,25 @@ export default abstract class ItemTypeBuilder {
    */
   private static async acquireLock(maxAttempts = 10): Promise<boolean> {
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
-      try {
-        if (!fs.existsSync(ItemTypeBuilder.lockFile)) {
-          // Create the lock file
-          fs.writeFileSync(
-            ItemTypeBuilder.lockFile,
-            String(Date.now()),
-            "utf8",
-          );
-          return true;
-        }
-
-        // Check if the lock is stale (more than 30 seconds old)
-        const lockTime = Number.parseInt(
-          fs.readFileSync(ItemTypeBuilder.lockFile, "utf8"),
-        );
-        if (Date.now() - lockTime > 30000) {
-          // Lock is stale, override it
-          fs.writeFileSync(
-            ItemTypeBuilder.lockFile,
-            String(Date.now()),
-            "utf8",
-          );
-          return true;
-        }
-
-        // Wait with exponential backoff
-        const waitTime = Math.min(100 * 2 ** attempt, 2000);
-        await new Promise((resolve) => setTimeout(resolve, waitTime));
-      } catch (err) {
-        console.warn(`Failed to acquire lock on attempt ${attempt + 1}:`, err);
+      if (!fs.existsSync(ItemTypeBuilder.lockFile)) {
+        // Create the lock file
+        fs.writeFileSync(ItemTypeBuilder.lockFile, String(Date.now()), "utf8");
+        return true;
       }
+
+      // Check if the lock is stale (more than 30 seconds old)
+      const lockTime = Number.parseInt(
+        fs.readFileSync(ItemTypeBuilder.lockFile, "utf8"),
+      );
+      if (Date.now() - lockTime > 30000) {
+        // Lock is stale, override it
+        fs.writeFileSync(ItemTypeBuilder.lockFile, String(Date.now()), "utf8");
+        return true;
+      }
+
+      // Wait with exponential backoff
+      const waitTime = Math.min(100 * 2 ** attempt, 2000);
+      await new Promise((resolve) => setTimeout(resolve, waitTime));
     }
 
     return false;
@@ -176,12 +163,8 @@ export default abstract class ItemTypeBuilder {
    * Release the lock for cache operations
    */
   private static releaseLock(): void {
-    try {
-      if (fs.existsSync(ItemTypeBuilder.lockFile)) {
-        fs.unlinkSync(ItemTypeBuilder.lockFile);
-      }
-    } catch (err) {
-      console.warn("Failed to release lock:", err);
+    if (fs.existsSync(ItemTypeBuilder.lockFile)) {
+      fs.unlinkSync(ItemTypeBuilder.lockFile);
     }
   }
 
@@ -207,16 +190,12 @@ export default abstract class ItemTypeBuilder {
       await ItemTypeBuilder.acquireLock();
 
       if (fs.existsSync(ItemTypeBuilder.cacheFile)) {
-        try {
-          const data = fs.readFileSync(ItemTypeBuilder.cacheFile, "utf8");
-          const obj = JSON.parse(data) as Record<
-            string,
-            { hash: string; id: string }
-          >;
-          ItemTypeBuilder.itemCache = new Map(Object.entries(obj));
-        } catch (e) {
-          console.warn("Failed to load itemTypeBuilder cache:", e);
-        }
+        const data = fs.readFileSync(ItemTypeBuilder.cacheFile, "utf8");
+        const obj = JSON.parse(data) as Record<
+          string,
+          { hash: string; id: string }
+        >;
+        ItemTypeBuilder.itemCache = new Map(Object.entries(obj));
       }
       ItemTypeBuilder.cacheLoaded = true;
     } finally {
@@ -232,12 +211,11 @@ export default abstract class ItemTypeBuilder {
     if (fs.existsSync(ItemTypeBuilder.cacheFile)) {
       try {
         fs.unlinkSync(ItemTypeBuilder.cacheFile);
-        console.log("✅ ItemTypeBuilder cache file removed.");
-      } catch (e) {
-        console.warn("⚠️  Failed to delete cache file:", e);
+      } catch (error: unknown) {
+        throw new Error(
+          `Failed to clear itemTypeBuilder cache file: ${(error as Error).message || "Unknown error"}`,
+        );
       }
-    } else {
-      console.log("⚠️  No cache file found, nothing to clear.");
     }
   }
 
@@ -245,9 +223,6 @@ export default abstract class ItemTypeBuilder {
     try {
       const locked = await ItemTypeBuilder.acquireLock();
       if (!locked) {
-        console.warn(
-          "Failed to acquire lock for saving cache, will try again later",
-        );
         return;
       }
 
@@ -262,8 +237,10 @@ export default abstract class ItemTypeBuilder {
           JSON.stringify(obj, null, 2),
           "utf8",
         );
-      } catch (e) {
-        console.warn("Failed to save itemTypeBuilder cache:", e);
+      } catch (error: unknown) {
+        throw new Error(
+          `Failed to save itemTypeBuilder cache file: ${(error as Error).message || "Unknown error"}`,
+        );
       }
     } finally {
       ItemTypeBuilder.releaseLock();
@@ -321,7 +298,7 @@ export default abstract class ItemTypeBuilder {
     return ItemTypeBuilder.computeHash(this.body, defs, this.config);
   }
 
-  private resolveSuffix(): string | undefined {
+  private resolveSuffix(): string | null | undefined {
     switch (this.type) {
       case "model":
         return this.config.modelApiKeySuffix;
@@ -847,9 +824,8 @@ export default abstract class ItemTypeBuilder {
     if (pendingOp) {
       try {
         return await pendingOp.promise;
-      } catch (error) {
+      } catch (_error) {
         // If the pending operation failed, we'll try our own operation
-        console.warn(`Pending operation for "${this.name}" failed:`, error);
         return undefined;
       }
     }
@@ -880,9 +856,6 @@ export default abstract class ItemTypeBuilder {
     );
 
     if (!this.config.overwriteExistingFields) {
-      console.info(
-        `Skipping update/delete of existing fields for "${this.name}" because overwriteExistingFields is set to false. Manual changes in the DatoCMS dashboard will not be overwritten.`,
-      );
       return;
     }
 
@@ -941,9 +914,6 @@ export default abstract class ItemTypeBuilder {
     // Check if already in cache with matching hash
     const cached = await ItemTypeBuilder.getCache(apiKey);
     if (cached && cached.hash === hash) {
-      console.info(
-        `Create skipped: "${this.name}" unchanged (id=${cached.id})`,
-      );
       return cached.id;
     }
 
@@ -956,7 +926,6 @@ export default abstract class ItemTypeBuilder {
         );
         await this.syncFields(item.id);
         await ItemTypeBuilder.setCache(apiKey, hash, item.id);
-        console.info(`Created item type "${this.name}" (id=${item.id})`);
         return item.id;
       } catch (error: unknown) {
         if (error instanceof UniquenessError) {
@@ -968,11 +937,6 @@ export default abstract class ItemTypeBuilder {
           return existing.id;
         }
 
-        if (error instanceof GenericDatoError) {
-          console.error(
-            `Failed to create item type "${this.name}": ${error.message}`,
-          );
-        }
         throw error;
       }
     };
@@ -993,34 +957,21 @@ export default abstract class ItemTypeBuilder {
     // Check cache: skip if nothing changed
     const cached = await ItemTypeBuilder.getCache(apiKey);
     if (cached && cached.hash === hash) {
-      console.info(
-        `Update skipped: "${this.name}" unchanged (id=${cached.id})`,
-      );
       return cached.id;
     }
 
     // Wrap the actual API call in an operation promise
     const operation = async (): Promise<string> => {
-      try {
-        // Attempt the update
-        const item = await this.api.call(() =>
-          this.api.client.itemTypes.update(apiKey, this.body),
-        );
-        await this.syncFields(item.id);
+      // Attempt the update
+      const item = await this.api.call(() =>
+        this.api.client.itemTypes.update(apiKey, this.body),
+      );
+      await this.syncFields(item.id);
 
-        // Persist to cache
-        await ItemTypeBuilder.setCache(apiKey, hash, item.id);
+      // Persist to cache
+      await ItemTypeBuilder.setCache(apiKey, hash, item.id);
 
-        console.info(`Updated item type "${this.name}" (id=${item.id})`);
-        return item.id;
-      } catch (err: unknown) {
-        if (err instanceof GenericDatoError) {
-          console.error(
-            `Failed to update item type "${this.name}": ${err.message}`,
-          );
-        }
-        throw err;
-      }
+      return item.id;
     };
 
     // Register & return a single in‐flight promise

@@ -1,14 +1,16 @@
 import pluralize from "pluralize";
 
+interface DatoApiKeyOptions {
+  name: string;
+  suffix?: string | null;
+  preservePlural?: boolean;
+}
+
 export function generateDatoApiKey({
   name,
   suffix,
   preservePlural = true,
-}: {
-  name: string;
-  suffix?: string;
-  preservePlural?: boolean;
-}): string {
+}: DatoApiKeyOptions): string {
   let result = name.toLowerCase();
 
   // Remove apostrophes (for possessive forms)
