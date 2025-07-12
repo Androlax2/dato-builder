@@ -1,3 +1,4 @@
+import { ConsoleLogger, LogLevel } from "../logger";
 import type { DateRangeValidatorConfig } from "./DateRangeValidator";
 import DateRangeValidator from "./DateRangeValidator";
 import DateTimeRangeValidator, {
@@ -87,8 +88,14 @@ export type ValidatorConfig = Partial<{
 
 export default class Validators {
   private validators: Validator[] = [];
+  private logger: ConsoleLogger;
 
   constructor(config: ValidatorConfig = {}) {
+    this.logger = new ConsoleLogger(LogLevel.ERROR);
+    this.logger.trace("Initializing validators", {
+      configKeys: Object.keys(config),
+    });
+
     const validatorMap: {
       [key: string]: {
         ValidatorClass: new (
@@ -197,22 +204,35 @@ export default class Validators {
     ] of Object.entries(validatorMap)) {
       if (validatorConfig !== undefined) {
         try {
+          this.logger.trace("Creating validator", {
+            key,
+            config: validatorConfig,
+          });
           const validator = new ValidatorClass(validatorConfig);
           this.validators.push(validator);
         } catch (error) {
-          console.error(`Error creating validator for ${key}: ${error}`);
+          this.logger.error(`Error creating validator for ${key}: ${error}`);
         }
       }
     }
+
+    this.logger.trace("Validators initialization completed", {
+      validatorCount: this.validators.length,
+    });
   }
 
   build(): Record<string, object | undefined> {
-    return this.validators.reduce(
+    this.logger.trace("Building validators configuration");
+    const result = this.validators.reduce(
       (result, validator) => {
         result[validator.key] = validator.build();
         return result;
       },
       {} as Record<string, object | undefined>,
     );
+    this.logger.trace("Validators configuration built", {
+      validatorCount: Object.keys(result).length,
+    });
+    return result;
   }
 }

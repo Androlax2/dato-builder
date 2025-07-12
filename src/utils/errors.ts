@@ -1,4 +1,5 @@
 import type GenericDatoError from "../Api/Error/GenericDatoError";
+import { ConsoleLogger, LogLevel } from "../logger";
 
 /**
  * Operation types for error messaging
@@ -55,11 +56,17 @@ export function createUserFriendlyErrorMessage(
     );
 
     // Add technical details for developers
-    message += `\n\nTechnical details: [${datoError.info.outerCode}/${datoError.info.innerCode || ""}] ${JSON.stringify(errorDetails)}`;
+    message += `\n\nTechnical details: [${datoError.info.outerCode}/${
+      datoError.info.innerCode || ""
+    }] ${JSON.stringify(errorDetails)}`;
 
     // Add resource definition as debug info for create/update operations
     if ((operation === "create" || operation === "update") && resourceDef) {
-      message += `\n\n${resourceType} definition: ${JSON.stringify(resourceDef, null, 2)}`;
+      message += `\n\n${resourceType} definition: ${JSON.stringify(
+        resourceDef,
+        null,
+        2,
+      )}`;
     }
 
     return message;
@@ -150,7 +157,14 @@ export async function executeWithErrorHandling<T>(
   resourceDef?: { api_key: string; [key: string]: any },
   existingResource?: ResourceWithKey,
 ): Promise<T> {
+  const logger = new ConsoleLogger(LogLevel.ERROR);
+
   try {
+    logger.trace("Executing API call", {
+      operation,
+      resourceType,
+      resourceKey: resourceDef?.api_key || existingResource?.api_key,
+    });
     return await apiCall();
   } catch (error: unknown) {
     const errorMessage = createUserFriendlyErrorMessage(
@@ -160,7 +174,7 @@ export async function executeWithErrorHandling<T>(
       resourceDef,
       existingResource,
     );
-    console.error(errorMessage);
+    logger.error(errorMessage);
     throw error;
   }
 }
