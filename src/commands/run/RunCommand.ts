@@ -258,54 +258,79 @@ export class RunCommand {
 
       // If we have builds in progress, wait for at least one to complete
       if (inProgress.size > 0) {
-        const promises = Array.from(inProgress.entries()).map(
-          async ([fileKey, promise]) => ({
+        // Wait for ALL in-progress builds to complete, not just one
+        const inProgressEntries = Array.from(inProgress.entries());
+        const completedBuilds = await Promise.allSettled(
+          inProgressEntries.map(async ([fileKey, promise]) => ({
             fileKey,
             result: await promise,
-          }),
+          })),
         );
 
-        // Wait for the first one to complete
-        const { fileKey, result } = await Promise.race(promises);
+        // Process all completed builds
+        for (const buildResult of completedBuilds) {
+          if (buildResult.status === "fulfilled") {
+            const { fileKey, result } = buildResult.value;
 
-        // Remove from in progress and add to completed
-        inProgress.delete(fileKey);
-        completed.add(fileKey);
-        results.push(result);
+            // Remove from in progress and add to completed
+            inProgress.delete(fileKey);
+            completed.add(fileKey);
+            results.push(result);
 
-        const fileInfo = fileMap.get(fileKey);
-        if (fileInfo) {
-          if (result.success) {
-            const status = result.fromCache ? "(from cache)" : "(built)";
-            this.logger.success(`${fileInfo.type}: ${fileInfo.name} ${status}`);
+            const fileInfo = fileMap.get(fileKey);
+            if (fileInfo) {
+              if (result.success) {
+                const status = result.fromCache ? "(from cache)" : "(built)";
+                this.logger.success(
+                  `${fileInfo.type}: ${fileInfo.name} ${status}`,
+                );
+              } else {
+                const errorMessage =
+                  result.error instanceof Error
+                    ? result.error.message
+                    : String(result.error);
+
+                this.logger.error(
+                  `${fileInfo.type}: ${fileInfo.name} - ${errorMessage}`,
+                );
+              }
+            }
           } else {
-            const errorMessage =
-              result.error instanceof Error
-                ? result.error.message
-                : String(result.error);
-
-            this.logger.error(
-              `${fileInfo.type}: ${fileInfo.name} - ${errorMessage}`,
-            );
+            // Handle rejected promises
+            this.logger.error(`Build promise rejected: ${buildResult.reason}`);
           }
         }
+
+        // Clear the inProgress map since we've processed all builds
+        inProgress.clear();
       }
 
       // Safety check to prevent infinite loops
-      if (
-        pending.size > 0 &&
-        inProgress.size === 0 &&
-        readyToBuild.length === 0
-      ) {
-        this.logger.error(
-          "Dependency deadlock detected. Some items cannot be built due to circular or missing dependencies.",
+      if (pending.size > 0 && inProgress.size === 0) {
+        const readyToBuildAfterCompletion = Array.from(pending).filter(
+          (fileKey) => {
+            const deps = dependsOn.get(fileKey) || new Set();
+            return Array.from(deps).every((dep) => completed.has(dep));
+          },
         );
-        const remainingItems = Array.from(pending).map((key) => {
-          const fileInfo = fileMap.get(key);
-          return fileInfo ? `${fileInfo.type}:${fileInfo.name}` : key;
-        });
-        this.logger.error(`Remaining items: ${remainingItems.join(", ")}`);
-        break;
+
+        if (readyToBuildAfterCompletion.length === 0) {
+          this.logger.error(
+            "Dependency deadlock detected. Some items cannot be built due to circular or missing dependencies.",
+          );
+          const remainingItems = Array.from(pending).map((key) => {
+            const fileInfo = fileMap.get(key);
+            const deps = dependsOn.get(key) || new Set();
+            const missingDeps = Array.from(deps).filter(
+              (dep) => !completed.has(dep),
+            );
+            return fileInfo
+              ? `${fileInfo.type}:${fileInfo.name} (missing deps: ${missingDeps.join(", ")})`
+              : key;
+          });
+          this.logger.error(`Remaining items: ${remainingItems.join(", ")}`);
+          break;
+        }
       }
     }
 
