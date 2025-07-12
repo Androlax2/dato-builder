@@ -1,8 +1,8 @@
-import type { DatoBuilderConfig } from "./config/types";
 import ItemTypeBuilder, {
   type ItemTypeBuilderBody,
   type ItemTypeBuilderType,
 } from "./ItemTypeBuilder";
+import type { DatoBuilderConfig } from "./types/DatoBuilderConfig";
 
 type ModelBuilderOptions = {
   name: string;

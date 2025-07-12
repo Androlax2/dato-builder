@@ -108,7 +108,7 @@ export default abstract class ItemTypeBuilder {
     };
   }
 
-  public getContentHash(): string {
+  public getHash(): string {
     return createHash("sha256")
       .update(
         JSON.stringify({

@@ -1,6 +1,7 @@
 import path from "node:path";
 import { glob } from "glob";
 import BlockBuilder from "../BlockBuilder";
+import type { ItemTypeCacheManager } from "../cache/ItemTypeCacheManager";
 import type { ConsoleLogger } from "../logger";
 import ModelBuilder from "../ModelBuilder";
 import type { BuilderContext } from "../types/BuilderContext";
@@ -8,6 +9,7 @@ import type { DatoBuilderConfig } from "../types/DatoBuilderConfig";
 
 type RunCommandOptions = {
   config: Required<DatoBuilderConfig>;
+  cache: ItemTypeCacheManager;
   logger: ConsoleLogger;
   /**
    * Path to the directory containing block files.
@@ -25,6 +27,7 @@ type RunCommandOptions = {
 
 interface FileInfo {
   name: string;
+  builder?: BlockBuilder | ModelBuilder;
   type: "block" | "model";
   filePath: string;
   dependencies: Set<string>;
@@ -32,19 +35,24 @@ interface FileInfo {
 
 export class RunCommand {
   private readonly config: Required<DatoBuilderConfig>;
+  private readonly cache: ItemTypeCacheManager;
   private readonly blocksPath: string;
   private readonly modelsPath: string;
   private readonly logger: ConsoleLogger;
-
-  private blockCache = new Map<string, string>();
-  private modelCache = new Map<string, string>();
 
   private buildPromises = new Map<string, Promise<string>>();
 
   private fileMap = new Map<string, FileInfo>();
 
-  constructor({ config, logger, blocksPath, modelsPath }: RunCommandOptions) {
+  constructor({
+    config,
+    cache,
+    logger,
+    blocksPath,
+    modelsPath,
+  }: RunCommandOptions) {
     this.config = config;
+    this.cache = cache;
     this.blocksPath = blocksPath ?? "./datocms/blocks";
     this.modelsPath = modelsPath ?? "./datocms/models";
     this.logger = logger;
@@ -79,6 +87,7 @@ export class RunCommand {
             result = await this.getOrCreateModel(fileInfo.name);
             this.logger.success(`Model "${fileInfo.name}" built successfully`);
           }
+
           return result;
         } catch (error: unknown) {
           this.logger.error(
@@ -220,10 +229,10 @@ export class RunCommand {
     });
 
     // Return cached ID if already built
-    const cachedId = this.blockCache.get(name);
-    if (cachedId) {
-      contextLogger.debug(`Using cached block ID: ${cachedId}`);
-      return cachedId;
+    const cachedBlock = this.cache.get(`block:${name}`);
+    if (cachedBlock) {
+      contextLogger.debug(`Using cached block ID: ${cachedBlock.id}`);
+      return cachedBlock.id;
     }
 
     // Return existing promise if currently building (prevents duplicate builds)
@@ -240,7 +249,6 @@ export class RunCommand {
 
     try {
       const itemTypeId = await buildPromise;
-      this.blockCache.set(name, itemTypeId);
       contextLogger.debug(`Block built with ID: ${itemTypeId}`);
       return itemTypeId;
     } finally {
@@ -255,10 +263,10 @@ export class RunCommand {
     });
 
     // Return cached ID if already built
-    const cachedId = this.modelCache.get(name);
-    if (cachedId) {
-      contextLogger.debug(`Using cached model ID: ${cachedId}`);
-      return cachedId;
+    const cachedModel = this.cache.get(`model:${name}`);
+    if (cachedModel) {
+      contextLogger.debug(`Using cached model ID: ${cachedModel.id}`);
+      return cachedModel.id;
     }
 
     // Return existing promise if currently building (prevents duplicate builds)
@@ -273,7 +281,6 @@ export class RunCommand {
 
     try {
       const itemTypeId = await buildPromise;
-      this.modelCache.set(name, itemTypeId);
       contextLogger.debug(`Model built with ID: ${itemTypeId}`);
       return itemTypeId;
     } finally {
@@ -317,7 +324,27 @@ export class RunCommand {
       );
     }
 
-    return await builder.upsert();
+    fileInfo.builder = builder;
+
+    const blockId = await builder.upsert();
+
+    try {
+      contextLogger.debug(`Caching block "${name}" with ID: ${blockId}`);
+
+      await this.cache.set(`block:${name}`, {
+        id: blockId,
+        hash: builder.getHash(),
+      });
+
+      contextLogger.debug(`Block "${name}" cached with ID: ${blockId}`);
+    } catch (error: unknown) {
+      contextLogger.warn(
+        `Failed to cache block "${name}": ${(error as Error).message}`,
+      );
+      // Continue without caching if it fails
+    }
+
+    return blockId;
   }
 
   private async buildModel(name: string): Promise<string> {
@@ -356,7 +383,27 @@ export class RunCommand {
       );
     }
 
-    return await builder.upsert();
+    fileInfo.builder = builder;
+
+    const modelId = await builder.upsert();
+
+    try {
+      contextLogger.debug(`Caching model "${name}" with ID: ${modelId}`);
+
+      await this.cache.set(`model:${name}`, {
+        id: modelId,
+        hash: builder.getHash(),
+      });
+
+      contextLogger.debug(`Model "${name}" cached with ID: ${modelId}`);
+    } catch (error: unknown) {
+      contextLogger.warn(
+        `Failed to cache model "${name}": ${(error as Error).message}`,
+      );
+      // Continue without caching if it fails
+    }
+
+    return modelId;
   }
 
   private async discoverAllFiles() {
