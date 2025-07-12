@@ -20,7 +20,7 @@ export class ConfigParser {
     this.logger = logger;
   }
 
-  public async loadConfig(): Promise<DatoBuilderConfig> {
+  public async loadConfig(): Promise<Required<DatoBuilderConfig>> {
     const configPath = await this.getConfigFilePath();
 
     this.logger.info(`Loading config from ${configPath}`);
@@ -31,15 +31,12 @@ export class ConfigParser {
       throw new Error("Unable to load dato-builder config file");
     }
 
-    return await this.validateConfig({
+    return this.validateConfig({
       ...ConfigParser.DEFAULTS,
-      ...userConfig.default,
+      ...(userConfig.default as DatoBuilderConfig),
     });
   }
 
-  /**
-   * Get config file path
-   */
   private async getConfigFilePath(): Promise<string> {
     const possiblePaths = [
       path.resolve(process.cwd(), "dato-builder.config.js"),
@@ -55,12 +52,7 @@ export class ConfigParser {
     throw new Error("No dato-builder config file found");
   }
 
-  /**
-   * Validate config
-   */
-  private async validateConfig(
-    config: DatoBuilderConfig,
-  ): Promise<DatoBuilderConfig> {
+  private validateConfig<T extends DatoBuilderConfig>(config: T): T {
     if (!config.apiToken) {
       throw new Error("Validation error: Missing apiToken");
     }

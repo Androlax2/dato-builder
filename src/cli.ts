@@ -1,21 +1,28 @@
 import { ConfigParser } from "./config/parser";
+import type { DatoBuilderConfig } from "./config/types";
 import { ConsoleLogger } from "./logger";
 
 export class CLI {
-  private readonly configParser: ConfigParser;
+  private readonly config: Required<DatoBuilderConfig>;
 
-  constructor(configParser: ConfigParser) {
-    this.configParser = configParser;
+  public constructor(config: Required<DatoBuilderConfig>) {
+    this.config = config;
   }
 
   public async main() {
-    const config = await this.configParser.loadConfig();
-    console.log({ config });
+    console.log(this.config);
   }
 }
 
 // TODO: Remove that after and build it inside build and call it from bin/cli.js
 const consoleLogger = new ConsoleLogger();
-const configParser = new ConfigParser(consoleLogger);
 
-new CLI(configParser).main().catch((error) => consoleLogger.error(error));
+(async () => {
+  const configParser = new ConfigParser(consoleLogger);
+  const config = await configParser.loadConfig();
+
+  void new CLI(config).main();
+})().catch((error) => {
+  consoleLogger.error(error);
+  process.exit(1);
+});
