@@ -1,7 +1,7 @@
 import type { Validator } from "./types";
 
 export type RichTextBlocksValidatorConfig = {
-  item_types: (string | Promise<string>)[];
+  item_types: string[];
 };
 
 export default class RichTextBlocksValidator implements Validator {
@@ -19,16 +19,7 @@ export default class RichTextBlocksValidator implements Validator {
     }
   }
 
-  async build() {
-    const resolvedItemTypes = await Promise.all(
-      this.config.item_types.map(async (itemType) => {
-        // If it's a promise, await it; otherwise return as-is
-        return typeof itemType === "string" ? itemType : await itemType;
-      }),
-    );
-
-    return {
-      item_types: resolvedItemTypes,
-    };
+  build() {
+    return this.config;
   }
 }

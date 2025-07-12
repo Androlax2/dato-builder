@@ -228,6 +228,7 @@ export class RunCommand {
 
     // Return existing promise if currently building (prevents duplicate builds)
     const existingPromise = this.buildPromises.get(`block:${name}`);
+
     if (existingPromise) {
       contextLogger.debug("Waiting for existing build promise");
       return existingPromise;
