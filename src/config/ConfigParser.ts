@@ -11,8 +11,8 @@ export class ConfigParser {
     "apiToken"
   > = {
     overwriteExistingFields: false,
-    modelApiKeySuffix: null,
-    blockApiKeySuffix: null,
+    modelApiKeySuffix: "model",
+    blockApiKeySuffix: "block",
     blocksPath: path.resolve(process.cwd(), "datocms", "blocks"),
     modelsPath: path.resolve(process.cwd(), "datocms", "models"),
     logLevel: LogLevel.INFO,
