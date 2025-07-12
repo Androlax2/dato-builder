@@ -5,7 +5,25 @@ import ModelBuilder from "../../ModelBuilder";
 import type { BuilderContext } from "../../types/BuilderContext";
 import type { FileInfo } from "./types";
 
+export class ItemBuildError extends Error {
+  constructor(
+    message: string,
+    public readonly itemType: string,
+    public readonly itemName: string,
+    public readonly cause?: Error,
+  ) {
+    super(message);
+    this.name = "ItemBuildError";
+  }
+}
+
 export class ItemBuilder {
+  // Cache for loaded modules to avoid repeated imports
+  private moduleCache = new Map<string, any>();
+
+  // Cache for computed hashes to avoid recomputation
+  private hashCache = new Map<string, string>();
+
   constructor(
     private cache: ItemTypeCacheManager,
     private logger: ConsoleLogger,
@@ -20,15 +38,24 @@ export class ItemBuilder {
       operation: "build",
     });
 
-    // Try to use cache first
-    const cachedResult = await this.tryUseCache(fileInfo, contextLogger);
-    if (cachedResult) {
-      return { id: cachedResult, fromCache: true };
-    }
+    try {
+      // Try to use cache first
+      const cachedResult = await this.tryUseCache(fileInfo, contextLogger);
+      if (cachedResult) {
+        return { id: cachedResult, fromCache: true };
+      }
 
-    // Build the item
-    const id = await this.buildFromSource(fileInfo, contextLogger);
-    return { id, fromCache: false };
+      // Build the item
+      const id = await this.buildFromSource(fileInfo, contextLogger);
+      return { id, fromCache: false };
+    } catch (error) {
+      throw new ItemBuildError(
+        `Failed to build ${fileInfo.type} "${fileInfo.name}": ${(error as Error).message}`,
+        fileInfo.type,
+        fileInfo.name,
+        error as Error,
+      );
+    }
   }
 
   private async tryUseCache(
@@ -54,6 +81,8 @@ export class ItemBuilder {
         logger.debug(
           `Cache invalidated for ${fileInfo.type} "${fileInfo.name}" (hash mismatch)`,
         );
+        // Clear hash cache since it's stale
+        this.hashCache.delete(fileInfo.filePath);
         return null;
       }
     } catch (error: unknown) {
@@ -65,30 +94,19 @@ export class ItemBuilder {
   }
 
   private async computeHash(fileInfo: FileInfo): Promise<string> {
-    const moduleExports = await import(fileInfo.filePath);
-    const buildFunction = moduleExports.default;
-
-    if (typeof buildFunction !== "function") {
-      throw new Error(
-        `${fileInfo.type} "${fileInfo.name}" does not export a default function`,
-      );
+    // Check hash cache first
+    const cachedHash = this.hashCache.get(fileInfo.filePath);
+    if (cachedHash) {
+      return cachedHash;
     }
 
-    const builder = await buildFunction(this.getContext());
+    const builder = await this.loadAndValidateBuilder(fileInfo);
+    const hash = builder.getHash();
 
-    if (fileInfo.type === "block" && !(builder instanceof BlockBuilder)) {
-      throw new Error(
-        `Block "${fileInfo.name}" must return an instance of BlockBuilder`,
-      );
-    }
+    // Cache the hash
+    this.hashCache.set(fileInfo.filePath, hash);
 
-    if (fileInfo.type === "model" && !(builder instanceof ModelBuilder)) {
-      throw new Error(
-        `Model "${fileInfo.name}" must return an instance of ModelBuilder`,
-      );
-    }
-
-    return builder.getHash();
+    return hash;
   }
 
   private async buildFromSource(
@@ -97,7 +115,20 @@ export class ItemBuilder {
   ): Promise<string> {
     logger.debug(`Building ${fileInfo.type} from: ${fileInfo.filePath}`);
 
-    const moduleExports = await import(fileInfo.filePath);
+    const builder = await this.loadAndValidateBuilder(fileInfo);
+    const id = await builder.upsert();
+
+    // Cache the result
+    await this.cacheResult(fileInfo, id, builder, logger);
+
+    return id;
+  }
+
+  private async loadAndValidateBuilder(
+    fileInfo: FileInfo,
+  ): Promise<BlockBuilder | ModelBuilder> {
+    // Load module (with caching)
+    const moduleExports = await this.loadModule(fileInfo.filePath);
     const buildFunction = moduleExports.default;
 
     if (typeof buildFunction !== "function") {
@@ -106,8 +137,33 @@ export class ItemBuilder {
       );
     }
 
+    // Execute build function
     const builder = await buildFunction(this.getContext());
 
+    // Validate builder type
+    this.validateBuilderType(fileInfo, builder);
+
+    return builder;
+  }
+
+  private async loadModule(filePath: string): Promise<any> {
+    // Check module cache first
+    const cachedModule = this.moduleCache.get(filePath);
+    if (cachedModule) {
+      return cachedModule;
+    }
+
+    // Load and cache module
+    const moduleExports = await import(filePath);
+    this.moduleCache.set(filePath, moduleExports);
+
+    return moduleExports;
+  }
+
+  private validateBuilderType(
+    fileInfo: FileInfo,
+    builder: any,
+  ): asserts builder is BlockBuilder | ModelBuilder {
     if (fileInfo.type === "block" && !(builder instanceof BlockBuilder)) {
       throw new Error(
         `Block "${fileInfo.name}" must return an instance of BlockBuilder`,
@@ -119,13 +175,6 @@ export class ItemBuilder {
         `Model "${fileInfo.name}" must return an instance of ModelBuilder`,
       );
     }
-
-    const id = await builder.upsert();
-
-    // Cache the result
-    await this.cacheResult(fileInfo, id, builder, logger);
-
-    return id;
   }
 
   private async cacheResult(
@@ -136,15 +185,16 @@ export class ItemBuilder {
   ): Promise<void> {
     try {
       const cacheKey = `${fileInfo.type}:${fileInfo.name}`;
+      const hash = builder.getHash();
 
       logger.debug(
         `Caching ${fileInfo.type} "${fileInfo.name}" with ID: ${id}`,
       );
 
-      await this.cache.set(cacheKey, {
-        id,
-        hash: builder.getHash(),
-      });
+      await this.cache.set(cacheKey, { id, hash });
+
+      // Update hash cache
+      this.hashCache.set(fileInfo.filePath, hash);
 
       logger.debug(`${fileInfo.type} "${fileInfo.name}" cached with ID: ${id}`);
     } catch (error: unknown) {
@@ -152,5 +202,17 @@ export class ItemBuilder {
         `Failed to cache ${fileInfo.type} "${fileInfo.name}": ${(error as Error).message}`,
       );
     }
+  }
+
+  public clearCaches(): void {
+    this.moduleCache.clear();
+    this.hashCache.clear();
+  }
+
+  public getCacheStats(): { moduleCache: number; hashCache: number } {
+    return {
+      moduleCache: this.moduleCache.size,
+      hashCache: this.hashCache.size,
+    };
   }
 }
