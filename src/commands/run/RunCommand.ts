@@ -19,6 +19,7 @@ interface RunCommandOptions {
   logger: ConsoleLogger;
   enableDeletion?: boolean;
   skipDeletionConfirmation?: boolean;
+  concurrency?: number;
 }
 
 // Custom error for item not found
@@ -47,6 +48,7 @@ export class RunCommand {
   private readonly deletionManager: DeletionManager;
   private readonly enableDeletion: boolean;
   private readonly skipDeletionConfirmation: boolean;
+  private readonly concurrency: number;
 
   private fileMap: Map<string, FileInfo> | null = null;
 
@@ -56,6 +58,7 @@ export class RunCommand {
     logger,
     enableDeletion = true,
     skipDeletionConfirmation = false,
+    concurrency = 1,
   }: RunCommandOptions) {
     this.logger = logger;
 
@@ -74,6 +77,7 @@ export class RunCommand {
     this.cache = cache;
     this.enableDeletion = enableDeletion;
     this.skipDeletionConfirmation = skipDeletionConfirmation;
+    this.concurrency = concurrency;
 
     this.fileDiscoverer = new FileDiscoverer(
       this.config.blocksPath,
@@ -147,6 +151,20 @@ export class RunCommand {
     fileMap: Map<string, FileInfo>,
     buildOrder: string[],
   ): Promise<BuildResult[]> {
+    if (this.concurrency <= 1) {
+      return this.buildSequentially(fileMap, buildOrder);
+    }
+
+    return this.buildConcurrently(fileMap, buildOrder);
+  }
+
+  /**
+   * Original sequential build logic
+   */
+  private async buildSequentially(
+    fileMap: Map<string, FileInfo>,
+    buildOrder: string[],
+  ): Promise<BuildResult[]> {
     const results: BuildResult[] = [];
 
     for (const fileKey of buildOrder) {
@@ -190,6 +208,151 @@ export class RunCommand {
     }
 
     return results;
+  }
+
+  /**
+   * Concurrent build execution that respects dependencies
+   */
+  private async buildConcurrently(
+    fileMap: Map<string, FileInfo>,
+    buildOrder: string[],
+  ): Promise<BuildResult[]> {
+    const results: BuildResult[] = [];
+    const completed = new Set<string>();
+    const inProgress = new Map<string, Promise<BuildResult>>();
+    const pending = new Set(buildOrder);
+
+    // Build dependency map for quick lookup
+    const dependsOn = new Map<string, Set<string>>();
+    for (const [fileKey, fileInfo] of fileMap) {
+      dependsOn.set(fileKey, new Set(fileInfo.dependencies || []));
+    }
+
+    this.logger.traceJson("Starting concurrent build", {
+      totalItems: buildOrder.length,
+      concurrency: this.concurrency,
+    });
+
+    // Keep building until all items are processed
+    while (pending.size > 0 || inProgress.size > 0) {
+      // Find items ready to build (dependencies satisfied)
+      const readyToBuild = Array.from(pending).filter((fileKey) => {
+        const deps = dependsOn.get(fileKey) || new Set();
+        return Array.from(deps).every((dep) => completed.has(dep));
+      });
+
+      // Start builds up to concurrency limit
+      const slotsAvailable = this.concurrency - inProgress.size;
+      const itemsToStart = readyToBuild.slice(0, slotsAvailable);
+
+      for (const fileKey of itemsToStart) {
+        pending.delete(fileKey);
+        const buildPromise = this.buildSingleItem(fileMap, fileKey);
+        inProgress.set(fileKey, buildPromise);
+
+        const fileInfo = fileMap.get(fileKey);
+        if (fileInfo) {
+          this.logger.info(`Building ${fileInfo.type}: ${fileInfo.name}`);
+        }
+      }
+
+      // If we have builds in progress, wait for at least one to complete
+      if (inProgress.size > 0) {
+        const promises = Array.from(inProgress.entries()).map(
+          async ([fileKey, promise]) => ({
+            fileKey,
+            result: await promise,
+          }),
+        );
+
+        // Wait for the first one to complete
+        const { fileKey, result } = await Promise.race(promises);
+
+        // Remove from in progress and add to completed
+        inProgress.delete(fileKey);
+        completed.add(fileKey);
+        results.push(result);
+
+        const fileInfo = fileMap.get(fileKey);
+        if (fileInfo) {
+          if (result.success) {
+            const status = result.fromCache ? "(from cache)" : "(built)";
+            this.logger.success(`${fileInfo.type}: ${fileInfo.name} ${status}`);
+          } else {
+            const errorMessage =
+              result.error instanceof Error
+                ? result.error.message
+                : String(result.error);
+
+            this.logger.error(
+              `${fileInfo.type}: ${fileInfo.name} - ${errorMessage}`,
+            );
+          }
+        }
+      }
+
+      // Safety check to prevent infinite loops
+      if (
+        pending.size > 0 &&
+        inProgress.size === 0 &&
+        readyToBuild.length === 0
+      ) {
+        this.logger.error(
+          "Dependency deadlock detected. Some items cannot be built due to circular or missing dependencies.",
+        );
+        const remainingItems = Array.from(pending).map((key) => {
+          const fileInfo = fileMap.get(key);
+          return fileInfo ? `${fileInfo.type}:${fileInfo.name}` : key;
+        });
+        this.logger.error(`Remaining items: ${remainingItems.join(", ")}`);
+        break;
+      }
+    }
+
+    this.logger.traceJson("Concurrent build completed", {
+      totalResults: results.length,
+      successful: results.filter((r) => r.success).length,
+      failed: results.filter((r) => !r.success).length,
+    });
+
+    return results;
+  }
+
+  /**
+   * Build a single item and return the result
+   */
+  private async buildSingleItem(
+    fileMap: Map<string, FileInfo>,
+    fileKey: string,
+  ): Promise<BuildResult> {
+    const fileInfo = fileMap.get(fileKey);
+    if (!fileInfo) {
+      return {
+        success: false,
+        fromCache: false,
+        type: "unknown",
+        name: fileKey,
+        error: new Error(`File info not found for key: ${fileKey}`),
+      };
+    }
+
+    try {
+      const result = await this.buildExecutor.getOrBuildItem(fileKey, fileInfo);
+      return {
+        success: true,
+        fromCache: result.fromCache,
+        type: fileInfo.type,
+        name: fileInfo.name,
+      };
+    } catch (error: unknown) {
+      return {
+        success: false,
+        fromCache: false,
+        type: fileInfo.type,
+        name: fileInfo.name,
+        error: error instanceof Error ? error : new Error(String(error)),
+      };
+    }
   }
 
   private getContext(): BuilderContext {

@@ -1,3 +1,4 @@
+import os from "node:os";
 import path from "node:path";
 import { Command } from "@commander-js/extra-typings";
 import { CacheManager } from "./cache/CacheManager";
@@ -15,6 +16,7 @@ interface BaseCommandOptions {
 interface BuildCommandOptions {
   enableDeletion?: boolean;
   skipDeletionConfirmation?: boolean;
+  concurrency?: number;
 }
 
 export class DatoBuilderCLI {
@@ -39,6 +41,7 @@ export class DatoBuilderCLI {
       logger: this.logger,
       enableDeletion: options.enableDeletion,
       skipDeletionConfirmation: options.skipDeletionConfirmation,
+      concurrency: options.concurrency ?? 1,
     }).execute();
     this.logger.trace("Build command execution completed");
   }
@@ -67,6 +70,9 @@ type GlobalOptions = {
 type BuildOptions = {
   skipDeletion: boolean;
   skipDeletionConfirmation: boolean;
+  concurrent?: boolean;
+  concurrency?: number;
+  autoConcurrency?: boolean;
 };
 
 // Setup Commander CLI
@@ -146,6 +152,21 @@ async function setupCLI(): Promise<void> {
       "Skip confirmation prompts for deletions",
       false,
     )
+    .option(
+      "--concurrent",
+      "Enable concurrent builds (default concurrency: 3)",
+      false,
+    )
+    .option(
+      "--concurrency <number>",
+      "Set the concurrency level for builds (implies --concurrent)",
+      parseInt,
+    )
+    .option(
+      "--auto-concurrency",
+      "Automatically determine and set concurrency based on CPU cores",
+      false,
+    )
     .action(async (options: BuildOptions, command) => {
       try {
         const globalOptions = command.optsWithGlobals();
@@ -155,9 +176,27 @@ async function setupCLI(): Promise<void> {
           quiet: globalOptions.quiet,
           cache: globalOptions.cache,
         });
+        let concurrency = options.concurrency;
+
+        // Handle concurrency options
+        if (options.autoConcurrency) {
+          concurrency = Math.max(1, os.cpus().length - 1);
+          console.log(`Auto-determined concurrency level: ${concurrency}`);
+        } else if (options.concurrent && !options.concurrency) {
+          // Use default concurrent level if --concurrent is specified without --concurrency
+          concurrency = 3;
+        } else if (
+          !options.concurrent &&
+          !options.concurrency &&
+          !options.autoConcurrency
+        ) {
+          // Default to sequential
+          concurrency = 1;
+        }
         await cli.build({
           enableDeletion: !options.skipDeletion,
           skipDeletionConfirmation: options.skipDeletionConfirmation,
+          concurrency,
         });
       } catch (error) {
         const logger = new ConsoleLogger(LogLevel.ERROR);
