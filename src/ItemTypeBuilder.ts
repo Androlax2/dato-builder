@@ -2,7 +2,6 @@ import { createHash } from "node:crypto";
 import type * as SimpleSchemaTypes from "@datocms/cma-client/src/generated/SimpleSchemaTypes";
 import { buildClient } from "@datocms/cma-client-node";
 import DatoApi from "./Api/DatoApi";
-import NotFoundError from "./Api/Error/NotFoundError";
 import AssetGallery, { type AssetGalleryConfig } from "./Fields/AssetGallery";
 import BooleanField, { type BooleanConfig } from "./Fields/Boolean";
 import BooleanRadioGroup, {
@@ -1005,12 +1004,13 @@ export default abstract class ItemTypeBuilder {
     }
   }
 
-  public async update(): Promise<string> {
+  public async update(existingId?: string): Promise<string> {
     this.logger.traceJson("Updating item type", {
       type: this.type,
       name: this.name,
       apiKey: this.body.api_key,
       fieldCount: this.fields.length,
+      existingId,
     });
 
     const apiKey = this.body.api_key;
@@ -1020,10 +1020,25 @@ export default abstract class ItemTypeBuilder {
       itemType: apiKey,
     });
 
-    this.logger.trace("Finding existing item type");
-    const existing = await this.api.call(() =>
-      this.api.client.itemTypes.find(apiKey),
-    );
+    let existing: any;
+    if (existingId) {
+      this.logger.trace("Using provided existing item type ID");
+      existing = await this.api.call(() =>
+        this.api.client.itemTypes.find(existingId),
+      );
+    } else {
+      this.logger.trace("Finding existing item type by name");
+      const existingItems = await this.api.call(() =>
+        this.api.client.itemTypes.list(),
+      );
+      existing = existingItems.find((item) => item.name === this.body.name);
+
+      if (!existing) {
+        throw new Error(
+          `No existing item type found with name "${this.body.name}"`,
+        );
+      }
+    }
 
     this.logger.traceJson("Found existing item type", {
       id: existing.id,
@@ -1031,8 +1046,17 @@ export default abstract class ItemTypeBuilder {
     });
 
     this.logger.trace("Calling API to update item type");
+    const updateBody = {
+      ...this.body,
+      hint: this.body.hint ?? null,
+    };
+
+    this.logger.traceJson("Update body prepared", {
+      updateBody,
+    });
+
     const item = await this.api.call(() =>
-      this.api.client.itemTypes.update(existing.id, this.body),
+      this.api.client.itemTypes.update(existing.id, updateBody),
     );
 
     this.logger.traceJson("Item type updated successfully", {
@@ -1065,19 +1089,27 @@ export default abstract class ItemTypeBuilder {
     contextLogger.debug("Upserting itemType");
 
     try {
-      this.logger.trace("Checking if item type exists");
-      await this.api.call(() =>
-        this.api.client.itemTypes.find(this.body.api_key),
+      this.logger.trace("Checking if item type exists by name");
+      const existingItems = await this.api.call(() =>
+        this.api.client.itemTypes.list(),
+      );
+      const existingItem = existingItems.find(
+        (item) => item.name === this.body.name,
       );
 
-      contextLogger.debug("ItemType exists, proceeding with update");
-      return this.update();
-    } catch (error: unknown) {
-      if (error instanceof NotFoundError) {
-        contextLogger.debug("ItemType not found, proceeding with creation");
+      if (existingItem) {
+        contextLogger.debug("ItemType exists by name, proceeding with update");
+        return this.update(existingItem.id);
+      } else {
+        contextLogger.debug(
+          "ItemType not found by name, proceeding with creation",
+        );
         return this.create();
       }
-
+    } catch (error: unknown) {
+      this.logger.errorJson("Error during upsert operation", {
+        error: (error as Error).message,
+      });
       throw error;
     }
   }
