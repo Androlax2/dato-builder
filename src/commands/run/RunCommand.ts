@@ -5,10 +5,9 @@ import type { DatoBuilderConfig } from "../../types/DatoBuilderConfig";
 import { BuildExecutor } from "./BuildExecutor";
 import { DependencyAnalyzer } from "./DependencyAnalyzer";
 import { DependencyResolver } from "./DependencyResolver";
-import { ExecutionSummary } from "./ExecutionSummary";
 import { FileDiscoverer } from "./FileDiscover";
 import { ItemBuilder } from "./ItemBuilder";
-import type { FileInfo } from "./types";
+import type { BuildResult, FileInfo } from "./types";
 
 interface RunCommandOptions {
   config: Required<DatoBuilderConfig>;
@@ -38,7 +37,6 @@ export class RunCommand {
   private readonly dependencyResolver: DependencyResolver;
   private readonly itemBuilder: ItemBuilder;
   private readonly buildExecutor: BuildExecutor;
-  private readonly executionSummary: ExecutionSummary;
 
   private fileMap: Map<string, FileInfo> | null = null;
 
@@ -67,7 +65,6 @@ export class RunCommand {
     this.dependencyResolver = new DependencyResolver(logger);
     this.itemBuilder = new ItemBuilder(cache, logger, () => this.getContext());
     this.buildExecutor = new BuildExecutor(this.itemBuilder, logger);
-    this.executionSummary = new ExecutionSummary(logger);
 
     this.logger.trace("RunCommand initialized successfully");
   }
@@ -75,6 +72,7 @@ export class RunCommand {
   public async execute(): Promise<void> {
     this.logger.trace("Starting RunCommand execution");
 
+    // File discovery with progress
     this.fileMap = await this.fileDiscoverer.discoverFiles();
     this.logger.traceJson("File discovery completed", {
       fileCount: this.fileMap.size,
@@ -85,40 +83,91 @@ export class RunCommand {
       return;
     }
 
+    // Dependency analysis with progress
     this.logger.trace("Starting dependency analysis");
     await this.dependencyAnalyzer.analyzeDependencies(this.fileMap);
     this.logger.trace("Dependency analysis completed");
 
+    // Build order resolution
     this.logger.trace("Resolving build order");
     const buildOrder = this.dependencyResolver.topologicalSort(this.fileMap);
     this.logger.traceJson("Build order resolved", {
       buildOrder: buildOrder.map((key) => this.fileMap?.get(key)?.name || key),
     });
 
+    // Build execution with progress
     this.logger.trace("Starting build execution");
-    const results = await this.buildExecutor.executeBuild(
+
+    const results = await this.buildExecutorWithProgress(
       this.fileMap,
       buildOrder,
     );
+
     this.logger.traceJson("Build execution completed", {
       resultCount: results.length,
     });
 
+    // Process results
     this.logger.trace("Processing build results");
-    results.forEach((result) => {
-      if (result.success && !result.fromCache) {
-        this.logger.success(
-          `${result.type.charAt(0).toUpperCase() + result.type.slice(1)} "${
-            result.name
-          }" built successfully`,
-        );
+  }
+
+  /**
+   * Execute build with progress indication
+   */
+  private async buildExecutorWithProgress(
+    fileMap: Map<string, FileInfo>,
+    buildOrder: string[],
+  ): Promise<BuildResult[]> {
+    const results: BuildResult[] = [];
+    const total = buildOrder.length;
+    let current = 0;
+
+    for (const fileKey of buildOrder) {
+      const fileInfo = fileMap.get(fileKey);
+      if (!fileInfo) {
+        this.logger.warn(`File info not found for key: ${fileKey}`);
+        continue;
       }
-    });
 
-    this.logger.trace("Logging execution summary");
-    this.executionSummary.logSummary(results, this.fileMap);
+      current++;
 
-    this.logger.trace("RunCommand execution completed");
+      // Show progress
+      this.logger.progress(
+        current,
+        total,
+        `${fileInfo.type}: ${fileInfo.name}`,
+      );
+
+      try {
+        // Build the item
+        const result = await this.buildExecutor.getOrBuildItem(
+          fileKey,
+          fileInfo,
+        );
+
+        results.push({
+          success: true,
+          fromCache: result.fromCache,
+          type: fileInfo.type,
+          name: fileInfo.name,
+        });
+      } catch (error: unknown) {
+        const errorMessage = (error as Error).message;
+        this.logger.error(
+          `Failed to build ${fileInfo.type} "${fileInfo.name}": ${errorMessage}`,
+        );
+
+        results.push({
+          success: false,
+          fromCache: false,
+          type: fileInfo.type,
+          name: fileInfo.name,
+          error: error instanceof Error ? error : new Error(String(error)),
+        });
+      }
+    }
+
+    return results;
   }
 
   private getContext(): BuilderContext {
@@ -310,25 +359,5 @@ export class RunCommand {
 
     // Sort by similarity (shorter matches first)
     return similar.sort((a, b) => a.length - b.length).slice(0, 3);
-  }
-
-  // Method to clear caches for development/testing
-  public clearCaches(): void {
-    this.itemBuilder.clearCaches();
-  }
-
-  // Method to get debug info
-  public getDebugInfo(): {
-    fileMapSize: number;
-    cacheStats: { moduleCache: number; hashCache: number };
-    availableBlocks: string[];
-    availableModels: string[];
-  } {
-    return {
-      fileMapSize: this.fileMap?.size ?? 0,
-      cacheStats: this.itemBuilder.getCacheStats(),
-      availableBlocks: this.getAvailableItems("block"),
-      availableModels: this.getAvailableItems("model"),
-    };
   }
 }

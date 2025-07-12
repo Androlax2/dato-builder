@@ -70,47 +70,6 @@ export class DatoBuilderCLI {
     this.logger.success("All caches cleared!");
     this.logger.trace("Cache clear operation completed");
   }
-
-  /**
-   * Get debug information
-   */
-  public async debug(): Promise<void> {
-    this.logger.trace("Starting debug information gathering");
-    this.logger.info("🔍 Gathering debug information...");
-
-    const runCommand = new RunCommand({
-      config: this.config,
-      cache: this.cache,
-      logger: this.logger,
-    });
-
-    const debugInfo = runCommand.getDebugInfo();
-
-    this.logger.info("\n📊 DEBUG INFORMATION:");
-    this.logger.info("=".repeat(50));
-    this.logger.info(`File Map Size: ${debugInfo.fileMapSize}`);
-    this.logger.info(`Module Cache Size: ${debugInfo.cacheStats.moduleCache}`);
-    this.logger.info(`Hash Cache Size: ${debugInfo.cacheStats.hashCache}`);
-    this.logger.info(`Available Blocks: ${debugInfo.availableBlocks.length}`);
-    this.logger.info(`Available Models: ${debugInfo.availableModels.length}`);
-    this.logger.info("=".repeat(50));
-
-    if (debugInfo.availableBlocks.length > 0) {
-      this.logger.info("\n📦 Available Blocks:");
-      debugInfo.availableBlocks.forEach((block) =>
-        this.logger.info(`  - ${block}`),
-      );
-    }
-
-    if (debugInfo.availableModels.length > 0) {
-      this.logger.info("\n🏗️  Available Models:");
-      debugInfo.availableModels.forEach((model) =>
-        this.logger.info(`  - ${model}`),
-      );
-    }
-
-    this.logger.trace("Debug information gathering completed");
-  }
 }
 
 // Type definitions for options
