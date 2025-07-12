@@ -1,6 +1,6 @@
 import path from "node:path";
 import { ItemTypeCacheManager } from "./cache/ItemTypeCacheManager";
-import { RunCommand } from "./commands/RunCommand";
+import { RunCommand } from "./commands/run/RunCommand";
 import { ConfigParser } from "./config/ConfigParser";
 import { ConsoleLogger } from "./logger";
 import { getLogLevel } from "./utils/utils";
