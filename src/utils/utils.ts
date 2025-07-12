@@ -55,7 +55,7 @@ export function generateDatoApiKey({
 }
 
 export function getLogLevel(
-  logLevel: "info" | "warn" | "error" | "debug",
+  logLevel?: "info" | "warn" | "error" | "debug" | null,
 ): LogLevel {
   switch (logLevel) {
     case "debug":

@@ -836,14 +836,19 @@ export default abstract class ItemTypeBuilder {
   }
 
   private async syncFields(itemTypeId: string): Promise<void> {
-    this.logger.debug(`Starting field sync for itemType: ${itemTypeId}`);
+    const contextLogger = this.logger.child({
+      operation: "syncFields",
+      itemType: this.body.api_key,
+    });
+
+    contextLogger.debug(`Starting field sync for itemType: ${itemTypeId}`);
 
     const existing = await this.api.call(() =>
       this.api.client.fields.list(itemTypeId),
     );
     const desired = this.fields.map((f) => f.build());
 
-    this.logger.debug(
+    contextLogger.debug(
       `Found ${existing.length} existing fields, ${desired.length} desired fields`,
     );
 
@@ -851,20 +856,21 @@ export default abstract class ItemTypeBuilder {
       (d) => !existing.some((e) => e.api_key === d.api_key),
     );
 
-    this.logger.debug(
+    contextLogger.debug(
       `Fields to create: ${toCreate.length} - [${toCreate.map((f) => f.api_key).join(", ")}]`,
     );
 
     await Promise.all(
       toCreate.map(async (fieldDef) => {
+        const fieldLogger = contextLogger.child({
+          field: fieldDef.api_key,
+          operation: "create",
+        });
+
         await executeWithErrorHandling(
           "create",
           () => {
-            this.logger.debug(
-              `Creating field: ${fieldDef.api_key} with definition: ${JSON.stringify(
-                fieldDef,
-              )}`,
-            );
+            fieldLogger.debugJson("Creating field with definition: ", fieldDef);
 
             return this.api.call(() =>
               this.api.client.fields.create(itemTypeId, fieldDef),
@@ -877,13 +883,13 @@ export default abstract class ItemTypeBuilder {
     );
 
     if (!this.config.overwriteExistingFields) {
-      this.logger.debug(
+      contextLogger.debug(
         "Skipping field updates - overwriteExistingFields is false",
       );
       return;
     }
 
-    this.logger.debug(
+    contextLogger.debug(
       "overwriteExistingFields is true, proceeding with field updates",
     );
 
@@ -896,11 +902,12 @@ export default abstract class ItemTypeBuilder {
         executeWithErrorHandling(
           "update",
           () => {
-            this.logger.debug(
-              `Updating field: ${existingField.api_key} with definition: ${JSON.stringify(
-                fieldDef,
-              )}`,
-            );
+            const fieldLogger = contextLogger.child({
+              field: existingField.api_key,
+              operation: "update",
+            });
+
+            fieldLogger.debugJson("Updating field with definition: ", fieldDef);
 
             return this.api.call(() =>
               this.api.client.fields.update(existingField.id, fieldDef),
@@ -913,7 +920,7 @@ export default abstract class ItemTypeBuilder {
       ];
     });
 
-    this.logger.debug(`Fields to update: ${updatePromises.length}`);
+    contextLogger.debug(`Fields to update: ${updatePromises.length}`);
     await Promise.all(updatePromises);
 
     // Delete fields that are no longer needed
@@ -921,18 +928,21 @@ export default abstract class ItemTypeBuilder {
       (e) => !desired.some((d) => d.api_key === e.api_key),
     );
 
-    this.logger.debug(
+    contextLogger.debug(
       `Fields to delete: ${toDelete.length} - [${toDelete.map((f) => f.api_key).join(", ")}]`,
     );
 
     await Promise.all(
       toDelete.map(async (existingField) => {
+        const fieldLogger = contextLogger.child({
+          field: existingField.api_key,
+          operation: "delete",
+        });
+
         await executeWithErrorHandling(
           "delete",
           () => {
-            this.logger.debug(
-              `Deleting field: ${existingField.api_key} with id: ${existingField.id}`,
-            );
+            fieldLogger.debug(`Deleting field with id: ${existingField.id}`);
 
             return this.api.call(() =>
               this.api.client.fields.destroy(existingField.id),
@@ -945,22 +955,25 @@ export default abstract class ItemTypeBuilder {
       }),
     );
 
-    this.logger.debug(`Field sync completed for itemType: ${itemTypeId}`);
+    contextLogger.debug(`Field sync completed for itemType: ${itemTypeId}`);
   }
 
   public async create(): Promise<string> {
     const apiKey = this.body.api_key;
     const hash = this.getDefinitionHash();
 
-    this.logger.debug(
-      `Creating itemType with apiKey: ${apiKey}, hash: ${hash}`,
-    );
+    const contextLogger = this.logger.child({
+      operation: "create",
+      itemType: apiKey,
+    });
+
+    contextLogger.debug(`Creating itemType with hash: ${hash}`);
 
     // First check for any pending operations
     const pendingResult = await this.waitForPendingOperation(apiKey);
     if (pendingResult) {
-      this.logger.debug(
-        `Found pending operation for ${apiKey}, returning: ${pendingResult}`,
+      contextLogger.debug(
+        `Found pending operation, returning: ${pendingResult}`,
       );
       return pendingResult;
     }
@@ -968,13 +981,13 @@ export default abstract class ItemTypeBuilder {
     // Check if already in cache with matching hash
     const cached = await ItemTypeBuilder.getCache(apiKey);
     if (cached && cached.hash === hash) {
-      this.logger.debug(
-        `Cache hit for ${apiKey} with matching hash, returning: ${cached.id}`,
+      contextLogger.debug(
+        `Cache hit with matching hash, returning: ${cached.id}`,
       );
       return cached.id;
     }
 
-    this.logger.debug(`Cache miss for ${apiKey}, proceeding with creation`);
+    contextLogger.debug("Cache miss, proceeding with creation");
 
     // Create a new operation and register it
     const operation = async (): Promise<string> => {
@@ -983,17 +996,16 @@ export default abstract class ItemTypeBuilder {
         const item = await this.api.call(() =>
           this.api.client.itemTypes.create(this.body),
         );
-        this.logger.debug(`Created itemType ${apiKey} with id: ${item.id}`);
+        contextLogger.debug(`Created itemType with id: ${item.id}`);
 
         await this.syncFields(item.id);
         await ItemTypeBuilder.setCache(apiKey, hash, item.id);
 
-        this.logger.debug(`Completed creation process for ${apiKey}`);
         return item.id;
       } catch (error: unknown) {
         if (error instanceof UniquenessError) {
-          this.logger.debug(
-            `UniquenessError for ${apiKey}, fetching existing item`,
+          contextLogger.debug(
+            "UniquenessError encountered, fetching existing item",
           );
 
           // If the item already exists, we can just return its ID
@@ -1002,14 +1014,14 @@ export default abstract class ItemTypeBuilder {
               this.api.client.itemTypes.find(apiKey),
             );
 
-            this.logger.debug(
-              `Found existing itemType ${apiKey} with id: ${existing.id}`,
+            contextLogger.debug(
+              `Found existing itemType with id: ${existing.id}`,
             );
 
             return existing.id;
           } catch (findError: unknown) {
-            this.logger.debug(
-              `Failed to find existing itemType ${apiKey}: ${(findError as Error).message}`,
+            contextLogger.error(
+              `Failed to find existing itemType: ${(findError as Error).message}`,
             );
             throw findError;
           }
@@ -1026,31 +1038,28 @@ export default abstract class ItemTypeBuilder {
     const apiKey = this.body.api_key;
     const hash = this.getDefinitionHash();
 
-    this.logger.debug(
-      `Updating itemType with apiKey: ${apiKey}, hash: ${hash}`,
-    );
+    const contextLogger = this.logger.child({
+      operation: "update",
+      itemType: apiKey,
+    });
+
+    contextLogger.debug(`Updating itemType with hash: ${hash}`);
 
     // First check for any pending operations
     const pending = await this.waitForPendingOperation(apiKey);
     if (pending) {
-      this.logger.debug(
-        `Found pending operation for ${apiKey}, returning: ${pending}`,
-      );
+      contextLogger.debug(`Found pending operation, returning: ${pending}`);
       return pending;
     }
 
     // Check cache: skip if nothing changed
     const cached = await ItemTypeBuilder.getCache(apiKey);
     if (cached && cached.hash === hash) {
-      this.logger.debug(
-        `Cache hit for ${apiKey} with matching hash, skipping update`,
-      );
+      contextLogger.debug("Cache hit with matching hash, skipping update");
       return cached.id;
     }
 
-    this.logger.debug(
-      `Cache miss or hash mismatch for ${apiKey}, proceeding with update`,
-    );
+    contextLogger.debug("Cache miss or hash mismatch, proceeding with update");
 
     // Wrap the actual API call in an operation promise
     const operation = async (): Promise<string> => {
@@ -1058,14 +1067,13 @@ export default abstract class ItemTypeBuilder {
       const item = await this.api.call(() =>
         this.api.client.itemTypes.update(apiKey, this.body),
       );
-      this.logger.debug(`Updated itemType ${apiKey} with id: ${item.id}`);
+      contextLogger.debug(`Updated itemType with id: ${item.id}`);
 
       await this.syncFields(item.id);
 
       // Persist to cache
       await ItemTypeBuilder.setCache(apiKey, hash, item.id);
 
-      this.logger.debug(`Completed update process for ${apiKey}`);
       return item.id;
     };
 
@@ -1075,20 +1083,23 @@ export default abstract class ItemTypeBuilder {
 
   public async upsert(): Promise<string> {
     const apiKey = this.body.api_key;
-    this.logger.debug(`Upserting itemType with apiKey: ${apiKey}`);
+    const contextLogger = this.logger.child({
+      operation: "upsert",
+      itemType: apiKey,
+    });
+
+    contextLogger.debug("Upserting itemType");
 
     try {
       await this.api.call(() =>
         this.api.client.itemTypes.find(this.body.api_key),
       );
 
-      this.logger.debug(`ItemType ${apiKey} exists, proceeding with update`);
+      contextLogger.debug("ItemType exists, proceeding with update");
       return this.update();
     } catch (error: unknown) {
       if (error instanceof NotFoundError) {
-        this.logger.debug(
-          `ItemType ${apiKey} not found, proceeding with creation`,
-        );
+        contextLogger.debug("ItemType not found, proceeding with creation");
         return this.create();
       }
 
