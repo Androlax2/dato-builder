@@ -17,9 +17,6 @@ export class ItemBuildError extends Error {
   }
 }
 
-/**
- * TODO: Persist the cache between runs
- */
 export class ItemBuilder {
   // Cache for loaded modules to avoid repeated imports
   private moduleCache = new Map<string, any>();
