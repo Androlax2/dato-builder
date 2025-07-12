@@ -54,7 +54,6 @@ export class BuildExecutor {
           return {
             name: fileInfo.name,
             type: fileInfo.type,
-            id: result.id,
             fromCache: result.fromCache,
             success: true,
           };
@@ -73,7 +72,6 @@ export class BuildExecutor {
           return {
             name: fileInfo.name,
             type: fileInfo.type,
-            id: "",
             fromCache: false,
             success: false,
             error: err,

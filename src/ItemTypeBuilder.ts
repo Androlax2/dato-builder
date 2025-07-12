@@ -854,7 +854,7 @@ export default abstract class ItemTypeBuilder {
       this.logger.traceJson("Skipping field updates", {
         reason: "overwriteExistingFields is false",
       });
-      contextLogger.debug(
+      contextLogger.warn(
         "Skipping field updates - overwriteExistingFields is false",
       );
       return;

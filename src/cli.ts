@@ -77,6 +77,7 @@ type GlobalOptions = {
   debug: boolean;
   verbose: boolean;
   quiet: boolean;
+  cache: boolean;
 };
 
 // Setup Commander CLI
@@ -84,6 +85,7 @@ async function setupCLI(): Promise<void> {
   const program = new Command()
     .name("dato-builder")
     .description("DatoCMS Builder CLI")
+    .option("-n, --no-cache", "Disable cache usage")
     .option("-d, --debug", "Output information useful for debugging.", false)
     .option("-v, --verbose", "Display even finer-grained trace logs.", false)
     .option("-q, --quiet", "Only display errors.", false);
@@ -117,6 +119,9 @@ async function setupCLI(): Promise<void> {
     const configParser = new ConfigParser(logger);
     const cache = new CacheManager(
       path.join(process.cwd(), ".dato-builder-cache", "item-types.json"),
+      {
+        skipReads: !globalOptions.cache,
+      },
     );
 
     const config = await configParser.loadConfig();
@@ -149,6 +154,7 @@ async function setupCLI(): Promise<void> {
           debug: globalOptions.debug,
           verbose: globalOptions.verbose,
           quiet: globalOptions.quiet,
+          cache: globalOptions.cache,
         });
         await cli.build();
       } catch (error) {
@@ -169,6 +175,7 @@ async function setupCLI(): Promise<void> {
           debug: globalOptions.debug,
           verbose: globalOptions.verbose,
           quiet: globalOptions.quiet,
+          cache: globalOptions.cache,
         });
         await cli.clearCache();
       } catch (error) {
