@@ -1,9 +1,8 @@
-import { ApiError } from "@datocms/cma-client-node";
-import type { getDatoClient } from "../config";
+import { ApiError, type Client } from "@datocms/cma-client-node";
 import { parseApiError, throwMappedApiError } from "./apiErrorHandler";
 
 export default class DatoApi {
-  constructor(readonly client: ReturnType<typeof getDatoClient>) {}
+  constructor(readonly client: Client) {}
 
   public async call<T>(
     fn: () => Promise<T>,

@@ -1,14 +1,17 @@
 import pluralize from "pluralize";
+import { LogLevel } from "../logger";
+
+interface DatoApiKeyOptions {
+  name: string;
+  suffix?: string | null;
+  preservePlural?: boolean;
+}
 
 export function generateDatoApiKey({
   name,
   suffix,
   preservePlural = true,
-}: {
-  name: string;
-  suffix?: string;
-  preservePlural?: boolean;
-}): string {
+}: DatoApiKeyOptions): string {
   let result = name.toLowerCase();
 
   // Remove apostrophes (for possessive forms)
@@ -49,4 +52,21 @@ export function generateDatoApiKey({
   }
 
   return result;
+}
+
+export function getLogLevel(
+  logLevel?: "info" | "warn" | "error" | "debug" | null,
+): LogLevel {
+  switch (logLevel) {
+    case "debug":
+      return LogLevel.DEBUG;
+    case "info":
+      return LogLevel.INFO;
+    case "warn":
+      return LogLevel.WARN;
+    case "error":
+      return LogLevel.ERROR;
+    default:
+      return LogLevel.INFO;
+  }
 }
