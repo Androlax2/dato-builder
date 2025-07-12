@@ -1,7 +1,6 @@
 import path from "node:path";
 import { Command } from "@commander-js/extra-typings";
 import { CacheManager } from "./cache/CacheManager";
-import { ListCommand } from "./commands/ListCommand";
 import { RunCommand } from "./commands/run/RunCommand";
 import { ConfigParser } from "./config/ConfigParser";
 import { ConsoleLogger, LogLevel } from "./logger";
@@ -38,33 +37,11 @@ export class DatoBuilderCLI {
   }
 
   /**
-   * Execute the list command
-   */
-  public async list(
-    options: {
-      format?: "table" | "json" | "simple";
-      type?: "blocks" | "models" | "all";
-      showCached?: boolean;
-    } = {},
-  ): Promise<void> {
-    this.logger.traceJson("Starting list command execution", options);
-    const listCommand = new ListCommand({
-      config: this.config,
-      cache: this.cache,
-      logger: this.logger,
-    });
-
-    await listCommand.execute(options);
-    this.logger.trace("List command execution completed");
-  }
-
-  /**
    * Clear all caches
    */
   public async clearCache(): Promise<void> {
     this.logger.trace("Starting cache clear operation");
 
-    // Clear persistent cache
     await this.cache.clear();
 
     this.logger.success("All caches cleared!");

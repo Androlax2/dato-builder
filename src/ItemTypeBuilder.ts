@@ -74,10 +74,7 @@ type ItemTypeBuilderOptions = {
   config: Required<DatoBuilderConfig>;
 };
 
-type HashableConfigKeys =
-  | "overwriteExistingFields"
-  | "modelApiKeySuffix"
-  | "blockApiKeySuffix";
+type HashableConfigKeys = "modelApiKeySuffix" | "blockApiKeySuffix";
 
 type HashableConfig = Pick<DatoBuilderConfig, HashableConfigKeys>;
 
@@ -148,11 +145,12 @@ export default abstract class ItemTypeBuilder {
 
   private getHashableConfig(): HashableConfig {
     this.logger.traceJson("Getting hashable config", {});
-    const config = {
-      overwriteExistingFields: this.config.overwriteExistingFields,
+
+    const config: HashableConfig = {
       modelApiKeySuffix: this.config.modelApiKeySuffix,
       blockApiKeySuffix: this.config.blockApiKeySuffix,
     };
+
     this.logger.traceJson("Hashable config retrieved", config);
     return config;
   }

@@ -72,7 +72,7 @@ export class RunCommand {
   public async execute(): Promise<void> {
     this.logger.trace("Starting RunCommand execution");
 
-    // File discovery with progress
+    // File discovery
     this.fileMap = await this.fileDiscoverer.discoverFiles();
     this.logger.traceJson("File discovery completed", {
       fileCount: this.fileMap.size,
@@ -83,7 +83,7 @@ export class RunCommand {
       return;
     }
 
-    // Dependency analysis with progress
+    // Dependency analysis
     this.logger.trace("Starting dependency analysis");
     await this.dependencyAnalyzer.analyzeDependencies(this.fileMap);
     this.logger.trace("Dependency analysis completed");
@@ -95,10 +95,10 @@ export class RunCommand {
       buildOrder: buildOrder.map((key) => this.fileMap?.get(key)?.name || key),
     });
 
-    // Build execution with progress
+    // Build execution
     this.logger.trace("Starting build execution");
 
-    const results = await this.buildExecutorWithProgress(
+    const results = await this.buildExecutorWithoutProgress(
       this.fileMap,
       buildOrder,
     );
@@ -112,16 +112,13 @@ export class RunCommand {
   }
 
   /**
-   * Execute build with progress indication
+   * Execute build with simple logging
    */
-  private async buildExecutorWithProgress(
+  private async buildExecutorWithoutProgress(
     fileMap: Map<string, FileInfo>,
     buildOrder: string[],
   ): Promise<BuildResult[]> {
     const results: BuildResult[] = [];
-    const total = buildOrder.length;
-    let current = 0;
-    let hasErrors = false;
 
     for (const fileKey of buildOrder) {
       const fileInfo = fileMap.get(fileKey);
@@ -130,16 +127,7 @@ export class RunCommand {
         continue;
       }
 
-      current++;
-
-      if (!hasErrors) {
-        // Show progress
-        this.logger.progress(
-          current,
-          total,
-          `${fileInfo.type}: ${fileInfo.name}`,
-        );
-      }
+      this.logger.info(`Building ${fileInfo.type}: ${fileInfo.name}`);
 
       try {
         // Build the item
@@ -148,6 +136,9 @@ export class RunCommand {
           fileInfo,
         );
 
+        const status = result.fromCache ? "(from cache)" : "(built)";
+        this.logger.success(`${fileInfo.type}: ${fileInfo.name} ${status}`);
+
         results.push({
           success: true,
           fromCache: result.fromCache,
@@ -155,12 +146,9 @@ export class RunCommand {
           name: fileInfo.name,
         });
       } catch (error: unknown) {
-        // Clear progress bar if this is the first error
-        if (!hasErrors) {
-          hasErrors = true;
-          // Add newline to separate from progress bar
-          process.stdout.write("\n");
-        }
+        this.logger.error(
+          `${fileInfo.type}: ${fileInfo.name} - ${error instanceof Error ? error.message : String(error)}`,
+        );
 
         results.push({
           success: false,
