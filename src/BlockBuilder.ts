@@ -16,14 +16,23 @@ type BlockBuilderBody = {
   hint?: string | null;
 };
 
+type BlockBuilderOptions = {
+  name: string;
+  options?: BlockBuilderBody;
+  config: ItemTypeBuilderConfig;
+};
+
 export default class BlockBuilder extends ItemTypeBuilder {
   public type: ItemTypeBuilderType = "block";
 
-  constructor(
-    name: string,
-    options?: BlockBuilderBody,
-    config?: ItemTypeBuilderConfig,
-  ) {
-    super("block", { ...options, name }, config);
+  constructor({ name, options, config }: BlockBuilderOptions) {
+    super({
+      type: "block",
+      body: {
+        ...options,
+        name,
+      },
+      config,
+    });
   }
 }

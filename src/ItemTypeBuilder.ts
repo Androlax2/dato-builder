@@ -2,12 +2,11 @@ import { createHash } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import type * as SimpleSchemaTypes from "@datocms/cma-client/src/generated/SimpleSchemaTypes";
+import { buildClient } from "@datocms/cma-client-node";
 import DatoApi from "./Api/DatoApi";
 import GenericDatoError from "./Api/Error/GenericDatoError";
 import NotFoundError from "./Api/Error/NotFoundError";
 import UniquenessError from "./Api/Error/UniquenessError";
-import { getDatoClient } from "./config";
-import { loadDatoBuilderConfig } from "./config/loader";
 import AssetGallery, { type AssetGalleryConfig } from "./Fields/AssetGallery";
 import BooleanField, { type BooleanConfig } from "./Fields/Boolean";
 import BooleanRadioGroup, {
@@ -70,6 +69,7 @@ export type ItemTypeBuilderBody = Omit<
 };
 
 export type ItemTypeBuilderConfig = {
+  apiToken: string;
   /**
    * Whether to overwrite existing fields in DatoCMS when syncing.
    *
@@ -88,6 +88,14 @@ export type ItemTypeBuilderConfig = {
   blockApiKeySuffix?: string;
 };
 
+type ItemTypeBuilderOptions = {
+  type: ItemTypeBuilderType;
+  body: Omit<SimpleSchemaTypes.ItemTypeCreateSchema, "api_key"> & {
+    api_key?: string;
+  };
+  config: ItemTypeBuilderConfig;
+};
+
 // For tracking in-progress operations
 interface PendingOperation {
   promise: Promise<string>;
@@ -95,13 +103,21 @@ interface PendingOperation {
 }
 
 export default abstract class ItemTypeBuilder {
-  protected api = new DatoApi(getDatoClient());
-  protected readonly client = this.api.client;
+  protected api: DatoApi;
   readonly body: SimpleSchemaTypes.ItemTypeCreateSchema;
   readonly name: string;
   readonly type: ItemTypeBuilderType;
   readonly fields: Field[] = [];
   readonly config: Required<ItemTypeBuilderConfig>;
+
+  private static readonly DEFAULT_CONFIG: Required<
+    Omit<ItemTypeBuilderConfig, "apiToken">
+  > = {
+    overwriteExistingFields: false,
+    debug: false,
+    modelApiKeySuffix: "",
+    blockApiKeySuffix: "",
+  };
 
   // Persistent cache file for item definitions
   private static cacheFile = path.resolve(
@@ -119,18 +135,15 @@ export default abstract class ItemTypeBuilder {
   );
   private static readonly PENDING_OPERATION_TIMEOUT = 60000; // 60 seconds
 
-  protected constructor(
-    type: ItemTypeBuilderType,
-    body: Omit<SimpleSchemaTypes.ItemTypeCreateSchema, "api_key"> & {
-      api_key?: string;
-    },
-    config: ItemTypeBuilderConfig = {},
-  ) {
+  protected constructor({ type, body, config }: ItemTypeBuilderOptions) {
     this.type = type;
     this.name = body.name;
+    this.api = new DatoApi(buildClient({ apiToken: config.apiToken }));
 
-    // Merge builder-specific and global config
-    this.config = this.mergeConfig(config);
+    this.config = {
+      ...ItemTypeBuilder.DEFAULT_CONFIG,
+      ...config,
+    } as Required<ItemTypeBuilderConfig>;
 
     const apiKey =
       body.api_key ||
@@ -146,20 +159,6 @@ export default abstract class ItemTypeBuilder {
       modular_block: this.type === "block",
       collection_appearance: body.collection_appearance || "table",
     };
-
-    if (this.config.debug) {
-      console.info(
-        `ItemTypeBuilder initialized with type "${this.type}" and API key "${apiKey}"`,
-      );
-
-      console.info(
-        `ItemTypeBuilder body: ${JSON.stringify(this.body, null, 2)}`,
-      );
-
-      console.info(
-        `ItemTypeBuilder config: ${JSON.stringify(this.config, null, 2)}`,
-      );
-    }
   }
 
   /**
@@ -302,10 +301,27 @@ export default abstract class ItemTypeBuilder {
     }
   }
 
+  public getContentHash(): string {
+    return createHash("sha256")
+      .update(
+        JSON.stringify({
+          body: this.body,
+          fields: [...this.fields.map((f) => f.build())].sort((a, b) =>
+            a.api_key.localeCompare(b.api_key),
+          ),
+          config: this.config,
+        }),
+      )
+      .digest("hex");
+  }
+
+  /**
+   * TODO: Remove this method later, we've the getContentHash()
+   */
   private static computeHash(
     body: SimpleSchemaTypes.ItemTypeCreateSchema,
     fields: SimpleSchemaTypes.FieldCreateSchema[],
-    config: ItemTypeBuilderConfig = {},
+    config: ItemTypeBuilderConfig,
   ): string {
     const sorted = [...fields].sort((a, b) =>
       a.api_key.localeCompare(b.api_key),
@@ -336,23 +352,6 @@ export default abstract class ItemTypeBuilder {
     return ItemTypeBuilder.computeHash(this.body, defs, this.config);
   }
 
-  private mergeConfig(
-    builderConfig: ItemTypeBuilderConfig,
-  ): Required<ItemTypeBuilderConfig> {
-    const globalConfig = loadDatoBuilderConfig();
-    return {
-      overwriteExistingFields:
-        builderConfig.overwriteExistingFields ??
-        globalConfig.overwriteExistingFields ??
-        false,
-      debug: builderConfig.debug ?? globalConfig.debug ?? false,
-      modelApiKeySuffix:
-        builderConfig.modelApiKeySuffix ?? globalConfig.modelApiKeySuffix ?? "",
-      blockApiKeySuffix:
-        builderConfig.blockApiKeySuffix ?? globalConfig.blockApiKeySuffix ?? "",
-    };
-  }
-
   private resolveSuffix(): string | undefined {
     switch (this.type) {
       case "model":
@@ -373,14 +372,6 @@ export default abstract class ItemTypeBuilder {
     const key = field.build().api_key;
     if (this.fields.some((f) => f.build().api_key === key)) {
       throw new Error(`Field with api_key "${key}" already exists.`);
-    }
-
-    if (this.config.debug) {
-      console.info(`Adding field "${field.body.label}" with api_key "${key}"`);
-
-      console.info(
-        `Field definition: ${JSON.stringify(field.build(), null, 2)}`,
-      );
     }
 
     this.fields.push(field);
@@ -886,9 +877,6 @@ export default abstract class ItemTypeBuilder {
     const pendingOp = ItemTypeBuilder.pendingOperations.get(apiKey);
     if (pendingOp) {
       try {
-        if (this.config.debug) {
-          console.info(`Waiting for pending operation on "${this.name}"...`);
-        }
         return await pendingOp.promise;
       } catch (error) {
         // If the pending operation failed, we'll try our own operation
@@ -901,7 +889,7 @@ export default abstract class ItemTypeBuilder {
 
   private async syncFields(itemTypeId: string): Promise<void> {
     const existing = await this.api.call(() =>
-      this.client.fields.list(itemTypeId),
+      this.api.client.fields.list(itemTypeId),
     );
     const desired = this.fields.map((f) => f.build());
 
@@ -914,7 +902,7 @@ export default abstract class ItemTypeBuilder {
           "create",
           () =>
             this.api.call(() =>
-              this.client.fields.create(itemTypeId, fieldDef),
+              this.api.client.fields.create(itemTypeId, fieldDef),
             ),
           "field",
           fieldDef,
@@ -939,7 +927,7 @@ export default abstract class ItemTypeBuilder {
           "update",
           () =>
             this.api.call(() =>
-              this.client.fields.update(existingField.id, fieldDef),
+              this.api.client.fields.update(existingField.id, fieldDef),
             ),
           "field",
           fieldDef,
@@ -960,7 +948,9 @@ export default abstract class ItemTypeBuilder {
         await executeWithErrorHandling(
           "delete",
           () =>
-            this.api.call(() => this.client.fields.destroy(existingField.id)),
+            this.api.call(() =>
+              this.api.client.fields.destroy(existingField.id),
+            ),
           "field",
           undefined,
           existingField,
@@ -976,11 +966,6 @@ export default abstract class ItemTypeBuilder {
     // First check for any pending operations
     const pendingResult = await this.waitForPendingOperation(apiKey);
     if (pendingResult) {
-      if (this.config.debug) {
-        console.info(
-          `Using result from pending operation for "${this.name}": ${pendingResult}`,
-        );
-      }
       return pendingResult;
     }
 
@@ -993,39 +978,23 @@ export default abstract class ItemTypeBuilder {
       return cached.id;
     }
 
-    if (this.config.debug) {
-      console.info(`Creating item type "${this.name}"...`);
-    }
-
     // Create a new operation and register it
     const operation = async (): Promise<string> => {
       try {
         // Create the item
         const item = await this.api.call(() =>
-          this.client.itemTypes.create(this.body),
+          this.api.client.itemTypes.create(this.body),
         );
         await this.syncFields(item.id);
         await ItemTypeBuilder.setCache(apiKey, hash, item.id);
         console.info(`Created item type "${this.name}" (id=${item.id})`);
-
-        if (this.config.debug) {
-          console.info(
-            `Item type "${this.name}" cached (id=${item.id}, hash=${hash})`,
-          );
-        }
         return item.id;
       } catch (error: unknown) {
         if (error instanceof UniquenessError) {
           // If the item already exists, we can just return its ID
           const existing = await this.api.call(() =>
-            this.client.itemTypes.find(apiKey),
+            this.api.client.itemTypes.find(apiKey),
           );
-
-          if (this.config.debug) {
-            console.info(
-              `Item type "${this.name}" already exists (id=${existing.id})`,
-            );
-          }
 
           return existing.id;
         }
@@ -1049,11 +1018,6 @@ export default abstract class ItemTypeBuilder {
     // First check for any pending operations
     const pending = await this.waitForPendingOperation(apiKey);
     if (pending) {
-      if (this.config.debug) {
-        console.info(
-          `Using result from pending operation for "${this.name}": ${pending}`,
-        );
-      }
       return pending;
     }
 
@@ -1066,16 +1030,12 @@ export default abstract class ItemTypeBuilder {
       return cached.id;
     }
 
-    if (this.config.debug) {
-      console.info(`Updating item type "${this.name}"...`);
-    }
-
     // Wrap the actual API call in an operation promise
     const operation = async (): Promise<string> => {
       try {
         // Attempt the update
         const item = await this.api.call(() =>
-          this.client.itemTypes.update(apiKey, this.body),
+          this.api.client.itemTypes.update(apiKey, this.body),
         );
         await this.syncFields(item.id);
 
@@ -1083,11 +1043,6 @@ export default abstract class ItemTypeBuilder {
         await ItemTypeBuilder.setCache(apiKey, hash, item.id);
 
         console.info(`Updated item type "${this.name}" (id=${item.id})`);
-        if (this.config.debug) {
-          console.info(
-            `Item type "${this.name}" cached (id=${item.id}, hash=${hash})`,
-          );
-        }
         return item.id;
       } catch (err: unknown) {
         if (err instanceof GenericDatoError) {
@@ -1104,12 +1059,10 @@ export default abstract class ItemTypeBuilder {
   }
 
   public async upsert(): Promise<string> {
-    if (this.config.debug) {
-      console.info(`Upserting item type \"${this.name}\"...`);
-    }
-
     try {
-      await this.api.call(() => this.client.itemTypes.find(this.body.api_key));
+      await this.api.call(() =>
+        this.api.client.itemTypes.find(this.body.api_key),
+      );
 
       return this.update();
     } catch (error: unknown) {
