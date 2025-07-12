@@ -24,7 +24,7 @@ export class ConfigParser {
   public async loadConfig(): Promise<Required<DatoBuilderConfig>> {
     const configPath = await this.getConfigFilePath();
 
-    this.logger.info(`Loading config from ${configPath}`);
+    this.logger.debug(`Loading config from ${configPath}`);
 
     const userConfig = await import(configPath);
 

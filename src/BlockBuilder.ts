@@ -1,5 +1,5 @@
-import type { DatoBuilderConfig } from "./config/types";
 import ItemTypeBuilder, { type ItemTypeBuilderType } from "./ItemTypeBuilder";
+import type { DatoBuilderConfig } from "./types/DatoBuilderConfig";
 
 type BlockBuilderBody = {
   /**
