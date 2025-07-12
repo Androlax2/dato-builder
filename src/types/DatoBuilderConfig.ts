@@ -32,4 +32,12 @@ export interface DatoBuilderConfig {
    * Block API Key Suffix
    */
   blockApiKeySuffix?: string | null;
+  /**
+   * The log level for the builder.
+   *
+   * Can be 'info', 'warn', 'error', or 'debug'.
+   *
+   * @default 'info'
+   */
+  logLevel?: "info" | "warn" | "error" | "debug" | null;
 }

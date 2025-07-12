@@ -1,6 +1,7 @@
 import { RunCommand } from "./commands/RunCommand";
-import { ConfigParser } from "./config/parser";
+import { ConfigParser } from "./config/ConfigParser";
 import { ConsoleLogger } from "./logger";
+import { getLogLevel } from "./utils/utils";
 
 // TODO: Remove that after and build it inside build and call it from bin/cli.js
 const consoleLogger = new ConsoleLogger();
@@ -11,7 +12,7 @@ const consoleLogger = new ConsoleLogger();
 
   void new RunCommand({
     config,
-    logger: consoleLogger,
+    logger: new ConsoleLogger(getLogLevel(config.logLevel)),
     blocksPath: `${process.cwd()}/src/datocms/blocks`,
     modelsPath: `${process.cwd()}/src/datocms/models`,
   }).execute();

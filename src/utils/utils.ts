@@ -1,4 +1,5 @@
 import pluralize from "pluralize";
+import { LogLevel } from "../logger";
 
 interface DatoApiKeyOptions {
   name: string;
@@ -51,4 +52,21 @@ export function generateDatoApiKey({
   }
 
   return result;
+}
+
+export function getLogLevel(
+  logLevel: "info" | "warn" | "error" | "debug",
+): LogLevel {
+  switch (logLevel) {
+    case "debug":
+      return LogLevel.DEBUG;
+    case "info":
+      return LogLevel.INFO;
+    case "warn":
+      return LogLevel.WARN;
+    case "error":
+      return LogLevel.ERROR;
+    default:
+      return LogLevel.INFO;
+  }
 }

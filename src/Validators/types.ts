@@ -1,5 +1,5 @@
 export interface Validator {
   key: string;
 
-  build(): object | undefined;
+  build(): Promise<object | undefined> | object | undefined;
 }

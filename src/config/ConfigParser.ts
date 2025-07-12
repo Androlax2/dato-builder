@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import type { ConsoleLogger } from "../logger";
-import type { DatoBuilderConfig } from "./types";
+import type { DatoBuilderConfig } from "../types/DatoBuilderConfig";
 
 export class ConfigParser {
   private readonly logger: ConsoleLogger;
@@ -14,6 +14,7 @@ export class ConfigParser {
     debug: false,
     modelApiKeySuffix: null,
     blockApiKeySuffix: null,
+    logLevel: "info",
   };
 
   constructor(logger: ConsoleLogger) {

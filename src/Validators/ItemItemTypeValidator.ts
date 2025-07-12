@@ -1,7 +1,7 @@
 import type { Validator } from "./types";
 
 export type ItemItemTypeValidatorConfig = {
-  item_types: string[];
+  item_types: (string | Promise<string>)[];
   on_publish_with_unpublished_references_strategy?:
     | "fail"
     | "publish_references";
@@ -24,7 +24,16 @@ export default class ItemItemTypeValidator implements Validator {
     }
   }
 
-  build() {
-    return this.config;
+  async build() {
+    const resolvedItemTypes = await Promise.all(
+      this.config.item_types.map(async (itemType) => {
+        // If it's a promise, await it; otherwise return as-is
+        return typeof itemType === "string" ? itemType : await itemType;
+      }),
+    );
+
+    return {
+      item_types: resolvedItemTypes,
+    };
   }
 }

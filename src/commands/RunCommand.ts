@@ -1,8 +1,8 @@
 import path from "node:path";
 import { glob } from "glob";
-import type BlockBuilder from "../BlockBuilder";
+import BlockBuilder from "../BlockBuilder";
 import type { ConsoleLogger } from "../logger";
-import type ModelBuilder from "../ModelBuilder";
+import ModelBuilder from "../ModelBuilder";
 import type { BuilderContext } from "../types/BuilderContext";
 import type { DatoBuilderConfig } from "../types/DatoBuilderConfig";
 
@@ -55,12 +55,8 @@ export class RunCommand {
       this.getModelFiles(),
     ]);
 
-    // Process all files and execute their builders
-    const allFiles = [...blockFiles, ...modelFiles];
-    this.logger.info(`Processing ${allFiles.length} files...`);
-
     const results = await Promise.allSettled(
-      allFiles.map(async (file) => {
+      [...blockFiles, ...modelFiles].map(async (file) => {
         const name = this.getNameFromFilePath(file);
         const type = this.getTypeFromFilePath(file);
 
@@ -174,7 +170,13 @@ export class RunCommand {
       throw new Error(`Block "${name}" does not export a default function`);
     }
 
-    const builder = (await buildFunction(this.getContext())) as BlockBuilder;
+    const builder = await buildFunction(this.getContext());
+
+    if (!(builder instanceof BlockBuilder)) {
+      throw new Error(
+        `Block "${name}" must return an instance of BlockBuilder`,
+      );
+    }
 
     return await builder.upsert();
   }
@@ -200,7 +202,13 @@ export class RunCommand {
       throw new Error(`Model "${name}" does not export a default function`);
     }
 
-    const builder = (await buildFunction(this.getContext())) as ModelBuilder;
+    const builder = await buildFunction(this.getContext());
+
+    if (!(builder instanceof ModelBuilder)) {
+      throw new Error(
+        `Model "${name}" must return an instance of ModelBuilder`,
+      );
+    }
 
     return await builder.upsert();
   }
