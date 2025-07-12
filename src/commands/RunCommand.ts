@@ -163,8 +163,10 @@ export class RunCommand {
   }
 
   private async discoverAllFiles() {
-    const blockFiles = await glob(`${this.blocksPath}/**/*.{ts,js}`);
-    const modelFiles = await glob(`${this.modelsPath}/**/*.{ts,js}`);
+    const [blockFiles, modelFiles] = await Promise.all([
+      glob(`${this.blocksPath}/**/*.{ts,js}`),
+      glob(`${this.modelsPath}/**/*.{ts,js}`),
+    ]);
 
     for (const file of blockFiles) {
       const name = path.basename(file, path.extname(file));
