@@ -63,12 +63,11 @@ export class DatoBuilderCLI {
    */
   public async clearCache(): Promise<void> {
     this.logger.trace("Starting cache clear operation");
-    this.logger.info("🧹 Clearing all caches...");
 
     // Clear persistent cache
     await this.cache.clear();
 
-    this.logger.success("✅ All caches cleared!");
+    this.logger.success("All caches cleared!");
     this.logger.trace("Cache clear operation completed");
   }
 
@@ -196,6 +195,26 @@ async function setupCLI(): Promise<void> {
       } catch (error) {
         const logger = new ConsoleLogger(LogLevel.ERROR);
         logger.error(`Build failed: ${(error as Error).message}`);
+        process.exit(1);
+      }
+    });
+
+  // Clear cache command
+  program
+    .command("clear-cache")
+    .description("Clear all caches")
+    .action(async (_options, command) => {
+      try {
+        const globalOptions = command.optsWithGlobals();
+        const cli = await initializeCLI({
+          debug: globalOptions.debug,
+          verbose: globalOptions.verbose,
+          quiet: globalOptions.quiet,
+        });
+        await cli.clearCache();
+      } catch (error) {
+        const logger = new ConsoleLogger(LogLevel.ERROR);
+        logger.error(`Cache clear failed: ${(error as Error).message}`);
         process.exit(1);
       }
     });
