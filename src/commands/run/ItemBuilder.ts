@@ -64,7 +64,7 @@ export class ItemBuilder {
       this.logger.traceJson("Build completed successfully", { id });
       return { id, fromCache: false };
     } catch (error) {
-      this.logger.errorJson("Item build failed", {
+      this.logger.traceJson("Item build failed", {
         type: fileInfo.type,
         name: fileInfo.name,
         error: (error as Error).message,

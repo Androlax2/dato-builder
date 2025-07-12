@@ -121,6 +121,7 @@ export class RunCommand {
     const results: BuildResult[] = [];
     const total = buildOrder.length;
     let current = 0;
+    let hasErrors = false;
 
     for (const fileKey of buildOrder) {
       const fileInfo = fileMap.get(fileKey);
@@ -131,12 +132,14 @@ export class RunCommand {
 
       current++;
 
-      // Show progress
-      this.logger.progress(
-        current,
-        total,
-        `${fileInfo.type}: ${fileInfo.name}`,
-      );
+      if (!hasErrors) {
+        // Show progress
+        this.logger.progress(
+          current,
+          total,
+          `${fileInfo.type}: ${fileInfo.name}`,
+        );
+      }
 
       try {
         // Build the item
@@ -152,10 +155,12 @@ export class RunCommand {
           name: fileInfo.name,
         });
       } catch (error: unknown) {
-        const errorMessage = (error as Error).message;
-        this.logger.error(
-          `Failed to build ${fileInfo.type} "${fileInfo.name}": ${errorMessage}`,
-        );
+        // Clear progress bar if this is the first error
+        if (!hasErrors) {
+          hasErrors = true;
+          // Add newline to separate from progress bar
+          process.stdout.write("\n");
+        }
 
         results.push({
           success: false,
@@ -258,7 +263,7 @@ export class RunCommand {
       availableItems,
     );
 
-    this.logger.errorJson("Item not found", { type, name, availableItems });
+    this.logger.traceJson("Item not found", { type, name, availableItems });
     throw new ItemNotFoundError(errorMessage, type, name, availableItems);
   }
 
