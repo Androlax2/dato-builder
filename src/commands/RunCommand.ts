@@ -1,6 +1,7 @@
 import path from "node:path";
 import { glob } from "glob";
 import type { DatoBuilderConfig } from "../config/types";
+import type ItemTypeBuilder from "../ItemTypeBuilder";
 import type { ConsoleLogger } from "../logger";
 
 type RunCommandOptions = {
@@ -41,41 +42,41 @@ export class RunCommand {
   }
 
   public async execute() {
-    // 1. Discover and map all files first
     await this.discoverAllFiles();
 
     if (this.fileMap.size === 0) {
       return;
     }
 
-    console.log(this);
-
-    /* // 2. Process all files
-    const blockFiles = await this.getBlockFiles();
-    const modelFiles = await this.getModelFiles();
+    /*const [blockFiles, modelFiles] = await Promise.all([
+      this.getBlockFiles(),
+      this.getModelFiles(),
+    ]);
 
     // 3. Build everything (with automatic deduplication)
     const context = {
       config: this.config,
       getBlock: (name: string) => this.getOrCreateBlock(name),
       getModel: (name: string) => this.getOrCreateModel(name),
-    };
+    };*/
 
-    // Process all files but don't execute builders yet
+    /*// Process all files but don't execute builders yet
     for (const file of [...blockFiles, ...modelFiles]) {
-      const createFn = await import(file);
+      await this.loadFile(file, context);
     }*/
   }
 
   private async getOrCreateBlock(name: string): Promise<string> {
     // Return cached ID if already built
-    if (this.blockCache.has(name)) {
-      return this.blockCache.get(name)!;
+    const cachedId = this.blockCache.get(name);
+    if (cachedId) {
+      return cachedId;
     }
 
     // Return existing promise if currently building (prevents duplicate builds)
-    if (this.buildPromises.has(`block:${name}`)) {
-      return this.buildPromises.get(`block:${name}`)!;
+    const existingPromise = this.buildPromises.get(`block:${name}`);
+    if (existingPromise) {
+      return existingPromise;
     }
 
     // Create new build promise
@@ -92,12 +93,16 @@ export class RunCommand {
   }
 
   private async getOrCreateModel(name: string): Promise<string> {
-    if (this.modelCache.has(name)) {
-      return this.modelCache.get(name)!;
+    // Return cached ID if already built
+    const cachedId = this.modelCache.get(name);
+    if (cachedId) {
+      return cachedId;
     }
 
-    if (this.buildPromises.has(`model:${name}`)) {
-      return this.buildPromises.get(`model:${name}`)!;
+    // Return existing promise if currently building (prevents duplicate builds)
+    const existingPromise = this.buildPromises.get(`model:${name}`);
+    if (existingPromise) {
+      return existingPromise;
     }
 
     const buildPromise = this.buildModel(name);
@@ -114,6 +119,7 @@ export class RunCommand {
 
   private async buildBlock(name: string): Promise<string> {
     const filePath = this.fileMap.get(`block:${name}`);
+
     if (!filePath) {
       throw new Error(
         `Block "${name}" not found. Available blocks: ${Array.from(
@@ -130,11 +136,9 @@ export class RunCommand {
       config: this.config,
       getBlock: (n: string) => this.getOrCreateBlock(n),
       getModel: (n: string) => this.getOrCreateModel(n),
-    });
+    }) as ItemTypeBuilder;
 
-    const itemTypeId = await builder.upsert();
-
-    return itemTypeId;
+    return await builder.upsert();
   }
 
   private async buildModel(name: string): Promise<string> {
@@ -155,11 +159,9 @@ export class RunCommand {
       config: this.config,
       getBlock: (n: string) => this.getOrCreateBlock(n),
       getModel: (n: string) => this.getOrCreateModel(n),
-    });
+    }) as ItemTypeBuilder;
 
-    const itemTypeId = await builder.upsert();
-
-    return itemTypeId;
+    return await builder.upsert();
   }
 
   private async discoverAllFiles() {
@@ -187,5 +189,17 @@ export class RunCommand {
         `Discovered ${blockFiles.length} blocks and ${modelFiles.length} models`,
       );
     }
+  }
+
+  private getBlockFiles() {
+    return Array.from(this.fileMap.entries())
+      .filter(([key]) => key.startsWith("block:"))
+      .map(([, filePath]) => filePath);
+  }
+
+  private getModelFiles() {
+    return Array.from(this.fileMap.entries())
+      .filter(([key]) => key.startsWith("model:"))
+      .map(([, filePath]) => filePath);
   }
 }
