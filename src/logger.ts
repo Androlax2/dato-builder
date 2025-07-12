@@ -47,8 +47,6 @@ export class ConsoleLogger {
     dim: "\x1b[2m",
   };
 
-  private readonly boldLevels = new Set(["ERROR", "WARN", "INFO", "SUCCESS"]);
-
   private readonly level: LogLevel;
   private readonly context: LogContext;
 
@@ -181,8 +179,7 @@ export class ConsoleLogger {
       : "";
 
     const bodyText = `${level}: ${msg.join(" ")}`;
-    const style = this.boldLevels.has(level) ? color + this.colors.bold : color;
-    const coloredBody = this.colorize(style, bodyText);
+    const coloredBody = this.colorize(color, bodyText);
 
     return `${timestamp} ${prefixText}${context}${coloredBody}`;
   }

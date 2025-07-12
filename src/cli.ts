@@ -1,56 +1,38 @@
 import path from "node:path";
+import { Command } from "@commander-js/extra-typings";
 import { ItemTypeCacheManager } from "./cache/ItemTypeCacheManager";
 import { ListCommand } from "./commands/ListCommand";
 import { RunCommand } from "./commands/run/RunCommand";
 import { ConfigParser } from "./config/ConfigParser";
-import { ConsoleLogger } from "./logger";
+import { ConsoleLogger, LogLevel } from "./logger";
 import type { DatoBuilderConfig } from "./types/DatoBuilderConfig";
-import { getLogLevel } from "./utils/utils";
 
 interface BaseCommandOptions {
   config: Required<DatoBuilderConfig>;
   cache: ItemTypeCacheManager;
   logger: ConsoleLogger;
-  blocksPath?: string | null;
-  modelsPath?: string | null;
 }
 
 export class DatoBuilderCLI {
   private readonly config: Required<DatoBuilderConfig>;
   private readonly cache: ItemTypeCacheManager;
   private readonly logger: ConsoleLogger;
-  private readonly blocksPath?: string | null;
-  private readonly modelsPath?: string | null;
 
   constructor(options: BaseCommandOptions) {
     this.config = options.config;
     this.cache = options.cache;
     this.logger = options.logger;
-    this.blocksPath = options.blocksPath;
-    this.modelsPath = options.modelsPath;
   }
 
   /**
    * Execute the build command
    */
   public async build(): Promise<void> {
-    this.logger.info("🚀 Starting build process...");
-
-    const runCommand = new RunCommand({
+    await new RunCommand({
       config: this.config,
       cache: this.cache,
       logger: this.logger,
-      blocksPath: this.blocksPath,
-      modelsPath: this.modelsPath,
-    });
-
-    try {
-      await runCommand.execute();
-      this.logger.success("Build completed successfully!");
-    } catch (error) {
-      this.logger.error(`Build failed: ${(error as Error).message}`);
-      throw error;
-    }
+    }).execute();
   }
 
   /**
@@ -67,8 +49,6 @@ export class DatoBuilderCLI {
       config: this.config,
       cache: this.cache,
       logger: this.logger,
-      blocksPath: this.blocksPath,
-      modelsPath: this.modelsPath,
     });
 
     await listCommand.execute(options);
@@ -96,8 +76,6 @@ export class DatoBuilderCLI {
       config: this.config,
       cache: this.cache,
       logger: this.logger,
-      blocksPath: this.blocksPath,
-      modelsPath: this.modelsPath,
     });
 
     const debugInfo = runCommand.getDebugInfo();
@@ -123,61 +101,92 @@ export class DatoBuilderCLI {
   }
 }
 
-// Example usage functions for different command patterns
-export class BuildCommandRunner {
-  async run(
-    options: BaseCommandOptions & {
-      command: "build" | "list" | "clear" | "debug";
-      listOptions?: {
-        format?: "table" | "json" | "simple";
-        type?: "blocks" | "models" | "all";
-        showCached?: boolean;
-      };
-    },
-  ): Promise<void> {
-    const cli = new DatoBuilderCLI(options);
+// Type definitions for options
+type GlobalOptions = {
+  debug: boolean;
+  verbose: boolean;
+  quiet: boolean;
+};
 
-    switch (options.command) {
-      case "build":
-        await cli.build();
-        break;
-      case "list":
-        await cli.list(options.listOptions);
-        break;
-      case "clear":
-        await cli.clearCache();
-        break;
-      case "debug":
-        await cli.debug();
-        break;
-      default:
-        throw new Error(`Unknown command: ${options.command}`);
+// Setup Commander CLI
+async function setupCLI(): Promise<void> {
+  const program = new Command()
+    .name("dato-builder")
+    .description("DatoCMS Builder CLI")
+    .option("-d, --debug", "Output information useful for debugging.", false)
+    .option("-v, --verbose", "Display even finer-grained trace logs.", false)
+    .option("-q, --quiet", "Only display errors.", false);
+
+  function getLogLevelFromOptions(options: GlobalOptions): LogLevel {
+    if (options.debug) {
+      return LogLevel.DEBUG;
+    } else if (options.quiet) {
+      return LogLevel.ERROR;
+    } else if (options.verbose) {
+      return LogLevel.TRACE;
+    } else {
+      return LogLevel.INFO;
     }
   }
+
+  async function initializeCLI(
+    globalOptions: GlobalOptions,
+  ): Promise<DatoBuilderCLI> {
+    const level = getLogLevelFromOptions(globalOptions);
+
+    const logger = new ConsoleLogger(level);
+    const configParser = new ConfigParser(logger);
+    const cache = new ItemTypeCacheManager(
+      path.join(process.cwd(), ".dato-builder-cache", "item-types.json"),
+    );
+
+    const config = await configParser.loadConfig();
+
+    // Override log level from config if CLI options are provided
+    if (globalOptions.debug || globalOptions.verbose || globalOptions.quiet) {
+      logger.setLevel(level);
+      config.logLevel = level;
+    } else {
+      logger.setLevel(config.logLevel);
+    }
+
+    await cache.initialize();
+
+    return new DatoBuilderCLI({
+      config,
+      cache,
+      logger,
+    });
+  }
+
+  // Build command
+  program
+    .command("build")
+    .description("Build DatoCMS types and blocks")
+    .action(async (_options, command) => {
+      try {
+        const globalOptions = command.optsWithGlobals();
+        const cli = await initializeCLI({
+          debug: globalOptions.debug,
+          verbose: globalOptions.verbose,
+          quiet: globalOptions.quiet,
+        });
+        await cli.build();
+      } catch (error) {
+        console.error(`Build failed: ${(error as Error).message}`);
+        process.exit(1);
+      }
+    });
+
+  await program.parseAsync(process.argv);
 }
 
-(async () => {
-  const consoleLogger = new ConsoleLogger();
-  const runner = new BuildCommandRunner();
-  const configParer = new ConfigParser(consoleLogger);
-
-  const config = await configParer.loadConfig();
-
-  const itemTypeCache = new ItemTypeCacheManager(
-    path.join(process.cwd(), ".dato-builder-cache", "item-types.json"),
-  );
-
-  await itemTypeCache.initialize();
-
-  await runner.run({
-    command: "build",
-    config,
-    modelsPath: `${process.cwd()}/src/datocms/models`,
-    blocksPath: `${process.cwd()}/src/datocms/blocks`,
-    cache: itemTypeCache,
-    logger: new ConsoleLogger(getLogLevel(config.logLevel)),
+// Main execution
+if (require.main === module) {
+  setupCLI().catch((error) => {
+    console.error("Error setting up CLI:", error);
+    process.exit(1);
   });
-})().catch((error) => {
-  console.error("Error running DatoBuilder CLI:", error);
-  process.exit(1);
-});
+}
+
+export { setupCLI };

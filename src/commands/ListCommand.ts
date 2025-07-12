@@ -8,8 +8,6 @@ interface ListCommandOptions {
   config: Required<DatoBuilderConfig>;
   cache: ItemTypeCacheManager;
   logger: ConsoleLogger;
-  blocksPath?: string | null;
-  modelsPath?: string | null;
 }
 
 interface ItemInfo {
@@ -27,20 +25,14 @@ export class ListCommand {
   private readonly logger: ConsoleLogger;
   private readonly fileDiscoverer: FileDiscoverer;
 
-  constructor({
-    config,
-    cache,
-    logger,
-    blocksPath,
-    modelsPath,
-  }: ListCommandOptions) {
+  constructor({ config, cache, logger }: ListCommandOptions) {
     this.config = config;
     this.cache = cache;
     this.logger = logger;
 
     this.fileDiscoverer = new FileDiscoverer(
-      blocksPath ?? "./datocms/blocks",
-      modelsPath ?? "./datocms/models",
+      this.config.blocksPath,
+      this.config.modelsPath,
       logger,
     );
   }

@@ -14,8 +14,6 @@ interface RunCommandOptions {
   config: Required<DatoBuilderConfig>;
   cache: ItemTypeCacheManager;
   logger: ConsoleLogger;
-  blocksPath?: string | null;
-  modelsPath?: string | null;
 }
 
 // Custom error for item not found
@@ -44,20 +42,14 @@ export class RunCommand {
 
   private fileMap: Map<string, FileInfo> | null = null;
 
-  constructor({
-    config,
-    cache,
-    logger,
-    blocksPath,
-    modelsPath,
-  }: RunCommandOptions) {
+  constructor({ config, cache, logger }: RunCommandOptions) {
     this.config = config;
     this.cache = cache;
     this.logger = logger;
 
     this.fileDiscoverer = new FileDiscoverer(
-      blocksPath ?? "./datocms/blocks",
-      modelsPath ?? "./datocms/models",
+      this.config.blocksPath,
+      this.config.modelsPath,
       logger,
     );
 

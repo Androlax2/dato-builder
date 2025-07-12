@@ -56,7 +56,7 @@ import Wysiwyg, { type WysiwygConfig } from "./Fields/Wysiwyg";
 import { ConsoleLogger } from "./logger";
 import type { DatoBuilderConfig } from "./types/DatoBuilderConfig";
 import { executeWithErrorHandling } from "./utils/errors";
-import { generateDatoApiKey, getLogLevel } from "./utils/utils";
+import { generateDatoApiKey } from "./utils/utils";
 
 export type ItemTypeBuilderType = "model" | "block";
 
@@ -85,7 +85,7 @@ export default abstract class ItemTypeBuilder {
   readonly config: Required<DatoBuilderConfig>;
 
   protected constructor({ type, body, config }: ItemTypeBuilderOptions) {
-    this.logger = new ConsoleLogger(getLogLevel(config.logLevel));
+    this.logger = new ConsoleLogger(config.logLevel);
     this.type = type;
     this.name = body.name;
     this.api = new DatoApi(buildClient({ apiToken: config.apiToken }));

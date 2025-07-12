@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import type { ConsoleLogger } from "../logger";
+import { type ConsoleLogger, LogLevel } from "../logger";
 import type { DatoBuilderConfig } from "../types/DatoBuilderConfig";
 
 export class ConfigParser {
@@ -11,10 +11,11 @@ export class ConfigParser {
     "apiToken"
   > = {
     overwriteExistingFields: false,
-    debug: false,
     modelApiKeySuffix: null,
     blockApiKeySuffix: null,
-    logLevel: "info",
+    blocksPath: path.resolve(process.cwd(), "datocms", "blocks"),
+    modelsPath: path.resolve(process.cwd(), "datocms", "models"),
+    logLevel: LogLevel.INFO,
   };
 
   constructor(logger: ConsoleLogger) {
