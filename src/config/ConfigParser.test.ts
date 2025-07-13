@@ -1,6 +1,5 @@
 import fs from "node:fs";
 import path from "node:path";
-import { afterEach } from "node:test";
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 import { createMockLogger } from "@tests/utils/mockLogger";
 import { ConfigParser } from "@/config/ConfigParser";
@@ -31,10 +30,6 @@ describe("ConfigParser", () => {
     jest.spyOn(process, "cwd").mockReturnValue("/mock/cwd");
 
     configParser = new ConfigParser(createMockLogger());
-  });
-
-  afterEach(() => {
-    jest.restoreAllMocks();
   });
 
   describe("loadConfig", () => {
