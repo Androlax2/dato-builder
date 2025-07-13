@@ -1,15 +1,23 @@
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 import ItemTypeBuilder from "../../src/ItemTypeBuilder";
 
-jest.mock("../../src/config/loader", () => ({
-  loadDatoBuilderConfig: jest.fn(() => ({
-    overwriteExistingFields: false,
-  })),
-}));
-
 class TestBuilder extends ItemTypeBuilder {
   constructor() {
-    super("model", { name: "TestModel" });
+    super({
+      config: {
+        overwriteExistingFields: false,
+        apiToken: "",
+        modelApiKeySuffix: null,
+        blockApiKeySuffix: null,
+        modelsPath: "",
+        blocksPath: "",
+        logLevel: 0,
+      },
+      type: "model",
+      body: {
+        name: "TestModel",
+      },
+    });
   }
 }
 
