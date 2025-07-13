@@ -307,7 +307,9 @@ export default ${asyncKeyword}function ${functionName}(${params}: BuilderContext
       const itemType = this.itemTypeReferences.get(itemId);
       if (itemType) {
         const getterMethod = itemType.modular_block ? "getBlock" : "getModel";
-        asyncCalls.push(`await ${getterMethod}('${itemType.api_key}')`);
+        asyncCalls.push(
+          `await ${getterMethod}('${this.toPascalCase(itemType.name)}')`,
+        );
       }
     }
 
