@@ -1,6 +1,3 @@
-import type { ConsoleLogger } from "../logger";
-import type { DatoBuilderConfig } from "../types/DatoBuilderConfig";
-
 interface ItemType {
   id: string;
   name: string;
@@ -32,21 +29,8 @@ interface ItemTypeReference {
   modular_block: boolean;
 }
 
-interface Dependency {
-  type: "block" | "model";
-  functionName: string;
-  apiKey: string;
-}
-
 export class FileGenerator {
-  private config: Required<DatoBuilderConfig>;
-  private logger: ConsoleLogger;
   private itemTypeReferences: Map<string, ItemTypeReference> = new Map();
-
-  constructor(config: Required<DatoBuilderConfig>, logger: ConsoleLogger) {
-    this.config = config;
-    this.logger = logger;
-  }
 
   /**
    * Set references to all item types for resolving dependencies
@@ -56,164 +40,121 @@ export class FileGenerator {
     for (const itemType of itemTypes) {
       this.itemTypeReferences.set(itemType.id, itemType);
     }
-    this.logger.trace(`Set ${itemTypes.length} item type references`);
   }
 
   /**
-   * Generate a TypeScript file for a block or model
+   * Generate a TypeScript file for a block or model using simple string templates
    */
-  async generateFile(
+  generateFile(
     itemType: ItemType,
     fields: Field[],
     type: "block" | "model",
-  ): Promise<string> {
-    this.logger.trace(`Generating file for ${type}: ${itemType.name}`);
-
+  ): string {
     const builderClass = type === "block" ? "BlockBuilder" : "ModelBuilder";
     const functionName = `build${this.toPascalCase(itemType.name)}`;
+    const needsAsync = this.hasBlockReferences(fields);
 
-    // Analyze dependencies
-    const dependencies = this.analyzeDependencies(fields);
-    const needsAsync = dependencies.length > 0;
-
-    // Generate components
-    const imports = this.generateImports(type);
-    const header = this.generateFileHeader(itemType, type);
-    const functionSignature = this.generateFunctionSignature(
+    return this.buildFileContent(
       functionName,
-      needsAsync,
-    );
-    const functionBody = this.generateFunctionBody(
+      type,
       itemType,
       fields,
       builderClass,
+      needsAsync,
+    );
+  }
+
+  private buildFileContent(
+    functionName: string,
+    type: "block" | "model",
+    itemType: ItemType,
+    fields: Field[],
+    builderClass: string,
+    needsAsync: boolean,
+  ): string {
+    const imports = this.generateImports(builderClass);
+    const functionDef = this.generateFunction(
+      functionName,
+      type,
+      itemType,
+      fields,
+      builderClass,
+      needsAsync,
     );
 
-    // Format and combine everything
-    return this.formatFile({
-      imports,
-      header,
-      functionSignature,
-      functionBody,
-    });
+    return `${imports}\n\n${functionDef}`;
   }
 
-  /**
-   * Generate import statements
-   */
-  private generateImports(type: "block" | "model"): string {
-    const builderClass = type === "block" ? "BlockBuilder" : "ModelBuilder";
-
-    return `import ${builderClass} from '../../${builderClass}';
-import type { BuilderContext } from '../../types/BuilderContext';`;
+  private generateImports(builderClass: string): string {
+    return `import ${builderClass} from "../../${builderClass}";
+import type { BuilderContext } from "../../types/BuilderContext";`;
   }
 
-  /**
-   * Generate file header comment
-   */
-  private generateFileHeader(itemType: any, type: "block" | "model"): string {
+  private generateFunction(
+    functionName: string,
+    type: "block" | "model",
+    itemType: ItemType,
+    fields: Field[],
+    builderClass: string,
+    needsAsync: boolean,
+  ): string {
+    const asyncKeyword = needsAsync ? "async " : "";
+    const params = needsAsync ? "{ config, getBlock, getModel }" : "{ config }";
+    const builderConfig = this.generateBuilderConfig(type, itemType);
+    const fieldMethods = this.generateFieldMethods(fields, needsAsync);
+
     return `/**
  * Build a "${itemType.name}" ${type} in DatoCMS.
- * 
  * Generated from DatoCMS API on ${new Date().toISOString()}
  * API Key: ${itemType.api_key}
- * ${itemType.description ? `Description: ${itemType.description}` : ""}
- */`;
+ */
+export default ${asyncKeyword}function ${functionName}(${params}: BuilderContext) {
+  return new ${builderClass}(${builderConfig})${fieldMethods};
+}`;
   }
 
-  /**
-   * Generate builder initialization options
-   */
-  private generateBuilderInitialization(
-    itemType: any,
-    builderClass: string,
+  private generateBuilderConfig(
+    type: "block" | "model",
+    itemType: ItemType,
   ): string {
-    return `new ${builderClass}({
+    const baseConfig = `{
     name: '${itemType.name}',
-    config,${this.generateBuilderBodyOptions(itemType, builderClass)}
-  })`;
-  }
+    config`;
 
-  /**
-   * Generate additional builder body options
-   */
-  private generateBuilderBodyOptions(
-    itemType: any,
-    builderClass: string,
-  ): string {
-    if (builderClass === "ModelBuilder") {
-      return `\n    body: {\n      singleton: ${itemType.singleton || false},\n      sortable: ${itemType.sortable || false},\n      draft_mode_active: ${itemType.draft_mode_active || false},\n      all_locales_required: ${itemType.all_locales_required || false}\n    }`;
+    if (type === "model") {
+      return `${baseConfig},
+    body: {
+      singleton: ${itemType.singleton || false},
+      sortable: ${itemType.sortable || false},
+      draft_mode_active: ${itemType.draft_mode_active || false},
+      all_locales_required: ${itemType.all_locales_required || false}
+    }
+  }`;
     } else {
-      return `\n    options: {\n      api_key: '${itemType.api_key}',\n      hint: '${itemType.description || ""}'\n    }`;
+      return `${baseConfig},
+    options: {
+      api_key: '${itemType.api_key}',
+      hint: '${itemType.description || ""}'
+    }
+  }`;
     }
   }
 
-  /**
-   * Generate field method calls
-   */
-  private generateFieldCalls(fields: any[]): string {
-    if (fields.length === 0) {
-      return "";
-    }
-
-    // Sort fields by position
+  private generateFieldMethods(fields: Field[], needsAsync: boolean): string {
     const sortedFields = [...fields].sort(
       (a, b) => (a.position || 0) - (b.position || 0),
     );
 
     return sortedFields
       .map((field) => {
-        return this.generateFieldCall(field);
+        const methodName = this.getFieldMethodName(field.field_type);
+        const config = this.generateFieldConfig(field, needsAsync);
+        return `\n    .${methodName}(${config})`;
       })
       .join("");
   }
 
-  /**
-   * Generate a single field method call
-   */
-  private generateFieldCall(field: any): string {
-    const methodName = this.getFieldMethodName(field.field_type);
-    const fieldConfig = this.generateEnhancedFieldConfig(field);
-
-    return `\n    .${methodName}(${fieldConfig})`;
-  }
-
-  /**
-   * Map DatoCMS field types to builder method names
-   */
-  private getFieldMethodName(fieldType: string): string {
-    const fieldTypeMap: { [key: string]: string } = {
-      string: "addSingleLineString",
-      text: "addMultiLineText",
-      wysiwyg: "addWysiwyg",
-      markdown: "addMarkdown",
-      integer: "addInteger",
-      float: "addFloat",
-      boolean: "addBoolean",
-      date: "addDate",
-      datetime: "addDateTime",
-      file: "addSingleAsset",
-      gallery: "addAssetGallery",
-      video: "addExternalVideo",
-      link: "addLink",
-      links: "addLinks",
-      slug: "addSlug",
-      seo: "addSeo",
-      lat_lon: "addLocation",
-      color: "addColorPicker",
-      json: "addJson",
-      structured_text: "addStructuredText",
-      single_block: "addSingleBlock",
-      rich_text: "addModularContent",
-    };
-
-    return fieldTypeMap[fieldType] || "addSingleLineString";
-  }
-
-  /**
-   * Generate field configuration object
-   */
-  private generateFieldConfig(field: any): string {
+  private generateFieldConfig(field: Field, needsAsync: boolean): string {
     const config: any = {
       label: field.label || field.api_key,
     };
@@ -225,18 +166,15 @@ import type { BuilderContext } from '../../types/BuilderContext';`;
     }
 
     // Add body configuration
-    const bodyConfig = this.generateFieldBodyConfig(field);
-    if (bodyConfig && Object.keys(bodyConfig).length > 0) {
-      config.body = bodyConfig;
+    const body = this.generateFieldBody(field, needsAsync);
+    if (body && Object.keys(body).length > 0) {
+      config.body = body;
     }
 
     return this.objectToString(config);
   }
 
-  /**
-   * Generate field type specific options
-   */
-  private generateFieldTypeOptions(field: any): any {
+  private generateFieldTypeOptions(field: Field): any {
     const options: any = {};
 
     // Handle field-specific configurations
@@ -282,7 +220,7 @@ import type { BuilderContext } from '../../types/BuilderContext';`;
         break;
     }
 
-    // Handle appearance-based options that are common
+    // Handle common appearance options
     if (field.appearance?.placeholder && !options.placeholder) {
       if (field.field_type === "text" || field.field_type === "string") {
         options.placeholder = field.appearance.placeholder;
@@ -292,13 +230,9 @@ import type { BuilderContext } from '../../types/BuilderContext';`;
     return Object.keys(options).length > 0 ? options : null;
   }
 
-  /**
-   * Generate field body configuration
-   */
-  private generateFieldBodyConfig(field: any): any {
+  private generateFieldBody(field: Field, needsAsync: boolean): any {
     const body: any = {};
 
-    // Add common field properties
     if (field.localized !== undefined) {
       body.localized = field.localized;
     }
@@ -307,60 +241,57 @@ import type { BuilderContext } from '../../types/BuilderContext';`;
       body.hint = field.hint;
     }
 
-    // Add validators
-    if (field.validators && Object.keys(field.validators).length > 0) {
+    // Process validators
+    if (field.validators) {
       body.validators = this.processValidators(field.validators);
+    }
+
+    // Handle block references with async resolution
+    if (needsAsync && this.fieldReferencesOtherItems(field)) {
+      const referencedItemIds = this.getReferencedItemIds(field);
+      const asyncCalls = this.generateAsyncCalls(referencedItemIds);
+
+      if (asyncCalls.length > 0) {
+        if (field.field_type === "rich_text") {
+          if (!body.validators) body.validators = {};
+          if (!body.validators.rich_text_blocks)
+            body.validators.rich_text_blocks = {};
+          body.validators.rich_text_blocks.item_types = `[${asyncCalls.join(", ")}]`;
+        } else if (field.field_type === "single_block") {
+          if (!body.validators) body.validators = {};
+          if (!body.validators.single_block) body.validators.single_block = {};
+          body.validators.single_block.item_types = `[${asyncCalls.join(", ")}]`;
+        } else if (field.field_type === "structured_text") {
+          if (!body.validators) body.validators = {};
+          if (!body.validators.structured_text_blocks)
+            body.validators.structured_text_blocks = {};
+          body.validators.structured_text_blocks.item_types = `[${asyncCalls.join(", ")}]`;
+        }
+      }
     }
 
     return body;
   }
 
-  /**
-   * Process field validators
-   */
-  private processValidators(validators: any): any {
+  private processValidators(validators: Record<string, any>): any {
     const processed: any = {};
 
-    // Handle common validators
     for (const [key, value] of Object.entries(validators)) {
       switch (key) {
         case "required":
-          if (value) {
-            processed.required = true;
-          }
+          if (value) processed.required = true;
           break;
-
         case "unique":
-          if (value) {
-            processed.unique = true;
-          }
+          if (value) processed.unique = true;
           break;
-
         case "length":
-          if (value && typeof value === "object") {
-            processed.length = value;
-          }
-          break;
-
         case "format":
-          if (value && typeof value === "object") {
-            processed.format = value;
-          }
-          break;
-
         case "number_range":
-          if (value && typeof value === "object") {
-            processed.number_range = value;
-          }
-          break;
-
         case "date_range":
           if (value && typeof value === "object") {
-            processed.date_range = value;
+            processed[key] = value;
           }
           break;
-
-        // Add more validator mappings as needed
         default:
           processed[key] = value;
       }
@@ -369,96 +300,20 @@ import type { BuilderContext } from '../../types/BuilderContext';`;
     return Object.keys(processed).length > 0 ? processed : undefined;
   }
 
-  /**
-   * Check if any fields require async handling
-   */
-  private hasAsyncFields(fields: any[]): boolean {
-    return fields.some(
-      (field) =>
-        ["rich_text", "single_block", "structured_text"].includes(
-          field.field_type,
-        ) && field.validators?.rich_text_blocks?.item_types?.length > 0,
-    );
-  }
+  private generateAsyncCalls(referencedItemIds: string[]): string[] {
+    const asyncCalls: string[] = [];
 
-  /**
-   * Convert object to string representation
-   */
-  private objectToString(obj: any, indent = 0): string {
-    const spaces = "  ".repeat(indent);
-    const innerSpaces = "  ".repeat(indent + 1);
-
-    if (typeof obj !== "object" || obj === null) {
-      return JSON.stringify(obj);
-    }
-
-    if (Array.isArray(obj)) {
-      if (obj.length === 0) return "[]";
-
-      const items = obj
-        .map((item) =>
-          typeof item === "object"
-            ? `${innerSpaces}${this.objectToString(item, indent + 1)}`
-            : `${innerSpaces}${JSON.stringify(item)}`,
-        )
-        .join(",\n");
-
-      return `\n${spaces}[\n${items}\n${spaces}]`;
-    }
-
-    const entries = Object.entries(obj);
-    if (entries.length === 0) return "{}";
-
-    const props = entries
-      .map(([key, value]) => {
-        const keyStr = /^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(key)
-          ? key
-          : JSON.stringify(key);
-        const valueStr =
-          typeof value === "object"
-            ? this.objectToString(value, indent + 1)
-            : JSON.stringify(value);
-        return `${innerSpaces}${keyStr}: ${valueStr}`;
-      })
-      .join(",\n");
-
-    return `{\n${props}\n${spaces}}`;
-  }
-
-  /**
-   * Analyze field dependencies to determine if async functions are needed
-   */
-  private analyzeDependencies(fields: Field[]): Dependency[] {
-    const dependencies: Dependency[] = [];
-
-    for (const field of fields) {
-      if (this.fieldReferencesOtherItems(field)) {
-        const referencedItemIds = this.getReferencedItemIds(field);
-
-        for (const itemId of referencedItemIds) {
-          const itemType = this.itemTypeReferences.get(itemId);
-          if (itemType) {
-            const type = itemType.modular_block ? "block" : "model";
-            const functionName = `build${this.toPascalCase(itemType.name)}`;
-
-            if (!dependencies.some((dep) => dep.apiKey === itemType.api_key)) {
-              dependencies.push({
-                type,
-                functionName,
-                apiKey: itemType.api_key,
-              });
-            }
-          }
-        }
+    for (const itemId of referencedItemIds) {
+      const itemType = this.itemTypeReferences.get(itemId);
+      if (itemType) {
+        const getterMethod = itemType.modular_block ? "getBlock" : "getModel";
+        asyncCalls.push(`await ${getterMethod}('${itemType.api_key}')`);
       }
     }
 
-    return dependencies;
+    return asyncCalls;
   }
 
-  /**
-   * Check if a field references other item types
-   */
   private fieldReferencesOtherItems(field: Field): boolean {
     return (
       (field.field_type === "rich_text" ||
@@ -468,13 +323,9 @@ import type { BuilderContext } from '../../types/BuilderContext';`;
     );
   }
 
-  /**
-   * Extract referenced item IDs from field configuration
-   */
   private getReferencedItemIds(field: Field): string[] {
     const itemIds: string[] = [];
 
-    // Check validators for referenced item types
     if (field.validators?.rich_text_blocks?.item_types) {
       itemIds.push(...field.validators.rich_text_blocks.item_types);
     }
@@ -490,177 +341,89 @@ import type { BuilderContext } from '../../types/BuilderContext';`;
     return itemIds;
   }
 
-  /**
-   * Generate function signature (async if needed)
-   */
-  private generateFunctionSignature(
-    functionName: string,
-    needsAsync: boolean,
-  ): string {
-    const asyncKeyword = needsAsync ? "async " : "";
-    const contextParam = needsAsync
-      ? "{ config, getBlock, getModel }"
-      : "{ config }";
-
-    return `export default ${asyncKeyword}function ${functionName}(${contextParam}: BuilderContext)`;
-  }
-
-  /**
-   * Generate enhanced function body with dependency resolution
-   */
-  private generateFunctionBody(
-    itemType: ItemType,
-    fields: Field[],
-    builderClass: string,
-  ): string {
-    let body = "";
-
-    // Generate field calls with proper dependency injection
-    const fieldCalls = this.generateEnhancedFieldCalls(fields);
-
-    body += `  return new ${builderClass}({\n`;
-    body += `    name: '${itemType.name}',\n`;
-    body += `    config,${this.generateBuilderBodyOptions(itemType, builderClass)}\n`;
-    body += `  })${fieldCalls};`;
-
-    return body;
-  }
-
-  /**
-   * Generate field calls with dependency injection
-   */
-  private generateEnhancedFieldCalls(fields: Field[]): string {
-    if (fields.length === 0) {
-      return "";
-    }
-
-    // Sort fields by position
-    const sortedFields = [...fields].sort(
-      (a, b) => (a.position || 0) - (b.position || 0),
-    );
-
-    return sortedFields
-      .map((field) => this.generateEnhancedFieldCall(field))
-      .join("");
-  }
-
-  /**
-   * Generate enhanced field call with dependency resolution
-   */
-  private generateEnhancedFieldCall(field: Field): string {
-    const methodName = this.getFieldMethodName(field.field_type);
-    const fieldConfig = this.generateEnhancedFieldConfig(field);
-
-    return `\n    .${methodName}(${fieldConfig})`;
-  }
-
-  /**
-   * Generate enhanced field configuration with dependency resolution
-   */
-  private generateEnhancedFieldConfig(field: Field): string {
-    const config: any = {
-      label: field.label || field.api_key,
+  private getFieldMethodName(fieldType: string): string {
+    const fieldTypeMap: Record<string, string> = {
+      string: "addSingleLineString",
+      text: "addMultiLineText",
+      wysiwyg: "addWysiwyg",
+      markdown: "addMarkdown",
+      integer: "addInteger",
+      float: "addFloat",
+      boolean: "addBoolean",
+      date: "addDate",
+      datetime: "addDateTime",
+      file: "addSingleAsset",
+      gallery: "addAssetGallery",
+      video: "addExternalVideo",
+      link: "addLink",
+      links: "addLinks",
+      slug: "addSlug",
+      seo: "addSeo",
+      lat_lon: "addLocation",
+      color: "addColorPicker",
+      json: "addJson",
+      structured_text: "addStructuredText",
+      single_block: "addSingleBlock",
+      rich_text: "addModularContent",
     };
 
-    // Add field-specific options
-    const fieldOptions = this.generateFieldTypeOptions(field);
-    if (fieldOptions) {
-      Object.assign(config, fieldOptions);
-    }
-
-    // Add body configuration with dependency resolution
-    const bodyConfig = this.generateEnhancedFieldBodyConfig(field);
-    if (bodyConfig && Object.keys(bodyConfig).length > 0) {
-      config.body = bodyConfig;
-    }
-
-    return this.objectToString(config, 1);
+    return fieldTypeMap[fieldType] || "addSingleLineString";
   }
 
-  /**
-   * Generate enhanced field body config with dependency resolution
-   */
-  private generateEnhancedFieldBodyConfig(field: Field): any {
-    const body = this.generateFieldBodyConfig(field);
+  private hasBlockReferences(fields: Field[]): boolean {
+    return fields.some((field) => this.fieldReferencesOtherItems(field));
+  }
 
-    // Handle referenced item types for rich_text, single_block, etc.
-    if (this.fieldReferencesOtherItems(field)) {
-      const referencedItemIds = this.getReferencedItemIds(field);
-      const resolvedBuilders: string[] = [];
+  private objectToString(obj: any, indent = 0): string {
+    const spaces = "  ".repeat(indent);
+    const innerSpaces = "  ".repeat(indent + 1);
 
-      for (const itemId of referencedItemIds) {
-        const itemType = this.itemTypeReferences.get(itemId);
-        if (itemType) {
-          const getterMethod = itemType.modular_block ? "getBlock" : "getModel";
-          resolvedBuilders.push(`await ${getterMethod}('${itemType.api_key}')`);
-          this.logger.trace(
-            `Resolved ${itemType.name} (${itemType.api_key}) for field ${field.api_key}`,
-          );
-        }
-      }
+    if (typeof obj !== "object" || obj === null) {
+      return JSON.stringify(obj);
+    }
 
-      if (resolvedBuilders.length > 0) {
-        // Reference the resolved builders using async calls
-        const asyncCalls: string[] = [];
+    if (Array.isArray(obj)) {
+      if (obj.length === 0) return "[]";
 
-        for (const itemId of referencedItemIds) {
-          const itemType = this.itemTypeReferences.get(itemId);
-          if (itemType) {
-            const getterMethod = itemType.modular_block
-              ? "getBlock"
-              : "getModel";
-            asyncCalls.push(`await ${getterMethod}('${itemType.name}')`);
+      const items = obj
+        .map((item) => {
+          if (typeof item === "string" && item.includes("await ")) {
+            return `${innerSpaces}${item}`;
           }
-        }
+          return typeof item === "object"
+            ? `${innerSpaces}${this.objectToString(item, indent + 1)}`
+            : `${innerSpaces}${JSON.stringify(item)}`;
+        })
+        .join(",\n");
 
-        if (asyncCalls.length > 0) {
-          if (field.field_type === "rich_text") {
-            body.validators.rich_text_blocks.item_types = `[${asyncCalls.join(", ")}]`;
-          } else if (field.field_type === "single_block") {
-            body.item_types = `[${asyncCalls.join(", ")}]`;
-          } else if (field.field_type === "structured_text") {
-            body.blocks = `[${asyncCalls.join(", ")}]`;
-          }
-        }
-      }
+      return `[\n${items},\n${spaces}]`;
     }
 
-    return body;
+    const entries = Object.entries(obj);
+    if (entries.length === 0) return "{}";
+
+    const props = entries
+      .map(([key, value]) => {
+        const keyStr = /^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(key)
+          ? key
+          : JSON.stringify(key);
+
+        let valueStr: string;
+        if (typeof value === "string" && value.includes("await ")) {
+          valueStr = value;
+        } else if (typeof value === "object") {
+          valueStr = this.objectToString(value, indent + 1);
+        } else {
+          valueStr = JSON.stringify(value);
+        }
+
+        return `${innerSpaces}${keyStr}: ${valueStr},`;
+      })
+      .join("\n");
+
+    return `{\n${props}\n${spaces}}`;
   }
 
-  /**
-   * Format the complete file with proper indentation
-   */
-  private formatFile(components: {
-    imports: string;
-    header: string;
-    functionSignature: string;
-    functionBody: string;
-  }): string {
-    const { imports, header, functionSignature, functionBody } = components;
-
-    return [
-      imports,
-      "",
-      header,
-      `${functionSignature} {`,
-      functionBody
-        .replace(
-          /"\[\s*await getBlock\('(.+?)'\)\s*\]"/g,
-          (_match, p1) => `[ await getBlock('${p1}') ]`,
-        )
-        .replace(
-          /"\[\s*await getModel\('(.+?)'\)\s*\]"/g,
-          (_match, p1) => `[ await getModel('${p1}') ]`,
-        ),
-      "}",
-      "",
-    ].join("\n");
-  }
-
-  /**
-   * Convert string to PascalCase
-   */
   private toPascalCase(str: string): string {
     return str
       .replace(/[^a-zA-Z0-9\s]/g, " ")

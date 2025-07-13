@@ -18,8 +18,8 @@ export interface SyncOptions {
 
 export class DatoCmsSync {
   private api: DatoApi;
-  private logger: ConsoleLogger;
-  private config: Required<DatoBuilderConfig>;
+  private readonly logger: ConsoleLogger;
+  private readonly config: Required<DatoBuilderConfig>;
   private cache: CacheManager;
   private fileGenerator: FileGenerator;
 
@@ -28,7 +28,7 @@ export class DatoCmsSync {
     this.logger = options.logger;
     this.cache = options.cache;
     this.api = new DatoApi(buildClient({ apiToken: this.config.apiToken }));
-    this.fileGenerator = new FileGenerator(this.config, this.logger);
+    this.fileGenerator = new FileGenerator();
   }
 
   /**
@@ -232,7 +232,7 @@ export class DatoCmsSync {
         }
 
         // Generate file content
-        const fileContent = await this.fileGenerator.generateFile(
+        const fileContent = this.fileGenerator.generateFile(
           itemType,
           fields,
           type,
