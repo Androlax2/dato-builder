@@ -1,22 +1,10 @@
 import fs from "node:fs";
 import path from "node:path";
-import { type ConsoleLogger, LogLevel } from "../logger";
-import type { DatoBuilderConfig } from "../types/DatoBuilderConfig";
+import { type ConsoleLogger, LogLevel } from "@/logger";
+import type { DatoBuilderConfig } from "@/types/DatoBuilderConfig";
 
 export class ConfigParser {
   private readonly logger: ConsoleLogger;
-
-  private static readonly DEFAULTS: Omit<
-    Required<DatoBuilderConfig>,
-    "apiToken"
-  > = {
-    overwriteExistingFields: false,
-    modelApiKeySuffix: "model",
-    blockApiKeySuffix: "block",
-    blocksPath: path.resolve(process.cwd(), "datocms", "blocks"),
-    modelsPath: path.resolve(process.cwd(), "datocms", "models"),
-    logLevel: LogLevel.INFO,
-  };
 
   constructor(logger: ConsoleLogger) {
     this.logger = logger;
@@ -34,9 +22,20 @@ export class ConfigParser {
     }
 
     return this.validateConfig({
-      ...ConfigParser.DEFAULTS,
+      ...this.DEFAULTS,
       ...(userConfig.default as DatoBuilderConfig),
     });
+  }
+
+  private get DEFAULTS(): Omit<Required<DatoBuilderConfig>, "apiToken"> {
+    return {
+      overwriteExistingFields: false,
+      modelApiKeySuffix: "model",
+      blockApiKeySuffix: "block",
+      blocksPath: path.resolve(process.cwd(), "datocms", "blocks"),
+      modelsPath: path.resolve(process.cwd(), "datocms", "models"),
+      logLevel: LogLevel.INFO,
+    };
   }
 
   private async getConfigFilePath(): Promise<string> {
