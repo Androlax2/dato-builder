@@ -15,6 +15,8 @@ export class ConfigParser {
     blockApiKeySuffix: "block",
     blocksPath: path.resolve(process.cwd(), "datocms", "blocks"),
     modelsPath: path.resolve(process.cwd(), "datocms", "models"),
+    syncBlocksPath: path.resolve(process.cwd(), "src", "datocms", "blocks"),
+    syncModelsPath: path.resolve(process.cwd(), "src", "datocms", "models"),
     logLevel: LogLevel.INFO,
   };
 

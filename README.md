@@ -87,6 +87,14 @@ module.exports = {
   debug: false, // enable verbose logging
   modelApiKeySuffix: undefined, // suffix for model API keys (e.g. "page" becomes "page_model")
   blockApiKeySuffix: "block", // suffix for block API keys (e.g. "hero" becomes "hero_block")
+  
+  // Paths for building from local to DatoCMS
+  modelsPath: "./datocms/models", // where to find model definitions
+  blocksPath: "./datocms/blocks", // where to find block definitions
+  
+  // Paths for syncing from DatoCMS to local
+  syncModelsPath: "./src/datocms/models", // where to generate synced models
+  syncBlocksPath: "./src/datocms/blocks", // where to generate synced blocks
 };
 ```
 
@@ -97,11 +105,18 @@ module.exports = {
 
 ## CLI Commands
 
-- **`npx dato-builder run <file|dir>`**  
-  Build one or more scripts (blocks, models, or whole folders).
+- **`npx dato-builder build`**  
+  Build DatoCMS types and blocks from your local definitions.
+
+- **`npx dato-builder sync [options]`**  
+  Sync blocks and models from DatoCMS to local TypeScript files.
+  
+  Options:
+  - `--dry-run`: Show what would be synced without making any changes
+  - `--force`: Force sync all items, ignoring cache
 
 - **`npx dato-builder clear-cache`**  
-  Wipe the local cache that tracks what’s already been synced.
+  Wipe the local cache that tracks what's already been synced.
 
 ---
 
@@ -169,12 +184,29 @@ npx dato-builder run datocms/models/TestModel.ts
 ### 3. Build Everything
 
 ```bash
-npx dato-builder run datocms/
+npx dato-builder build
 ```
+
+### 4. Sync from DatoCMS
+
+You can also sync existing blocks and models from DatoCMS to your local project:
+
+```bash
+# Dry run to see what would be synced
+npx dato-builder sync --dry-run
+
+# Sync all changes
+npx dato-builder sync
+
+# Force sync everything, ignoring cache
+npx dato-builder sync --force
+```
+
+This will generate TypeScript files in your configured sync paths (default: `./src/datocms/blocks` and `./src/datocms/models`) that match your DatoCMS schema.
 
 ---
 
-_Note: You can add more builder scripts (blocks or models) and then point `run` at the parent folder to sync them all in one go._
+_Note: The sync command creates a single source of truth by generating local files from your DatoCMS schema, while the build command pushes your local definitions to DatoCMS._
 
 # Comprehensive Field & Validator Reference
 
