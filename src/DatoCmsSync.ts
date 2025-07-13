@@ -163,6 +163,9 @@ export class DatoCmsSync {
         return;
       }
 
+      // Set item type references for the file generator
+      this.fileGenerator.setItemTypeReferences(itemTypes);
+
       // Categorize into blocks and models
       const { blocks, models } = this.categorizeItemTypes(itemTypes);
 
@@ -228,6 +231,10 @@ export class DatoCmsSync {
           continue;
         }
 
+        if (itemType.name !== "Captioned Image Card Marquee") {
+          continue;
+        }
+
         // Generate file content
         const fileContent = await this.fileGenerator.generateFile(
           itemType,
@@ -278,8 +285,8 @@ export class DatoCmsSync {
   private getFilePath(itemType: any, type: "block" | "model"): string {
     const basePath =
       type === "block"
-        ? this.config.syncBlocksPath || "./src/datocms/blocks"
-        : this.config.syncModelsPath || "./src/datocms/models";
+        ? this.config.syncBlocksPath
+        : this.config.syncModelsPath;
     const fileName = `${this.toPascalCase(itemType.name)}.ts`;
     return path.resolve(process.cwd(), basePath, fileName);
   }

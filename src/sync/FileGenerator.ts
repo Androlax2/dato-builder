@@ -77,7 +77,7 @@ export class FileGenerator {
     const needsAsync = dependencies.length > 0;
 
     // Generate components
-    const imports = this.generateImports(type, dependencies);
+    const imports = this.generateImports(type);
     const header = this.generateFileHeader(itemType, type);
     const functionSignature = this.generateFunctionSignature(
       functionName,
@@ -87,7 +87,6 @@ export class FileGenerator {
       itemType,
       fields,
       builderClass,
-      dependencies,
     );
 
     // Format and combine everything
@@ -102,20 +101,11 @@ export class FileGenerator {
   /**
    * Generate import statements
    */
-  private generateImports(type: "block" | "model", fields: any[]): string {
+  private generateImports(type: "block" | "model"): string {
     const builderClass = type === "block" ? "BlockBuilder" : "ModelBuilder";
 
-    let imports = `import ${builderClass} from '../../${builderClass}';
+    return `import ${builderClass} from '../../${builderClass}';
 import type { BuilderContext } from '../../types/BuilderContext';`;
-
-    // Add additional imports based on field types if needed
-    const needsAsync = this.hasAsyncFields(fields);
-    if (needsAsync) {
-      imports +=
-        "\n// Additional imports for async field dependencies may be needed";
-    }
-
-    return imports;
   }
 
   /**
@@ -522,19 +512,8 @@ import type { BuilderContext } from '../../types/BuilderContext';`;
     itemType: ItemType,
     fields: Field[],
     builderClass: string,
-    dependencies: Dependency[],
   ): string {
     let body = "";
-
-    // Generate dependency resolution if needed
-    if (dependencies.length > 0) {
-      body += "  // Resolve dependencies\n";
-      for (const dep of dependencies) {
-        const getterMethod = dep.type === "block" ? "getBlock" : "getModel";
-        body += `  const ${dep.functionName.toLowerCase()}Builder = await ${getterMethod}('${dep.apiKey}');\n`;
-      }
-      body += "\n";
-    }
 
     // Generate field calls with proper dependency injection
     const fieldCalls = this.generateEnhancedFieldCalls(fields);
@@ -612,9 +591,11 @@ import type { BuilderContext } from '../../types/BuilderContext';`;
       for (const itemId of referencedItemIds) {
         const itemType = this.itemTypeReferences.get(itemId);
         if (itemType) {
-          const functionName = `build${this.toPascalCase(itemType.name)}`;
-          const varName = `${functionName.toLowerCase()}Builder`;
-          resolvedBuilders.push(varName);
+          const getterMethod = itemType.modular_block ? "getBlock" : "getModel";
+          resolvedBuilders.push(`await ${getterMethod}('${itemType.api_key}')`);
+          this.logger.trace(
+            `Resolved ${itemType.name} (${itemType.api_key}) for field ${field.api_key}`,
+          );
         }
       }
 
@@ -628,13 +609,13 @@ import type { BuilderContext } from '../../types/BuilderContext';`;
             const getterMethod = itemType.modular_block
               ? "getBlock"
               : "getModel";
-            asyncCalls.push(`await ${getterMethod}('${itemType.api_key}')`);
+            asyncCalls.push(`await ${getterMethod}('${itemType.name}')`);
           }
         }
 
         if (asyncCalls.length > 0) {
           if (field.field_type === "rich_text") {
-            body.item_types = `[${asyncCalls.join(", ")}]`;
+            body.validators.rich_text_blocks.item_types = `[${asyncCalls.join(", ")}]`;
           } else if (field.field_type === "single_block") {
             body.item_types = `[${asyncCalls.join(", ")}]`;
           } else if (field.field_type === "structured_text") {
@@ -663,7 +644,15 @@ import type { BuilderContext } from '../../types/BuilderContext';`;
       "",
       header,
       `${functionSignature} {`,
-      functionBody,
+      functionBody
+        .replace(
+          /"\[\s*await getBlock\('(.+?)'\)\s*\]"/g,
+          (_match, p1) => `[ await getBlock('${p1}') ]`,
+        )
+        .replace(
+          /"\[\s*await getModel\('(.+?)'\)\s*\]"/g,
+          (_match, p1) => `[ await getModel('${p1}') ]`,
+        ),
       "}",
       "",
     ].join("\n");
