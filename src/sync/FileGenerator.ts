@@ -117,26 +117,26 @@ export default ${asyncKeyword}function ${functionName}(${params}: BuilderContext
     type: "block" | "model",
     itemType: ItemType,
   ): string {
-    const baseConfig = `{
-    name: '${itemType.name}',
-    config`;
-
     if (type === "model") {
-      return `${baseConfig},
-    body: {
-      singleton: ${itemType.singleton || false},
-      sortable: ${itemType.sortable || false},
-      draft_mode_active: ${itemType.draft_mode_active || false},
-      all_locales_required: ${itemType.all_locales_required || false}
-    }
-  }`;
+      return `{
+      name: '${itemType.name}',
+      config,
+      body: {
+        singleton: ${itemType.singleton || false},
+        sortable: ${itemType.sortable || false},
+        draft_mode_active: ${itemType.draft_mode_active || false},
+        all_locales_required: ${itemType.all_locales_required || false},
+      },
+    }`;
     } else {
-      return `${baseConfig},
-    options: {
-      api_key: '${itemType.api_key}',
-      hint: '${itemType.description || ""}'
-    }
-  }`;
+      return `{
+      name: '${itemType.name}',
+      config,
+      options: {
+        api_key: '${itemType.api_key}',
+        hint: '${itemType.description || ""}',
+      },
+    }`;
     }
   }
 
@@ -171,7 +171,7 @@ export default ${asyncKeyword}function ${functionName}(${params}: BuilderContext
       config.body = body;
     }
 
-    return this.objectToString(config);
+    return this.objectToString(config, 2);
   }
 
   private generateFieldTypeOptions(field: Field): any {
