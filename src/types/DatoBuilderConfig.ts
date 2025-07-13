@@ -56,7 +56,7 @@ export interface DatoBuilderConfig {
    * File-system path (relative to the project root) where synced blocks
    * should be generated when running sync command.
    *
-   * @default "./src/datocms/blocks"
+   * @default "./src/datocms/.generated/blocks"
    */
   syncBlocksPath?: string;
 
@@ -64,7 +64,7 @@ export interface DatoBuilderConfig {
    * File-system path (relative to the project root) where synced models
    * should be generated when running sync command.
    *
-   * @default "./src/datocms/models"
+   * @default "./src/datocms/.generated/models"
    */
   syncModelsPath?: string;
 
