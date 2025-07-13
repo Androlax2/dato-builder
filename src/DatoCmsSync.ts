@@ -231,10 +231,6 @@ export class DatoCmsSync {
           continue;
         }
 
-        if (itemType.name !== "Captioned Image Card Marquee") {
-          continue;
-        }
-
         // Generate file content
         const fileContent = await this.fileGenerator.generateFile(
           itemType,
