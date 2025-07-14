@@ -665,11 +665,70 @@ describe("ItemTypeBuilder", () => {
     });
   });
 
+  describe("Error handling", () => {
+    it("should propagate API errors when creating fields", async () => {
+      const mockField = {
+        build: jest.fn().mockReturnValue({ api_key: "test_field" }),
+      } as unknown as Field;
+
+      builder.addField(mockField);
+
+      const apiError = new Error("API Error");
+      mockClientFields.create.mockRejectedValueOnce(apiError);
+
+      await expect(builder.create()).rejects.toThrow(
+        'Failed to create field "test_field": API Error',
+      );
+    });
+
+    it("should propagate API errors when updating fields", async () => {
+      const mockField = {
+        build: jest.fn().mockReturnValue({ api_key: "test_field" }),
+      } as unknown as Field;
+
+      builder.addField(mockField);
+      builder.setOverrideExistingFields(true);
+
+      mockClientItemTypes.list.mockResolvedValueOnce([
+        { id: "item-123", name: "Test Model" },
+      ]);
+      mockClientFields.list.mockResolvedValueOnce([
+        { id: "field-123", api_key: "test_field" },
+      ]);
+
+      const apiError = new Error("API Error");
+      mockClientFields.update.mockRejectedValueOnce(apiError);
+
+      await expect(builder.update()).rejects.toThrow(
+        'Failed to update field "test_field" (id: field-123): API Error',
+      );
+    });
+
+    it("should propagate API errors when deleting fields", async () => {
+      builder.setOverrideExistingFields(true);
+
+      mockClientItemTypes.list.mockResolvedValueOnce([
+        { id: "item-123", name: "Test Model" },
+      ]);
+      mockClientFields.list.mockResolvedValueOnce([
+        { id: "field-123", api_key: "to_delete" },
+      ]);
+
+      const apiError = new Error("API Error");
+      mockClientFields.destroy.mockRejectedValueOnce(apiError);
+
+      await expect(builder.update()).rejects.toThrow(
+        'Failed to delete field "to_delete" (id: field-123): API Error',
+      );
+    });
+  });
+
   describe("syncFields", () => {
     beforeEach(() => {
       mockClientItemTypes.list.mockResolvedValue([
         { id: "item-123", name: "Test Model" },
       ]);
+      mockClientFields.list.mockResolvedValue([]);
     });
 
     it("should update existing fields when overwriteExistingFields is true", async () => {
@@ -695,6 +754,8 @@ describe("ItemTypeBuilder", () => {
         api_key: "existing_field",
         label: "Updated Field",
       });
+      expect(mockClientFields.create).not.toHaveBeenCalled();
+      expect(mockClientFields.destroy).not.toHaveBeenCalled();
     });
 
     it("should delete fields no longer in the builder when overwriteExistingFields is true", async () => {
@@ -720,6 +781,11 @@ describe("ItemTypeBuilder", () => {
 
       // Should delete field2 since it's not in the builder
       expect(mockClientFields.destroy).toHaveBeenCalledWith("field-456");
+      expect(mockClientFields.create).not.toHaveBeenCalled();
+      expect(mockClientFields.update).toHaveBeenCalledWith("field-123", {
+        api_key: "field1",
+        label: "Field 1",
+      });
     });
 
     it("should not update or delete fields when overwriteExistingFields is false", async () => {
@@ -745,6 +811,33 @@ describe("ItemTypeBuilder", () => {
       await builder.update();
 
       // No updates or deletes should happen
+      expect(mockClientFields.update).not.toHaveBeenCalled();
+      expect(mockClientFields.destroy).not.toHaveBeenCalled();
+      expect(mockClientFields.create).not.toHaveBeenCalled();
+    });
+
+    it("should create new fields that do not exist", async () => {
+      // Mock existing fields
+      mockClientFields.list.mockResolvedValueOnce([
+        { id: "field-123", api_key: "field1", label: "Field 1" },
+      ]);
+
+      // Add a new field
+      const mockField = {
+        build: jest.fn().mockReturnValue({
+          api_key: "new_field",
+          label: "New Field",
+        }),
+      } as unknown as Field;
+
+      builder.addField(mockField);
+
+      await builder.update();
+
+      expect(mockClientFields.create).toHaveBeenCalledWith("item-123", {
+        api_key: "new_field",
+        label: "New Field",
+      });
       expect(mockClientFields.update).not.toHaveBeenCalled();
       expect(mockClientFields.destroy).not.toHaveBeenCalled();
     });
