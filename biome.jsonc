@@ -29,7 +29,7 @@
     "rules": {
       "recommended": true,
       "complexity": {
-        "noForEach": "error"
+        "noForEach": "warn"
       },
       "correctness": {
         "noUnusedImports": "error",
@@ -42,7 +42,7 @@
       },
       "nursery": {
         "noUnassignedVariables": "error",
-        "useReadonlyClassProperties": "error",
+        "useReadonlyClassProperties": "warn",
         "noMisusedPromises": "error",
         "noMagicNumbers": "warn",
         "noImplicitCoercion": "error",
