@@ -38,8 +38,9 @@ export abstract class FieldGenerator<
   abstract generateBuildConfig(): MethodNameToConfig<TMethodName>;
 
   public generateMethodCall(): string {
-    throw new Error(
-      "Implement generateMethodCall in FieldGenerator parent class",
-    );
+    const methodName = this.getMethodCallName();
+    const config = this.generateBuildConfig();
+
+    return `${methodName}(${JSON.stringify(config)})`;
   }
 }
