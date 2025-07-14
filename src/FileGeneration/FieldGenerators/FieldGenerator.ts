@@ -32,6 +32,28 @@ export abstract class FieldGenerator<
     const methodName = this.getMethodCallName();
     const config = this.generateBuildConfig();
 
-    return `.${methodName}(${JSON.stringify(config)})`;
+    return `.${methodName}(${this.serializeConfig(config)})`;
+  }
+
+  private serializeConfig(obj: any): string {
+    if (obj === null) return "null";
+    if (obj === undefined) return "undefined";
+    if (typeof obj === "string") return JSON.stringify(obj);
+    if (typeof obj === "number" || typeof obj === "boolean") return String(obj);
+    if (obj instanceof Date)
+      return `new Date(${JSON.stringify(obj.toISOString())})`;
+
+    if (Array.isArray(obj)) {
+      return `[${obj.map((item) => this.serializeConfig(item)).join(", ")}]`;
+    }
+
+    if (typeof obj === "object") {
+      const entries = Object.entries(obj)
+        .map(([key, value]) => `${key}: ${this.serializeConfig(value)}`)
+        .join(", ");
+      return `{ ${entries} }`;
+    }
+
+    return JSON.stringify(obj);
   }
 }

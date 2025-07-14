@@ -209,6 +209,24 @@ describe("DateGenerator", () => {
         );
       });
 
+      it("generates method call with new Date() constructor calls", () => {
+        const dateGenerator = new DateGenerator({
+          field: createMockField({
+            label: "Date with Range",
+            api_key: "date-with-range-api-key",
+            validators: {
+              date_range: { min: "2020-01-01", max: "2025-12-31" },
+            },
+          }),
+        });
+
+        const methodCall = dateGenerator.generateMethodCall();
+
+        expect(methodCall).toContain('new Date("2020-01-01T00:00:00.000Z")');
+        expect(methodCall).toContain('new Date("2025-12-31T00:00:00.000Z")');
+        expect(methodCall).toMatch(/\.addDate\(/);
+      });
+
       it("can generate a date field with a minimum date", () => {
         const dateGenerator = new DateGenerator({
           field: createMockField({
