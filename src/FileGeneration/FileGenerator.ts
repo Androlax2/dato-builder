@@ -2,14 +2,12 @@ import type {
   Field,
   ItemType,
 } from "@datocms/cma-client/src/generated/SimpleSchemaTypes";
+import type { Options } from "prettier";
 import type { FieldGeneratorFactory } from "@/FileGeneration/FieldGenerators/FieldGeneratorFactory";
 import { BlockReferenceAnalyzer } from "@/FileGeneration/FileGenerators/BlockReferenceAnalyzer";
 import { BuilderConfigGenerator } from "@/FileGeneration/FileGenerators/BuilderConfigGenerator";
 import { FieldMethodGenerator } from "@/FileGeneration/FileGenerators/FieldMethodGenerator";
-import {
-  CodeFormatter,
-  type FormatterConfig,
-} from "@/FileGeneration/FileGenerators/formatters/CodeFormatter";
+import { CodeFormatter } from "@/FileGeneration/FileGenerators/formatters/CodeFormatter";
 import { ImportGenerator } from "@/FileGeneration/FileGenerators/ImportGenerator";
 import { toPascalCase } from "@/utils/utils";
 import { FunctionGenerator } from "./FileGenerators/FunctionGenerator";
@@ -19,7 +17,7 @@ export interface FileGeneratorConfig {
   fields: Field[];
   type: "block" | "model";
   itemTypeReferences: Map<string, ItemType>;
-  formatting?: Partial<FormatterConfig>;
+  formatting?: Options;
 }
 
 export class FileGenerator {
