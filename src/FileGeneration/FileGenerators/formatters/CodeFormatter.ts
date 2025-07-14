@@ -1,34 +1,52 @@
-import prettier, { type Options } from "prettier";
+import { ESLint } from "eslint";
+import { format, type Options as PrettierOptions } from "prettier";
 
 export class CodeFormatter {
-  private readonly defaultConfig: Options = {
+  private readonly prettierConfig: PrettierOptions = {
     parser: "typescript",
     singleQuote: false,
     trailingComma: "es5",
     tabWidth: 2,
     semi: true,
-    printWidth: 120,
+    printWidth: 30,
     bracketSpacing: true,
     arrowParens: "avoid",
-    bracketSameLine: true,
+    bracketSameLine: false,
     singleAttributePerLine: false,
   };
 
-  constructor(private readonly config: Options = {}) {}
+  private readonly eslint = new ESLint({
+    baseConfig: {
+      languageOptions: {
+        ecmaVersion: 2020,
+        sourceType: "module",
+      },
+      rules: {
+        // break chains longer than depth 1:
+        "newline-per-chained-call": ["error", { ignoreChainWithDepth: 1 }],
+      },
+    },
+    fix: true,
+  });
 
-  /**
-   * Format code using Prettier
-   */
+  constructor(private readonly config: Partial<PrettierOptions> = {}) {}
+
   async format(code: string): Promise<string> {
+    let formatted = code;
     try {
-      return await prettier.format(code, {
-        ...this.defaultConfig,
+      formatted = await format(code, {
+        ...this.prettierConfig,
         ...this.config,
       });
-    } catch (error) {
-      console.warn("Failed to format code with Prettier:", error);
-      // Return original code if formatting fails
-      return code;
+    } catch (_e) {
+      // fallback to original
+    }
+
+    try {
+      const [result] = await this.eslint.lintText(formatted);
+      return result.output ?? formatted;
+    } catch (_e) {
+      return formatted;
     }
   }
 }

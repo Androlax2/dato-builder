@@ -57,6 +57,7 @@
     "@datocms/cma-client-node": "^4.0.1",
     "@inquirer/prompts": "^7.6.0",
     "commander": "^14.0.0",
+    "eslint": "^9.31.0",
     "glob": "^11.0.3",
     "inquirer": "^12.7.0",
     "pluralize": "^8.0.0",

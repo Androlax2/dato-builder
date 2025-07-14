@@ -12,6 +12,8 @@ import type { CacheManager } from "./cache/CacheManager";
 import type { ConsoleLogger } from "./logger";
 import type { DatoBuilderConfig } from "./types/DatoBuilderConfig";
 
+// TODO: When everything is stable, make this be able to run in concurrent mode like the run command
+
 export interface SyncOptions {
   config: Required<DatoBuilderConfig>;
   cache: CacheManager;
