@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
+import { createMockConfig } from "@tests/utils/mockConfig";
 import type { DatoBuilderConfig } from "../src";
 import DatoApi from "../src/Api/DatoApi";
 import Field, { type FieldBody } from "../src/Fields/Field";
@@ -10,7 +11,6 @@ import StringSelect from "../src/Fields/StringSelect";
 import ItemTypeBuilder, {
   type ItemTypeBuilderType,
 } from "../src/ItemTypeBuilder";
-import { createMockConfig } from "./utils/mockConfig";
 
 jest.mock("../src/Api/DatoApi");
 jest.mock("../src/Fields/Integer");
