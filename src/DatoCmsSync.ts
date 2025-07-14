@@ -8,8 +8,8 @@ import { buildClient } from "@datocms/cma-client-node";
 import { confirm } from "@inquirer/prompts";
 import DatoApi from "./Api/DatoApi";
 import type { CacheManager } from "./cache/CacheManager";
+import { FileGenerator } from "./FileGenerator";
 import type { ConsoleLogger } from "./logger";
-import { FileGenerator } from "./sync/FileGenerator";
 import type { DatoBuilderConfig } from "./types/DatoBuilderConfig";
 
 export interface SyncOptions {
