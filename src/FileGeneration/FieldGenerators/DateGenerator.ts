@@ -7,10 +7,18 @@ export class DateGenerator extends FieldGenerator<"addDate"> {
   }
 
   generateBuildConfig() {
+    //console.dir(this.field, { depth: null });
+
+    const config: MethodNameToConfig<"addDate"> = {
+      label: this.field.label,
+    };
     const body: NonNullable<MethodNameToConfig<"addDate">["body"]> = {
       api_key: this.field.api_key,
-      position: this.field.position,
     };
+
+    if (this.field.hint) {
+      body.hint = this.field.hint;
+    }
 
     // Handle validators
     if (
@@ -26,30 +34,25 @@ export class DateGenerator extends FieldGenerator<"addDate"> {
         validators.required = true;
       }
 
-      // Range validator (min and max together)
-      if (this.field.validators.range) {
-        validators.date_range = {
-          min: new Date(
-            (this.field.validators.range as { min: string; max: string }).min,
-          ),
-          max: new Date(
-            (this.field.validators.range as { min: string; max: string }).max,
-          ),
+      // Range validator (min and max)
+      if (this.field.validators.date_range) {
+        const dateRange = this.field.validators.date_range as {
+          min?: string;
+          max?: string;
         };
-      }
 
-      // Min date validator
-      if (this.field.validators.min_date) {
-        validators.date_range = {
-          min: new Date(this.field.validators.min_date as string),
-        };
-      }
+        if (dateRange.min) {
+          validators.date_range = {
+            min: new Date(dateRange.min),
+          };
+        }
 
-      // Max date validator
-      if (this.field.validators.max_date) {
-        validators.date_range = {
-          max: new Date(this.field.validators.max_date as string),
-        };
+        if (dateRange.max) {
+          validators.date_range = {
+            ...validators.date_range,
+            max: new Date(dateRange.max),
+          };
+        }
       }
 
       body.validators = validators;
@@ -60,9 +63,10 @@ export class DateGenerator extends FieldGenerator<"addDate"> {
       body.default_value = this.field.default_value;
     }
 
-    return {
-      label: this.field.label,
-      body,
-    };
+    if (Object.keys(body).length > 0) {
+      config.body = body;
+    }
+
+    return config;
   }
 }

@@ -7,6 +7,7 @@ export class BuilderConfigGenerator {
       name: '${itemType.name}',
       config,
       body: {
+        api_key: '${itemType.api_key}',
         singleton: ${itemType.singleton || false},
         sortable: ${itemType.sortable || false},
         draft_mode_active: ${itemType.draft_mode_active || false},

@@ -10,10 +10,10 @@ function createMockField(
     id: "test-id",
     type: "field",
     field_type: "date",
-    hint: "test hint",
+    hint: null,
     localized: false,
-    validators: {},
     position: 1,
+    validators: {},
     appearance: { addons: [], editor: "date_picker", parameters: {} },
     default_value: null,
     deep_filtering_enabled: false,
@@ -25,21 +25,125 @@ function createMockField(
 }
 
 describe("DateGenerator", () => {
-  it("can generate a date with label, position, api_key", () => {
-    const dateGenerator = new DateGenerator({
-      field: createMockField({
+  describe("Basic functionality", () => {
+    it("can generate a date with label", () => {
+      const dateGenerator = new DateGenerator({
+        field: createMockField({
+          label: "Date",
+          api_key: "date",
+        }),
+      });
+
+      expect(dateGenerator.generateBuildConfig()).toEqual({
         label: "Date",
-        api_key: "test-date-api-key",
-      }),
+        body: {
+          api_key: "date",
+        },
+      } satisfies DateConfig);
     });
 
-    expect(dateGenerator.generateBuildConfig()).toEqual({
-      label: "Date",
-      body: {
-        api_key: "test-date-api-key",
-        position: 1,
-      },
-    } satisfies DateConfig);
+    it("does not include position", () => {
+      const dateGenerator = new DateGenerator({
+        field: createMockField({
+          label: "Date without Position",
+          api_key: "date_without_position",
+        }),
+      });
+
+      expect(dateGenerator.generateBuildConfig()).toEqual({
+        label: "Date without Position",
+        body: {
+          api_key: "date_without_position",
+        },
+      } satisfies DateConfig);
+    });
+
+    it("can generate a date with a hint", () => {
+      const dateGenerator = new DateGenerator({
+        field: createMockField({
+          label: "Date with Hint",
+          api_key: "date_with_hint",
+          hint: "This is a test hint",
+        }),
+      });
+
+      expect(dateGenerator.generateBuildConfig()).toEqual({
+        label: "Date with Hint",
+        body: {
+          api_key: "date_with_hint",
+          hint: "This is a test hint",
+        },
+      } satisfies DateConfig);
+    });
+
+    it("can generate a date without a hint", () => {
+      const dateGenerator = new DateGenerator({
+        field: createMockField({
+          label: "Date without Hint",
+          api_key: "date_without_hint",
+          hint: null,
+        }),
+      });
+
+      expect(dateGenerator.generateBuildConfig()).toEqual({
+        label: "Date without Hint",
+        body: {
+          api_key: "date_without_hint",
+        },
+      } satisfies DateConfig);
+    });
+
+    it("can generate a date with a default value", () => {
+      const dateGenerator = new DateGenerator({
+        field: createMockField({
+          label: "Date with Default Value",
+          api_key: "date_with_default_value",
+          default_value: "2025-07-24",
+        }),
+      });
+
+      expect(dateGenerator.generateBuildConfig()).toEqual({
+        label: "Date with Default Value",
+        body: {
+          api_key: "date_with_default_value",
+          default_value: "2025-07-24",
+        },
+      } satisfies DateConfig);
+    });
+
+    it("can generate a date without a default value", () => {
+      const dateGenerator = new DateGenerator({
+        field: createMockField({
+          label: "Date without Default Value",
+          api_key: "date_without_default_value",
+          default_value: null,
+        }),
+      });
+
+      expect(dateGenerator.generateBuildConfig()).toEqual({
+        label: "Date without Default Value",
+        body: {
+          api_key: "date_without_default_value",
+        },
+      } satisfies DateConfig);
+    });
+
+    it("should not include validators if none are set", () => {
+      const dateGenerator = new DateGenerator({
+        field: createMockField({
+          label: "Date without Validators",
+          api_key: "date_without_validators",
+          validators: {},
+        }),
+      });
+
+      expect(dateGenerator.generateBuildConfig()).toEqual({
+        label: "Date without Validators",
+        body: {
+          api_key: "date_without_validators",
+        },
+      } satisfies DateConfig);
+    });
   });
 
   describe("With validators", () => {
@@ -57,7 +161,6 @@ describe("DateGenerator", () => {
           label: "Required Date",
           body: {
             api_key: "required-date-api-key",
-            position: 1,
             validators: { required: true },
           },
         } satisfies DateConfig);
@@ -75,7 +178,6 @@ describe("DateGenerator", () => {
           label: "Non-Required Date",
           body: {
             api_key: "non-required-date-api-key",
-            position: 1,
           },
         } satisfies DateConfig);
       });
@@ -87,23 +189,24 @@ describe("DateGenerator", () => {
           field: createMockField({
             label: "Date with Range",
             api_key: "date-with-range-api-key",
-            validators: { range: { min: "2020-01-01", max: "2025-12-31" } },
+            validators: {
+              date_range: { min: "2020-01-01", max: "2025-12-31" },
+            },
           }),
         });
 
-        expect(dateGenerator.generateBuildConfig()).toEqual({
-          label: "Date with Range",
-          body: {
-            api_key: "date-with-range-api-key",
-            position: 1,
-            validators: {
-              date_range: {
-                min: new Date("2020-01-01"),
-                max: new Date("2025-12-31"),
-              },
-            },
-          },
-        } satisfies DateConfig);
+        const config = dateGenerator.generateBuildConfig();
+
+        expect(config.label).toBe("Date with Range");
+        expect(config.body?.api_key).toBe("date-with-range-api-key");
+        expect(config.body?.validators?.date_range?.min).toBeInstanceOf(Date);
+        expect(config.body?.validators?.date_range?.max).toBeInstanceOf(Date);
+        expect(config.body?.validators?.date_range?.min).toEqual(
+          new Date("2020-01-01"),
+        );
+        expect(config.body?.validators?.date_range?.max).toEqual(
+          new Date("2025-12-31"),
+        );
       });
 
       it("can generate a date field with a minimum date", () => {
@@ -111,22 +214,18 @@ describe("DateGenerator", () => {
           field: createMockField({
             label: "Date with Min",
             api_key: "date-with-min-api-key",
-            validators: { min_date: "2020-01-01" },
+            validators: { date_range: { min: "2020-01-01" } },
           }),
         });
 
-        expect(dateGenerator.generateBuildConfig()).toEqual({
-          label: "Date with Min",
-          body: {
-            api_key: "date-with-min-api-key",
-            position: 1,
-            validators: {
-              date_range: {
-                min: new Date("2020-01-01"),
-              },
-            },
-          },
-        } satisfies DateConfig);
+        const config = dateGenerator.generateBuildConfig();
+
+        expect(config.label).toBe("Date with Min");
+        expect(config.body?.api_key).toBe("date-with-min-api-key");
+        expect(config.body?.validators?.date_range?.min).toBeInstanceOf(Date);
+        expect(config.body?.validators?.date_range?.min).toEqual(
+          new Date("2020-01-01"),
+        );
       });
 
       it("can generate a date field with a maximum date", () => {
@@ -134,61 +233,19 @@ describe("DateGenerator", () => {
           field: createMockField({
             label: "Date with Max",
             api_key: "date-with-max-api-key",
-            validators: { max_date: "2025-12-31" },
+            validators: { date_range: { max: "2025-12-31" } },
           }),
         });
 
-        expect(dateGenerator.generateBuildConfig()).toEqual({
-          label: "Date with Max",
-          body: {
-            api_key: "date-with-max-api-key",
-            position: 1,
-            validators: {
-              date_range: {
-                max: new Date("2025-12-31"),
-              },
-            },
-          },
-        } satisfies DateConfig);
+        const config = dateGenerator.generateBuildConfig();
+
+        expect(config.label).toBe("Date with Max");
+        expect(config.body?.api_key).toBe("date-with-max-api-key");
+        expect(config.body?.validators?.date_range?.max).toBeInstanceOf(Date);
+        expect(config.body?.validators?.date_range?.max).toEqual(
+          new Date("2025-12-31"),
+        );
       });
-    });
-  });
-
-  describe("With default value", () => {
-    it("can generate a date field with a default value", () => {
-      const dateGenerator = new DateGenerator({
-        field: createMockField({
-          label: "Date with Default",
-          api_key: "date-with-default-api-key",
-          default_value: "2025-07-24",
-        }),
-      });
-
-      expect(dateGenerator.generateBuildConfig()).toEqual({
-        label: "Date with Default",
-        body: {
-          api_key: "date-with-default-api-key",
-          position: 1,
-          default_value: "2025-07-24",
-        },
-      } satisfies DateConfig);
-    });
-
-    it("can generate a date field without a default value", () => {
-      const dateGenerator = new DateGenerator({
-        field: createMockField({
-          label: "Date without Default",
-          api_key: "date-without-default-api-key",
-        }),
-      });
-
-      expect(dateGenerator.generateBuildConfig()).toEqual({
-        label: "Date without Default",
-        body: {
-          api_key: "date-without-default-api-key",
-          position: 1,
-        },
-      } satisfies DateConfig);
     });
   });
 });
