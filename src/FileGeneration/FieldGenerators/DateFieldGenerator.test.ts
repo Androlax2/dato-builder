@@ -1,7 +1,7 @@
 import type { Field } from "@datocms/cma-client/src/generated/SimpleSchemaTypes";
 import { describe, expect, it } from "@jest/globals";
 import type { DateConfig } from "@/Fields/Date";
-import { DateGenerator } from "@/FileGeneration/FieldGenerators/DateGenerator";
+import { DateGenerator } from "@/FileGeneration/FieldGenerators/DateFieldGenerator";
 
 function createMockField(
   overrides: Partial<Field> & Pick<Field, "label" | "api_key">,

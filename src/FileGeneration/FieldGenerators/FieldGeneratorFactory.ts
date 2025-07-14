@@ -1,5 +1,5 @@
 import type { Field } from "@datocms/cma-client/src/generated/SimpleSchemaTypes";
-import { DateGenerator } from "@/FileGeneration/FieldGenerators/DateGenerator";
+import { DateFieldGenerator } from "@/FileGeneration/FieldGenerators/DateFieldGenerator";
 import type {
   FieldGenerator,
   FieldGeneratorConfig,
@@ -29,7 +29,7 @@ export class FieldGeneratorFactory {
   private getGeneratorClass(field: Field): FieldGeneratorConstructor {
     const generatorMap: Record<Field["field_type"], FieldGeneratorConstructor> =
       {
-        date: DateGenerator,
+        date: DateFieldGenerator,
       };
 
     const generatorClass = generatorMap[field.field_type];
