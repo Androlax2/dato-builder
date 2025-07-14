@@ -14,9 +14,12 @@ export interface FieldGeneratorConfig {
  * Each subclass handles a specific field type and generates the appropriate
  * ItemTypeBuilder method call (e.g., .addDate(), .addText(), etc.)
  *
- * The method name and config types are automatically inferred from getMethodCallName()
+ * Types are automatically inferred from the TMethodName generic parameter.
+ * This ensures compile-time safety when ItemTypeBuilder signatures change.
  */
-export abstract class FieldGenerator {
+export abstract class FieldGenerator<
+  TMethodName extends ItemTypeBuilderAddMethods,
+> {
   protected field: Field;
 
   constructor(config: FieldGeneratorConfig) {
@@ -27,16 +30,14 @@ export abstract class FieldGenerator {
    * Get the name of the ItemTypeBuilder method to call.
    * @example "addDate", "addText", "addBoolean"
    */
-  abstract getMethodCallName(): ItemTypeBuilderAddMethods;
+  abstract getMethodCallName(): TMethodName;
 
   /**
    * Generate the configuration object for the ItemTypeBuilder method.
    * Transform API field data into the format expected by ItemTypeBuilder.
-   * Return type is inferred from getMethodCallName()
+   * Return type is automatically inferred from TMethodName.
    */
-  abstract generateBuildConfig(): MethodNameToConfig<
-    ReturnType<this["getMethodCallName"]>
-  >;
+  abstract generateBuildConfig(): MethodNameToConfig<TMethodName>;
 
   /**
    * Generate the complete method call string for the ItemTypeBuilder.

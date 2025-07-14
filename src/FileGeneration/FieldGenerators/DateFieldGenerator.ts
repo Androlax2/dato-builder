@@ -2,30 +2,17 @@ import { FieldGenerator } from "@/FileGeneration/FieldGenerators/FieldGenerator"
 import type { MethodNameToConfig } from "@/types/ItemTypeBuilderFields";
 
 /**
- * Generates ItemTypeBuilder.addDate().
+ * Generates ItemTypeBuilder.addDate() method calls.
  */
-export class DateFieldGenerator extends FieldGenerator {
-  // Helper to get inferred types in a more readable way
-  private get inferredTypes() {
-    type MethodName = ReturnType<this["getMethodCallName"]>;
-    type Config = MethodNameToConfig<MethodName>;
-    type Body = NonNullable<Config["body"]>;
-    type Validators = NonNullable<Body["validators"]>;
-
-    return {} as {
-      Config: Config;
-      Body: Body;
-      Validators: Validators;
-    };
-  }
+export class DateFieldGenerator extends FieldGenerator<"addDate"> {
   private static readonly DATE_ONLY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
   getMethodCallName() {
     return "addDate" as const;
   }
 
-  generateBuildConfig(): typeof this.inferredTypes.Config {
-    const config = this.createBaseConfig() as typeof this.inferredTypes.Config;
+  generateBuildConfig(): MethodNameToConfig<"addDate"> {
+    const config = this.createBaseConfig() as MethodNameToConfig<"addDate">;
     const body = this.buildDateFieldBody();
 
     if (this.hasBodyContent(body)) {
@@ -35,8 +22,12 @@ export class DateFieldGenerator extends FieldGenerator {
     return config;
   }
 
-  private buildDateFieldBody(): typeof this.inferredTypes.Body {
-    const body = this.createBaseBody() as typeof this.inferredTypes.Body;
+  private buildDateFieldBody(): NonNullable<
+    MethodNameToConfig<"addDate">["body"]
+  > {
+    const body = this.createBaseBody() as NonNullable<
+      MethodNameToConfig<"addDate">["body"]
+    >;
 
     this.addHintToBody(body);
     this.addDefaultValueToBody(body);
@@ -45,12 +36,16 @@ export class DateFieldGenerator extends FieldGenerator {
     return body;
   }
 
-  private addDateValidators(body: typeof this.inferredTypes.Body): void {
+  private addDateValidators(
+    body: NonNullable<MethodNameToConfig<"addDate">["body"]>,
+  ): void {
     if (!this.hasValidators()) {
       return;
     }
 
-    const validators = {} as typeof this.inferredTypes.Validators;
+    const validators = {} as NonNullable<
+      NonNullable<MethodNameToConfig<"addDate">["body"]>["validators"]
+    >;
 
     this.processRequiredValidator(validators);
     this.processDateRangeValidator(validators);
@@ -61,15 +56,19 @@ export class DateFieldGenerator extends FieldGenerator {
   }
 
   private processRequiredValidator(
-    validators: typeof this.inferredTypes.Validators,
+    validators: NonNullable<
+      NonNullable<MethodNameToConfig<"addDate">["body"]>["validators"]
+    >,
   ): void {
     if (this.field.validators?.required) {
-      (validators as any).required = true;
+      validators.required = true;
     }
   }
 
   private processDateRangeValidator(
-    validators: typeof this.inferredTypes.Validators,
+    validators: NonNullable<
+      NonNullable<MethodNameToConfig<"addDate">["body"]>["validators"]
+    >,
   ): void {
     const dateRange = this.getDateRangeFromField();
 
@@ -80,7 +79,7 @@ export class DateFieldGenerator extends FieldGenerator {
     const rangeValidator = this.buildDateRangeValidator(dateRange);
 
     if (Object.keys(rangeValidator).length > 0) {
-      (validators as any).date_range = rangeValidator;
+      validators.date_range = rangeValidator;
     }
   }
 
@@ -127,7 +126,9 @@ export class DateFieldGenerator extends FieldGenerator {
     return DateFieldGenerator.DATE_ONLY_PATTERN.test(dateString);
   }
 
-  private hasBodyContent(body: typeof this.inferredTypes.Body): boolean {
+  private hasBodyContent(
+    body: NonNullable<MethodNameToConfig<"addDate">["body"]>,
+  ): boolean {
     // Always include body if it has any properties (including api_key)
     return Object.keys(body).length > 0;
   }
