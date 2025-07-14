@@ -45,32 +45,7 @@ describe("FieldGenerator", () => {
 
     config = {
       field: mockField,
-      needsAsync: false,
-      itemTypeReferences: new Map(),
     };
-  });
-
-  describe("getMethodCallName", () => {
-    it("should return the correct method name for date generator", () => {
-      const generator = new MockDateGenerator(config);
-      const methodName = generator.getMethodCallName();
-
-      expect(methodName).toBe("addDate");
-    });
-  });
-
-  describe("generateBuildConfig", () => {
-    it("should generate correct config for date field", () => {
-      const generator = new MockDateGenerator(config);
-      const buildConfig = generator.generateBuildConfig();
-
-      expect(buildConfig).toEqual({
-        label: "Test Field",
-        body: {
-          position: 1,
-        },
-      });
-    });
   });
 
   describe("generateMethodCall", () => {
