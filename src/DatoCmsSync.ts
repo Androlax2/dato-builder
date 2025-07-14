@@ -1,5 +1,9 @@
 import fs from "node:fs/promises";
 import path from "node:path";
+import type {
+  Field,
+  ItemType,
+} from "@datocms/cma-client/src/generated/SimpleSchemaTypes";
 import { buildClient } from "@datocms/cma-client-node";
 import { confirm } from "@inquirer/prompts";
 import DatoApi from "./Api/DatoApi";
@@ -17,11 +21,11 @@ export interface SyncOptions {
 }
 
 export class DatoCmsSync {
-  private api: DatoApi;
+  private readonly api: DatoApi;
   private readonly logger: ConsoleLogger;
   private readonly config: Required<DatoBuilderConfig>;
-  private cache: CacheManager;
-  private fileGenerator: FileGenerator;
+  private readonly cache: CacheManager;
+  private readonly fileGenerator: FileGenerator;
 
   constructor(options: SyncOptions) {
     this.config = options.config;
@@ -76,9 +80,9 @@ export class DatoCmsSync {
   /**
    * Separate blocks and models from item types
    */
-  private categorizeItemTypes(itemTypes: any[]) {
-    const blocks = itemTypes.filter((item) => item.modular_block === true);
-    const models = itemTypes.filter((item) => item.modular_block === false);
+  private categorizeItemTypes(itemTypes: ItemType[]) {
+    const blocks = itemTypes.filter((item) => item.modular_block);
+    const models = itemTypes.filter((item) => !item.modular_block);
 
     this.logger.debug(
       `Categorized ${blocks.length} blocks and ${models.length} models`,
@@ -91,8 +95,8 @@ export class DatoCmsSync {
    * Check if sync is needed based on cache
    */
   private async shouldSync(
-    itemType: any,
-    fields: any[],
+    itemType: ItemType,
+    fields: Field[],
     force: boolean,
   ): Promise<boolean> {
     if (force) {
@@ -123,7 +127,7 @@ export class DatoCmsSync {
   /**
    * Create a hash for caching purposes
    */
-  private createHash(data: any): string {
+  private createHash(data: { itemType: ItemType; fields: Field[] }): string {
     const crypto = require("node:crypto");
     return crypto
       .createHash("sha256")
@@ -134,7 +138,7 @@ export class DatoCmsSync {
   /**
    * Update cache after successful sync
    */
-  private async updateCache(itemType: any, fields: any[]) {
+  private async updateCache(itemType: ItemType, fields: Field[]) {
     const cacheKey = `sync:${itemType.api_key}`;
     const hash = this.createHash({ itemType, fields });
 
@@ -157,6 +161,7 @@ export class DatoCmsSync {
     try {
       // Fetch all item types
       const itemTypes = await this.fetchItemTypes();
+      console.log({ itemTypes });
 
       if (itemTypes.length === 0) {
         this.logger.warn("No item types found in DatoCMS");
@@ -196,7 +201,7 @@ export class DatoCmsSync {
    * Process a list of item types (blocks or models)
    */
   private async processItemTypes(
-    itemTypes: any[],
+    itemTypes: ItemType[],
     type: "block" | "model",
     options: { dryRun?: boolean; force?: boolean },
   ): Promise<void> {
@@ -278,7 +283,7 @@ export class DatoCmsSync {
   /**
    * Get the file path for an item type
    */
-  private getFilePath(itemType: any, type: "block" | "model"): string {
+  private getFilePath(itemType: ItemType, type: "block" | "model"): string {
     const basePath =
       type === "block"
         ? this.config.syncBlocksPath
