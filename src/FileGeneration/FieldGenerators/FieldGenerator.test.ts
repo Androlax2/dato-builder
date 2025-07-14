@@ -6,7 +6,11 @@ import {
 } from "@/FileGeneration/FieldGenerators/FieldGenerator";
 
 // Mock concrete implementation for testing
-class MockDateGenerator extends FieldGenerator<"addDate"> {
+class MockDateGenerator extends FieldGenerator {
+  constructor(config: FieldGeneratorConfig) {
+    super(config);
+  }
+
   getMethodCallName() {
     return "addDate" as const;
   }
@@ -17,7 +21,7 @@ class MockDateGenerator extends FieldGenerator<"addDate"> {
       body: {
         position: this.field.position,
       },
-    };
+    } as any;
   }
 }
 
@@ -59,7 +63,11 @@ describe("FieldGenerator", () => {
     });
 
     it("should serialize Date objects with ISO strings", () => {
-      class MockDateGeneratorWithISO extends FieldGenerator<"addDate"> {
+      class MockDateGeneratorWithISO extends FieldGenerator {
+        constructor(config: FieldGeneratorConfig) {
+          super(config);
+        }
+
         getMethodCallName() {
           return "addDate" as const;
         }
@@ -81,7 +89,11 @@ describe("FieldGenerator", () => {
     });
 
     it("should serialize Date objects with original string format when available", () => {
-      class MockDateGeneratorWithOriginal extends FieldGenerator<"addDate"> {
+      class MockDateGeneratorWithOriginal extends FieldGenerator {
+        constructor(config: FieldGeneratorConfig) {
+          super(config);
+        }
+
         getMethodCallName() {
           return "addDate" as const;
         }
@@ -109,7 +121,11 @@ describe("FieldGenerator", () => {
     });
 
     it("should handle nested objects with Date values", () => {
-      class MockDateGeneratorWithNested extends FieldGenerator<"addDate"> {
+      class MockDateGeneratorWithNested extends FieldGenerator {
+        constructor(config: FieldGeneratorConfig) {
+          super(config);
+        }
+
         getMethodCallName() {
           return "addDate" as const;
         }
@@ -148,7 +164,11 @@ describe("FieldGenerator", () => {
     });
 
     it("should handle null and undefined values", () => {
-      class MockGeneratorWithNulls extends FieldGenerator<"addDate"> {
+      class MockGeneratorWithNulls extends FieldGenerator {
+        constructor(config: FieldGeneratorConfig) {
+          super(config);
+        }
+
         getMethodCallName() {
           return "addDate" as const;
         }
@@ -173,7 +193,11 @@ describe("FieldGenerator", () => {
     });
 
     it("should handle arrays of different types", () => {
-      class MockGeneratorWithArrays extends FieldGenerator<"addDate"> {
+      class MockGeneratorWithArrays extends FieldGenerator {
+        constructor(config: FieldGeneratorConfig) {
+          super(config);
+        }
+
         getMethodCallName() {
           return "addDate" as const;
         }
@@ -209,7 +233,11 @@ describe("FieldGenerator", () => {
     });
 
     it("should handle special characters in strings", () => {
-      class MockGeneratorWithSpecialChars extends FieldGenerator<"addDate"> {
+      class MockGeneratorWithSpecialChars extends FieldGenerator {
+        constructor(config: FieldGeneratorConfig) {
+          super(config);
+        }
+
         getMethodCallName() {
           return "addDate" as const;
         }
@@ -237,7 +265,11 @@ describe("FieldGenerator", () => {
     });
 
     it("should handle deeply nested objects", () => {
-      class MockGeneratorWithDeepNesting extends FieldGenerator<"addDate"> {
+      class MockGeneratorWithDeepNesting extends FieldGenerator {
+        constructor(config: FieldGeneratorConfig) {
+          super(config);
+        }
+
         getMethodCallName() {
           return "addDate" as const;
         }
@@ -274,7 +306,11 @@ describe("FieldGenerator", () => {
     });
 
     it("should handle boolean values correctly", () => {
-      class MockGeneratorWithBooleans extends FieldGenerator<"addDate"> {
+      class MockGeneratorWithBooleans extends FieldGenerator {
+        constructor(config: FieldGeneratorConfig) {
+          super(config);
+        }
+
         getMethodCallName() {
           return "addDate" as const;
         }
@@ -302,7 +338,11 @@ describe("FieldGenerator", () => {
     });
 
     it("should handle empty objects and arrays", () => {
-      class MockGeneratorWithEmpty extends FieldGenerator<"addDate"> {
+      class MockGeneratorWithEmpty extends FieldGenerator {
+        constructor(config: FieldGeneratorConfig) {
+          super(config);
+        }
+
         getMethodCallName() {
           return "addDate" as const;
         }
