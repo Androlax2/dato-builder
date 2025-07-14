@@ -324,17 +324,14 @@ export default ${asyncKeyword}function ${functionName}(${params}: BuilderContext
     return itemIds;
   }
 
-  private getFieldMethodName(fieldType: string): string {
-    const fieldTypeMap: Record<string, string> = {
+  private getFieldMethodName(fieldType: Field["field_type"]): string {
+    const fieldTypeMap: Record<Field["field_type"], string> = {
       string: "addSingleLineString",
       text: "addMultiLineText",
-      wysiwyg: "addWysiwyg",
-      markdown: "addMarkdown",
       integer: "addInteger",
       float: "addFloat",
       boolean: "addBoolean",
       date: "addDate",
-      datetime: "addDateTime",
       file: "addSingleAsset",
       gallery: "addAssetGallery",
       video: "addExternalVideo",
@@ -348,6 +345,7 @@ export default ${asyncKeyword}function ${functionName}(${params}: BuilderContext
       structured_text: "addStructuredText",
       single_block: "addSingleBlock",
       rich_text: "addModularContent",
+      date_time: "addDateTime",
     };
 
     return fieldTypeMap[fieldType] || "addSingleLineString";
