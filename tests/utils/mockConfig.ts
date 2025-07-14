@@ -1,5 +1,5 @@
+import { LogLevel } from "@/logger";
 import type { DatoBuilderConfig } from "../../src";
-import { LogLevel } from "../../src/logger";
 
 export function createMockConfig(
   config?: Partial<DatoBuilderConfig>,
@@ -12,6 +12,8 @@ export function createMockConfig(
     blocksPath: "/custom/blocks",
     modelsPath: "/custom/models",
     logLevel: LogLevel.NONE,
+    syncBlocksPath: "/custom/sync/blocks",
+    syncModelsPath: "/custom/sync/models",
   };
 
   return {
