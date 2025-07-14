@@ -3,6 +3,13 @@ import type {
   ItemType,
 } from "@datocms/cma-client/src/generated/SimpleSchemaTypes";
 
+type BlockValidatorMap = {
+  rich_text_blocks?: { item_types: string[] };
+  single_block?: { item_types: string[] };
+  structured_text_blocks?: { item_types: string[] };
+  [other: string]: unknown;
+};
+
 export class FileGenerator {
   private readonly itemTypeReferences: Map<string, ItemType> = new Map();
 
@@ -172,7 +179,7 @@ export default ${asyncKeyword}function ${functionName}(${params}: BuilderContext
         break;
 
       case "rich_text":
-      case "markdown":
+      case "text":
         if (field.appearance?.toolbar) {
           options.toolbar = field.appearance.toolbar;
         }
@@ -302,16 +309,16 @@ export default ${asyncKeyword}function ${functionName}(${params}: BuilderContext
   private getReferencedItemIds(field: Field): string[] {
     const itemIds: string[] = [];
 
-    if (field.validators?.rich_text_blocks?.item_types) {
-      itemIds.push(...field.validators.rich_text_blocks.item_types);
-    }
+    const validators = field.validators as BlockValidatorMap;
 
-    if (field.validators?.single_block?.item_types) {
-      itemIds.push(...field.validators.single_block.item_types);
+    if (validators.rich_text_blocks?.item_types) {
+      itemIds.push(...validators.rich_text_blocks.item_types);
     }
-
-    if (field.validators?.structured_text_blocks?.item_types) {
-      itemIds.push(...field.validators.structured_text_blocks.item_types);
+    if (validators.single_block?.item_types) {
+      itemIds.push(...validators.single_block.item_types);
+    }
+    if (validators.structured_text_blocks?.item_types) {
+      itemIds.push(...validators.structured_text_blocks.item_types);
     }
 
     return itemIds;
