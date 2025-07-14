@@ -6,6 +6,17 @@ export class DateGenerator extends FieldGenerator<"addDate"> {
     return "addDate" as const;
   }
 
+  private createDateValue(
+    dateString: string,
+  ): Date & { _originalString?: string } {
+    const date = new Date(dateString) as Date & { _originalString?: string };
+    // If it's a date-only string (YYYY-MM-DD), preserve the original format
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+      date._originalString = dateString;
+    }
+    return date;
+  }
+
   generateBuildConfig() {
     //console.dir(this.field, { depth: null });
 
@@ -43,14 +54,14 @@ export class DateGenerator extends FieldGenerator<"addDate"> {
 
         if (dateRange.min) {
           validators.date_range = {
-            min: new Date(dateRange.min),
+            min: this.createDateValue(dateRange.min),
           };
         }
 
         if (dateRange.max) {
           validators.date_range = {
             ...validators.date_range,
-            max: new Date(dateRange.max),
+            max: this.createDateValue(dateRange.max),
           };
         }
       }

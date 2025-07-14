@@ -222,8 +222,8 @@ describe("DateGenerator", () => {
 
         const methodCall = dateGenerator.generateMethodCall();
 
-        expect(methodCall).toContain('new Date("2020-01-01T00:00:00.000Z")');
-        expect(methodCall).toContain('new Date("2025-12-31T00:00:00.000Z")');
+        expect(methodCall).toContain('new Date("2020-01-01")');
+        expect(methodCall).toContain('new Date("2025-12-31")');
         expect(methodCall).toMatch(/\.addDate\(/);
       });
 

@@ -40,8 +40,14 @@ export abstract class FieldGenerator<
     if (obj === undefined) return "undefined";
     if (typeof obj === "string") return JSON.stringify(obj);
     if (typeof obj === "number" || typeof obj === "boolean") return String(obj);
-    if (obj instanceof Date)
+    if (obj instanceof Date) {
+      // Check if this Date has an original string we should preserve
+      const originalString = (obj as any)._originalString;
+      if (originalString) {
+        return `new Date(${JSON.stringify(originalString)})`;
+      }
       return `new Date(${JSON.stringify(obj.toISOString())})`;
+    }
 
     if (Array.isArray(obj)) {
       return `[${obj.map((item) => this.serializeConfig(item)).join(", ")}]`;
