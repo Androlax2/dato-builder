@@ -3,29 +3,34 @@ import { describe, expect, it } from "@jest/globals";
 import type { DateConfig } from "@/Fields/Date";
 import { DateGenerator } from "@/FileGeneration/FieldGenerators/DateGenerator";
 
+function createMockField(
+  overrides: Partial<Field> & Pick<Field, "label" | "api_key">,
+): Field {
+  const defaults: Omit<Field, "label" | "api_key"> = {
+    id: "test-id",
+    type: "field",
+    field_type: "date",
+    hint: "test hint",
+    localized: false,
+    validators: {},
+    position: 1,
+    appearance: { addons: [], editor: "date_picker", parameters: {} },
+    default_value: null,
+    deep_filtering_enabled: false,
+    item_type: { id: "SDGeMOa4Q3CRgEQTXg8jbg", type: "item_type" },
+    fieldset: null,
+  };
+
+  return { ...defaults, ...overrides };
+}
+
 describe("DateGenerator", () => {
   it("can generate a date with label, position, api_key", () => {
-    const mockField: Field = {
-      id: "test-id",
-      type: "field",
-      label: "Date",
-      field_type: "date",
-      api_key: "test-date-api-key",
-      hint: "test hint",
-      localized: false,
-      validators: {},
-      position: 1,
-      appearance: { addons: [], editor: "date_picker", parameters: {} },
-      default_value: null,
-      deep_filtering_enabled: false,
-      item_type: { id: "SDGeMOa4Q3CRgEQTXg8jbg", type: "item_type" },
-      fieldset: null,
-    };
-
     const dateGenerator = new DateGenerator({
-      field: mockField,
-      needsAsync: false,
-      itemTypeReferences: new Map(),
+      field: createMockField({
+        label: "Date",
+        api_key: "test-date-api-key",
+      }),
     });
 
     expect(dateGenerator.generateBuildConfig()).toEqual({
@@ -40,27 +45,12 @@ describe("DateGenerator", () => {
   describe("With validators", () => {
     describe("Required", () => {
       it("can generate a required date field", () => {
-        const mockField: Field = {
-          id: "test-id",
-          type: "field",
-          label: "Required Date",
-          field_type: "date",
-          api_key: "required-date-api-key",
-          hint: "test hint",
-          localized: false,
-          validators: { required: {} },
-          position: 1,
-          appearance: { addons: [], editor: "date_picker", parameters: {} },
-          default_value: null,
-          deep_filtering_enabled: false,
-          item_type: { id: "SDGeMOa4Q3CRgEQTXg8jbg", type: "item_type" },
-          fieldset: null,
-        };
-
         const dateGenerator = new DateGenerator({
-          field: mockField,
-          needsAsync: false,
-          itemTypeReferences: new Map(),
+          field: createMockField({
+            label: "Required Date",
+            api_key: "required-date-api-key",
+            validators: { required: {} },
+          }),
         });
 
         expect(dateGenerator.generateBuildConfig()).toEqual({
@@ -74,27 +64,11 @@ describe("DateGenerator", () => {
       });
 
       it("can generate a non-required date field", () => {
-        const mockField: Field = {
-          id: "test-id",
-          type: "field",
-          label: "Non-Required Date",
-          field_type: "date",
-          api_key: "non-required-date-api-key",
-          hint: "test hint",
-          localized: false,
-          validators: {},
-          position: 1,
-          appearance: { addons: [], editor: "date_picker", parameters: {} },
-          default_value: null,
-          deep_filtering_enabled: false,
-          item_type: { id: "SDGeMOa4Q3CRgEQTXg8jbg", type: "item_type" },
-          fieldset: null,
-        };
-
         const dateGenerator = new DateGenerator({
-          field: mockField,
-          needsAsync: false,
-          itemTypeReferences: new Map(),
+          field: createMockField({
+            label: "Non-Required Date",
+            api_key: "non-required-date-api-key",
+          }),
         });
 
         expect(dateGenerator.generateBuildConfig()).toEqual({
@@ -109,27 +83,12 @@ describe("DateGenerator", () => {
 
     describe("Date Range", () => {
       it("can generate a date field with a range", () => {
-        const mockField: Field = {
-          id: "test-id",
-          type: "field",
-          label: "Date with Range",
-          field_type: "date",
-          api_key: "date-with-range-api-key",
-          hint: "test hint",
-          localized: false,
-          validators: { range: { min: "2020-01-01", max: "2025-12-31" } },
-          position: 1,
-          appearance: { addons: [], editor: "date_picker", parameters: {} },
-          default_value: null,
-          deep_filtering_enabled: false,
-          item_type: { id: "SDGeMOa4Q3CRgEQTXg8jbg", type: "item_type" },
-          fieldset: null,
-        };
-
         const dateGenerator = new DateGenerator({
-          field: mockField,
-          needsAsync: false,
-          itemTypeReferences: new Map(),
+          field: createMockField({
+            label: "Date with Range",
+            api_key: "date-with-range-api-key",
+            validators: { range: { min: "2020-01-01", max: "2025-12-31" } },
+          }),
         });
 
         expect(dateGenerator.generateBuildConfig()).toEqual({
@@ -148,27 +107,12 @@ describe("DateGenerator", () => {
       });
 
       it("can generate a date field with a minimum date", () => {
-        const mockField: Field = {
-          id: "test-id",
-          type: "field",
-          label: "Date with Min",
-          field_type: "date",
-          api_key: "date-with-min-api-key",
-          hint: "test hint",
-          localized: false,
-          validators: { min_date: "2020-01-01" },
-          position: 1,
-          appearance: { addons: [], editor: "date_picker", parameters: {} },
-          default_value: null,
-          deep_filtering_enabled: false,
-          item_type: { id: "SDGeMOa4Q3CRgEQTXg8jbg", type: "item_type" },
-          fieldset: null,
-        };
-
         const dateGenerator = new DateGenerator({
-          field: mockField,
-          needsAsync: false,
-          itemTypeReferences: new Map(),
+          field: createMockField({
+            label: "Date with Min",
+            api_key: "date-with-min-api-key",
+            validators: { min_date: "2020-01-01" },
+          }),
         });
 
         expect(dateGenerator.generateBuildConfig()).toEqual({
@@ -186,27 +130,12 @@ describe("DateGenerator", () => {
       });
 
       it("can generate a date field with a maximum date", () => {
-        const mockField: Field = {
-          id: "test-id",
-          type: "field",
-          label: "Date with Max",
-          field_type: "date",
-          api_key: "date-with-max-api-key",
-          hint: "test hint",
-          localized: false,
-          validators: { max_date: "2025-12-31" },
-          position: 1,
-          appearance: { addons: [], editor: "date_picker", parameters: {} },
-          default_value: null,
-          deep_filtering_enabled: false,
-          item_type: { id: "SDGeMOa4Q3CRgEQTXg8jbg", type: "item_type" },
-          fieldset: null,
-        };
-
         const dateGenerator = new DateGenerator({
-          field: mockField,
-          needsAsync: false,
-          itemTypeReferences: new Map(),
+          field: createMockField({
+            label: "Date with Max",
+            api_key: "date-with-max-api-key",
+            validators: { max_date: "2025-12-31" },
+          }),
         });
 
         expect(dateGenerator.generateBuildConfig()).toEqual({
@@ -227,27 +156,12 @@ describe("DateGenerator", () => {
 
   describe("With default value", () => {
     it("can generate a date field with a default value", () => {
-      const mockField: Field = {
-        id: "test-id",
-        type: "field",
-        label: "Date with Default",
-        field_type: "date",
-        api_key: "date-with-default-api-key",
-        hint: "test hint",
-        localized: false,
-        validators: {},
-        position: 1,
-        appearance: { addons: [], editor: "date_picker", parameters: {} },
-        default_value: "2025-07-24",
-        deep_filtering_enabled: false,
-        item_type: { id: "SDGeMOa4Q3CRgEQTXg8jbg", type: "item_type" },
-        fieldset: null,
-      };
-
       const dateGenerator = new DateGenerator({
-        field: mockField,
-        needsAsync: false,
-        itemTypeReferences: new Map(),
+        field: createMockField({
+          label: "Date with Default",
+          api_key: "date-with-default-api-key",
+          default_value: "2025-07-24",
+        }),
       });
 
       expect(dateGenerator.generateBuildConfig()).toEqual({
@@ -261,27 +175,11 @@ describe("DateGenerator", () => {
     });
 
     it("can generate a date field without a default value", () => {
-      const mockField: Field = {
-        id: "test-id",
-        type: "field",
-        label: "Date without Default",
-        field_type: "date",
-        api_key: "date-without-default-api-key",
-        hint: "test hint",
-        localized: false,
-        validators: {},
-        position: 1,
-        appearance: { addons: [], editor: "date_picker", parameters: {} },
-        default_value: null,
-        deep_filtering_enabled: false,
-        item_type: { id: "SDGeMOa4Q3CRgEQTXg8jbg", type: "item_type" },
-        fieldset: null,
-      };
-
       const dateGenerator = new DateGenerator({
-        field: mockField,
-        needsAsync: false,
-        itemTypeReferences: new Map(),
+        field: createMockField({
+          label: "Date without Default",
+          api_key: "date-without-default-api-key",
+        }),
       });
 
       expect(dateGenerator.generateBuildConfig()).toEqual({

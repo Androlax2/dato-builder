@@ -102,8 +102,6 @@ export default ${asyncKeyword}function ${functionName}(${params}: BuilderContext
       .map((field) => {
         const generator = this.fieldGeneratorFactory.createGenerator({
           field,
-          needsAsync,
-          itemTypeReferences: this.config.itemTypeReferences,
         });
 
         return generator.generateMethodCall();
