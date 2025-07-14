@@ -1,4 +1,4 @@
-import type { ConsoleLogger } from "../../logger";
+import type { ConsoleLogger } from "@/logger";
 import type { FileInfo } from "./types";
 
 export class DependencyResolver {
