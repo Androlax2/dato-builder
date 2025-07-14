@@ -4,16 +4,19 @@ import type {
   FieldGenerator,
   FieldGeneratorConfig,
 } from "@/FileGeneration/FieldGenerators/FieldGenerator";
+import type { ItemTypeBuilderAddMethods } from "@/types/ItemTypeBuilderFields";
 
 type FieldGeneratorConstructor = new (
   config: FieldGeneratorConfig,
-) => FieldGenerator;
+) => FieldGenerator<ItemTypeBuilderAddMethods>;
 
 export class FieldGeneratorFactory {
   /**
    * Main factory method that determines the correct generator based on field type and appearance
    */
-  createGenerator(config: FieldGeneratorConfig): FieldGenerator {
+  createGenerator(
+    config: FieldGeneratorConfig,
+  ): FieldGenerator<ItemTypeBuilderAddMethods> {
     const field = config.field;
 
     const GeneratorClass = this.getGeneratorClass(field);

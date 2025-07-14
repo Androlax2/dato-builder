@@ -2,6 +2,10 @@ import type {
   Field,
   ItemType,
 } from "@datocms/cma-client/src/generated/SimpleSchemaTypes";
+import type {
+  ItemTypeBuilderAddMethods,
+  MethodNameToConfig,
+} from "@/types/ItemTypeBuilderFields";
 
 export interface FieldGeneratorConfig {
   field: Field;
@@ -9,7 +13,9 @@ export interface FieldGeneratorConfig {
   itemTypeReferences: Map<string, ItemType>;
 }
 
-export abstract class FieldGenerator {
+export abstract class FieldGenerator<
+  TMethodName extends ItemTypeBuilderAddMethods,
+> {
   protected field: Field;
   protected needsAsync: boolean;
   protected itemTypeReferences: Map<string, ItemType>;
@@ -27,9 +33,13 @@ export abstract class FieldGenerator {
    *    return "addDate";
    * }
    */
-  abstract getMethodCallName(): string;
+  abstract getMethodCallName(): TMethodName;
 
-  generateMethodCall(): string {
-    return "test";
+  abstract generateBuildConfig(): MethodNameToConfig<TMethodName>;
+
+  public generateMethodCall(): string {
+    throw new Error(
+      "Implement generateMethodCall in FieldGenerator parent class",
+    );
   }
 }
