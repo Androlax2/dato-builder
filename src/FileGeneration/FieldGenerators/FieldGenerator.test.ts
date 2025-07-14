@@ -54,8 +54,97 @@ describe("FieldGenerator", () => {
       const methodCall = generator.generateMethodCall();
 
       expect(methodCall).toBe(
-        `.addDate({"label":"Test Field","body":{"position":1}})`,
+        `.addDate({ label: "Test Field", body: { position: 1 } })`,
       );
+    });
+
+    it("should serialize Date objects with ISO strings", () => {
+      class MockDateGeneratorWithISO extends FieldGenerator<"addDate"> {
+        getMethodCallName() {
+          return "addDate" as const;
+        }
+
+        generateBuildConfig(): any {
+          return {
+            label: this.field.label,
+            body: {
+              date_value: new Date("2025-07-14T10:30:00.000Z"),
+            },
+          };
+        }
+      }
+
+      const generator = new MockDateGeneratorWithISO(config);
+      const methodCall = generator.generateMethodCall();
+
+      expect(methodCall).toContain('new Date("2025-07-14T10:30:00.000Z")');
+    });
+
+    it("should serialize Date objects with original string format when available", () => {
+      class MockDateGeneratorWithOriginal extends FieldGenerator<"addDate"> {
+        getMethodCallName() {
+          return "addDate" as const;
+        }
+
+        generateBuildConfig(): any {
+          const date = new Date("2025-07-14") as Date & {
+            _originalString?: string;
+          };
+          date._originalString = "2025-07-14";
+
+          return {
+            label: this.field.label,
+            body: {
+              date_value: date,
+            },
+          };
+        }
+      }
+
+      const generator = new MockDateGeneratorWithOriginal(config);
+      const methodCall = generator.generateMethodCall();
+
+      expect(methodCall).toContain('new Date("2025-07-14")');
+      expect(methodCall).not.toContain("T00:00:00.000Z");
+    });
+
+    it("should handle nested objects with Date values", () => {
+      class MockDateGeneratorWithNested extends FieldGenerator<"addDate"> {
+        getMethodCallName() {
+          return "addDate" as const;
+        }
+
+        generateBuildConfig(): any {
+          const minDate = new Date("2020-01-01") as Date & {
+            _originalString?: string;
+          };
+          minDate._originalString = "2020-01-01";
+
+          const maxDate = new Date("2025-12-31") as Date & {
+            _originalString?: string;
+          };
+          maxDate._originalString = "2025-12-31";
+
+          return {
+            label: this.field.label,
+            body: {
+              validators: {
+                date_range: {
+                  min: minDate,
+                  max: maxDate,
+                },
+              },
+            },
+          };
+        }
+      }
+
+      const generator = new MockDateGeneratorWithNested(config);
+      const methodCall = generator.generateMethodCall();
+
+      expect(methodCall).toContain('new Date("2020-01-01")');
+      expect(methodCall).toContain('new Date("2025-12-31")');
+      expect(methodCall).not.toContain("T00:00:00.000Z");
     });
   });
 });
