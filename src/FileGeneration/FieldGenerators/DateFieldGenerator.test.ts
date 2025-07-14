@@ -1,7 +1,7 @@
 import type { Field } from "@datocms/cma-client/src/generated/SimpleSchemaTypes";
 import { describe, expect, it } from "@jest/globals";
 import type { DateConfig } from "@/Fields/Date";
-import { DateGenerator } from "@/FileGeneration/FieldGenerators/DateFieldGenerator";
+import { DateFieldGenerator } from "@/FileGeneration/FieldGenerators/DateFieldGenerator";
 
 function createMockField(
   overrides: Partial<Field> & Pick<Field, "label" | "api_key">,
@@ -24,10 +24,10 @@ function createMockField(
   return { ...defaults, ...overrides };
 }
 
-describe("DateGenerator", () => {
+describe("DateFieldGenerator", () => {
   describe("Basic functionality", () => {
     it("can generate a date with label", () => {
-      const dateGenerator = new DateGenerator({
+      const dateGenerator = new DateFieldGenerator({
         field: createMockField({
           label: "Date",
           api_key: "date",
@@ -43,7 +43,7 @@ describe("DateGenerator", () => {
     });
 
     it("does not include position", () => {
-      const dateGenerator = new DateGenerator({
+      const dateGenerator = new DateFieldGenerator({
         field: createMockField({
           label: "Date without Position",
           api_key: "date_without_position",
@@ -59,7 +59,7 @@ describe("DateGenerator", () => {
     });
 
     it("can generate a date with a hint", () => {
-      const dateGenerator = new DateGenerator({
+      const dateGenerator = new DateFieldGenerator({
         field: createMockField({
           label: "Date with Hint",
           api_key: "date_with_hint",
@@ -77,7 +77,7 @@ describe("DateGenerator", () => {
     });
 
     it("can generate a date without a hint", () => {
-      const dateGenerator = new DateGenerator({
+      const dateGenerator = new DateFieldGenerator({
         field: createMockField({
           label: "Date without Hint",
           api_key: "date_without_hint",
@@ -94,7 +94,7 @@ describe("DateGenerator", () => {
     });
 
     it("can generate a date with a default value", () => {
-      const dateGenerator = new DateGenerator({
+      const dateGenerator = new DateFieldGenerator({
         field: createMockField({
           label: "Date with Default Value",
           api_key: "date_with_default_value",
@@ -112,7 +112,7 @@ describe("DateGenerator", () => {
     });
 
     it("can generate a date without a default value", () => {
-      const dateGenerator = new DateGenerator({
+      const dateGenerator = new DateFieldGenerator({
         field: createMockField({
           label: "Date without Default Value",
           api_key: "date_without_default_value",
@@ -129,7 +129,7 @@ describe("DateGenerator", () => {
     });
 
     it("should not include validators if none are set", () => {
-      const dateGenerator = new DateGenerator({
+      const dateGenerator = new DateFieldGenerator({
         field: createMockField({
           label: "Date without Validators",
           api_key: "date_without_validators",
@@ -149,7 +149,7 @@ describe("DateGenerator", () => {
   describe("With validators", () => {
     describe("Required", () => {
       it("can generate a required date field", () => {
-        const dateGenerator = new DateGenerator({
+        const dateGenerator = new DateFieldGenerator({
           field: createMockField({
             label: "Required Date",
             api_key: "required-date-api-key",
@@ -167,7 +167,7 @@ describe("DateGenerator", () => {
       });
 
       it("can generate a non-required date field", () => {
-        const dateGenerator = new DateGenerator({
+        const dateGenerator = new DateFieldGenerator({
           field: createMockField({
             label: "Non-Required Date",
             api_key: "non-required-date-api-key",
@@ -185,7 +185,7 @@ describe("DateGenerator", () => {
 
     describe("Date Range", () => {
       it("can generate a date field with a range", () => {
-        const dateGenerator = new DateGenerator({
+        const dateGenerator = new DateFieldGenerator({
           field: createMockField({
             label: "Date with Range",
             api_key: "date-with-range-api-key",
@@ -210,7 +210,7 @@ describe("DateGenerator", () => {
       });
 
       it("generates method call with new Date() constructor calls", () => {
-        const dateGenerator = new DateGenerator({
+        const dateGenerator = new DateFieldGenerator({
           field: createMockField({
             label: "Date with Range",
             api_key: "date-with-range-api-key",
@@ -228,7 +228,7 @@ describe("DateGenerator", () => {
       });
 
       it("can generate a date field with a minimum date", () => {
-        const dateGenerator = new DateGenerator({
+        const dateGenerator = new DateFieldGenerator({
           field: createMockField({
             label: "Date with Min",
             api_key: "date-with-min-api-key",
@@ -247,7 +247,7 @@ describe("DateGenerator", () => {
       });
 
       it("can generate a date field with a maximum date", () => {
-        const dateGenerator = new DateGenerator({
+        const dateGenerator = new DateFieldGenerator({
           field: createMockField({
             label: "Date with Max",
             api_key: "date-with-max-api-key",
@@ -266,7 +266,7 @@ describe("DateGenerator", () => {
       });
 
       it("preserves original format for date-only strings", () => {
-        const dateGenerator = new DateGenerator({
+        const dateGenerator = new DateFieldGenerator({
           field: createMockField({
             label: "Date Format Test",
             api_key: "date-format-test",
@@ -284,7 +284,7 @@ describe("DateGenerator", () => {
       });
 
       it("preserves ISO format for ISO string dates", () => {
-        const dateGenerator = new DateGenerator({
+        const dateGenerator = new DateFieldGenerator({
           field: createMockField({
             label: "ISO Date Test",
             api_key: "iso-date-test",
@@ -304,7 +304,7 @@ describe("DateGenerator", () => {
       });
 
       it("handles mixed date-only and ISO formats", () => {
-        const dateGenerator = new DateGenerator({
+        const dateGenerator = new DateFieldGenerator({
           field: createMockField({
             label: "Mixed Format Test",
             api_key: "mixed-format-test",
@@ -324,7 +324,7 @@ describe("DateGenerator", () => {
       });
 
       it("handles edge case date formats", () => {
-        const dateGenerator = new DateGenerator({
+        const dateGenerator = new DateFieldGenerator({
           field: createMockField({
             label: "Edge Case Dates",
             api_key: "edge-case-dates",
