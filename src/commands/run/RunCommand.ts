@@ -1,15 +1,15 @@
 import { buildClient } from "@datocms/cma-client-node";
+import type { CacheManager } from "@/cache/CacheManager";
+import type { ConsoleLogger } from "@/logger";
+import type { BuilderContext } from "@/types/BuilderContext";
+import type { DatoBuilderConfig } from "@/types/DatoBuilderConfig";
 import DatoApi from "../../Api/DatoApi";
-import type { CacheManager } from "../../cache/CacheManager";
-import type { ConsoleLogger } from "../../logger";
-import type { BuilderContext } from "../../types/BuilderContext";
-import type { DatoBuilderConfig } from "../../types/DatoBuilderConfig";
 import { BuildExecutor } from "./BuildExecutor";
 import { DeletionDetector } from "./DeletionDetector";
 import { DeletionManager } from "./DeletionManager";
 import { DependencyAnalyzer } from "./DependencyAnalyzer";
 import { DependencyResolver } from "./DependencyResolver";
-import { FileDiscoverer } from "./FileDiscover";
+import { FileDiscoverer } from "./FileDiscoverer";
 import { ItemBuilder } from "./ItemBuilder";
 import type { BuildResult, FileInfo } from "./types";
 

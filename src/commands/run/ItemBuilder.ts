@@ -1,8 +1,8 @@
-import type BlockBuilder from "../../BlockBuilder";
-import type { CacheManager } from "../../cache/CacheManager";
-import type { ConsoleLogger } from "../../logger";
-import type ModelBuilder from "../../ModelBuilder";
-import type { BuilderContext } from "../../types/BuilderContext";
+import type BlockBuilder from "@/BlockBuilder";
+import type { CacheManager } from "@/cache/CacheManager";
+import type { ConsoleLogger } from "@/logger";
+import type ModelBuilder from "@/ModelBuilder";
+import type { BuilderContext } from "@/types/BuilderContext";
 import type { FileInfo } from "./types";
 
 export class ItemBuildError extends Error {

@@ -1,6 +1,6 @@
 import path from "node:path";
 import { glob } from "glob";
-import type { ConsoleLogger } from "../../logger";
+import type { ConsoleLogger } from "@/logger";
 import type { FileInfo } from "./types";
 
 export class FileDiscoverer {
