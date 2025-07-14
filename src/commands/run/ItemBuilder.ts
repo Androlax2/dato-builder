@@ -1,8 +1,8 @@
-import type BlockBuilder from "../../BlockBuilder";
-import type { CacheManager } from "../../cache/CacheManager";
-import type { ConsoleLogger } from "../../logger";
-import type ModelBuilder from "../../ModelBuilder";
-import type { BuilderContext } from "../../types/BuilderContext";
+import type BlockBuilder from "@/BlockBuilder";
+import type { CacheManager } from "@/cache/CacheManager";
+import type { ConsoleLogger } from "@/logger";
+import type ModelBuilder from "@/ModelBuilder";
+import type { BuilderContext } from "@/types/BuilderContext";
 import type { FileInfo } from "./types";
 
 export class ItemBuildError extends Error {
@@ -19,15 +19,15 @@ export class ItemBuildError extends Error {
 
 export class ItemBuilder {
   // Cache for loaded modules to avoid repeated imports
-  private moduleCache = new Map<string, any>();
+  private readonly moduleCache = new Map<string, any>();
 
   // Cache for computed hashes to avoid recomputation
-  private hashCache = new Map<string, string>();
+  private readonly hashCache = new Map<string, string>();
 
   constructor(
-    private cache: CacheManager,
-    private logger: ConsoleLogger,
-    private getContext: () => BuilderContext,
+    private readonly cache: CacheManager,
+    private readonly logger: ConsoleLogger,
+    private readonly getContext: () => BuilderContext,
   ) {
     this.logger.trace("Initializing ItemBuilder");
   }

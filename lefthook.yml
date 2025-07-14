@@ -5,6 +5,14 @@ commit-msg:
     "spellcheck-commit-msg.sh":
       runner: bash
 
+output:
+  - meta
+  - summary
+  - empty_summary
+  - success
+  - failure
+  - skips
+
 pre-commit:
   parallel: true
   commands:

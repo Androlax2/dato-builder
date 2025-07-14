@@ -7,7 +7,7 @@ type CacheData = {
 };
 
 export class CacheManager {
-  private items: Map<string, CacheData> | null;
+  private items: Map<string, CacheData>;
 
   private readonly cachePath: string;
   private readonly skipReads: boolean;
@@ -22,15 +22,16 @@ export class CacheManager {
   constructor(cachePath: string, options: { skipReads?: boolean } = {}) {
     this.cachePath = cachePath;
     this.skipReads = options.skipReads || false;
-    // Only initialize the Map if we're not skipping reads
-    this.items = this.skipReads ? null : new Map();
+    // Always initialize the Map for in-memory caching
+    this.items = new Map();
   }
 
   /**
    * Initialize the cache by loading existing data from file
+   * Skips loading if skipReads is enabled
    */
   async initialize(): Promise<void> {
-    // Skip initialization if we're not using cache
+    // Skip loading from file if skipReads is enabled, but keep in-memory cache
     if (this.skipReads) {
       return;
     }
@@ -46,35 +47,23 @@ export class CacheManager {
 
   /**
    * Get an item from the cache
-   * Returns undefined if skipReads is enabled (--no-cache)
    */
   get(key: string): CacheData | undefined {
-    if (this.skipReads || !this.items) {
-      return undefined;
-    }
     return this.items.get(key);
   }
 
   /**
    * Set an item in the cache
-   * No-op if skipReads is enabled (--no-cache)
    */
   async set(key: string, data: CacheData): Promise<void> {
-    if (this.skipReads || !this.items) {
-      return;
-    }
     this.items.set(key, data);
     return this.queueWrite(data);
   }
 
   /**
    * Check if an item exists in the cache
-   * Returns false if skipReads is enabled (--no-cache)
    */
   has(key: string): boolean {
-    if (this.skipReads || !this.items) {
-      return false;
-    }
     return this.items.has(key);
   }
 
@@ -82,9 +71,6 @@ export class CacheManager {
    * Delete an item from the cache
    */
   async delete(key: string): Promise<boolean> {
-    if (this.skipReads || !this.items) {
-      return false;
-    }
     const existed = this.items.delete(key);
     if (existed) {
       await this.persistToFile();
@@ -96,76 +82,49 @@ export class CacheManager {
    * Clear all items from the cache
    */
   async clear(): Promise<void> {
-    if (this.skipReads || !this.items) {
-      return;
-    }
     this.items.clear();
     await this.persistToFile();
   }
 
   /**
    * Get all cache keys
-   * Returns empty array if skipReads is enabled (--no-cache)
    */
   keys(): string[] {
-    if (this.skipReads || !this.items) {
-      return [];
-    }
     return Array.from(this.items.keys());
   }
 
   /**
    * Get all cache values
-   * Returns empty array if skipReads is enabled (--no-cache)
    */
   values(): CacheData[] {
-    if (this.skipReads || !this.items) {
-      return [];
-    }
     return Array.from(this.items.values());
   }
 
   /**
    * Get cache size
-   * Returns 0 if skipReads is enabled (--no-cache)
    */
   size(): number {
-    if (this.skipReads || !this.items) {
-      return 0;
-    }
     return this.items.size;
   }
 
   /**
    * Get cache entries as array of [key, value] pairs
-   * Returns empty array if skipReads is enabled (--no-cache)
    */
   entries(): [string, CacheData][] {
-    if (this.skipReads || !this.items) {
-      return [];
-    }
     return Array.from(this.items.entries());
   }
 
   /**
    * Find items by hash
-   * Returns empty array if skipReads is enabled (--no-cache)
    */
   findByHash(hash: string): CacheData[] {
-    if (this.skipReads || !this.items) {
-      return [];
-    }
     return this.values().filter((item) => item.hash === hash);
   }
 
   /**
    * Find item by id
-   * Returns undefined if skipReads is enabled (--no-cache)
    */
   findById(id: string): CacheData | undefined {
-    if (this.skipReads || !this.items) {
-      return undefined;
-    }
     return this.values().find((item) => item.id === id);
   }
 
@@ -177,10 +136,10 @@ export class CacheManager {
   }
 
   /**
-   * Get actual cache size (returns 0 if no cache is maintained)
+   * Get actual cache size (always returns current in-memory size)
    */
   getActualSize(): number {
-    return this.items ? this.items.size : 0;
+    return this.items.size;
   }
 
   /**
@@ -244,12 +203,16 @@ export class CacheManager {
       // Resolve all queued promises
       const queue = [...this.writeQueue];
       this.writeQueue = [];
-      queue.forEach(({ resolve }) => resolve());
+      for (const { resolve } of queue) {
+        resolve();
+      }
     } catch (error) {
       // Reject all queued promises
       const queue = [...this.writeQueue];
       this.writeQueue = [];
-      queue.forEach(({ reject }) => reject(error));
+      for (const { reject } of queue) {
+        reject(error);
+      }
     } finally {
       this.isWriting = false;
 
@@ -264,10 +227,6 @@ export class CacheManager {
    * Persist the current cache state to file
    */
   private async persistToFile(): Promise<void> {
-    if (this.skipReads || !this.items) {
-      return;
-    }
-
     await this.ensureCacheDirectoryExists();
 
     // Convert Map to array of [key, value] pairs for JSON serialization

@@ -5,8 +5,8 @@ import type { FileInfo } from "./types";
 
 export class DependencyAnalyzer {
   constructor(
-    private config: Required<DatoBuilderConfig>,
-    private logger: ConsoleLogger,
+    private readonly config: Required<DatoBuilderConfig>,
+    private readonly logger: ConsoleLogger,
   ) {
     this.logger.traceJson("Initializing DependencyAnalyzer", {
       config: {

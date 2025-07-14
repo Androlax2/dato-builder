@@ -1,13 +1,13 @@
 import path from "node:path";
 import { glob } from "glob";
-import type { ConsoleLogger } from "../../logger";
+import type { ConsoleLogger } from "@/logger";
 import type { FileInfo } from "./types";
 
 export class FileDiscoverer {
   constructor(
-    private blocksPath: string,
-    private modelsPath: string,
-    private logger: ConsoleLogger,
+    private readonly blocksPath: string,
+    private readonly modelsPath: string,
+    private readonly logger: ConsoleLogger,
   ) {
     this.logger.traceJson("Initializing FileDiscoverer", {
       blocksPath: this.blocksPath,

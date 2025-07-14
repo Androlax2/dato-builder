@@ -1,4 +1,5 @@
 export enum LogLevel {
+  NONE = -1,
   ERROR = 0,
   WARN = 1,
   INFO = 2,
@@ -31,9 +32,9 @@ export class ConsoleLogger {
   private readonly contextOrder: string[];
   private readonly maxContextLength: number;
   private readonly prettyJson: boolean;
-  private timers = new Map<string, number>();
+  private readonly timers = new Map<string, number>();
 
-  private colors = {
+  private readonly colors = {
     reset: "\x1b[0m",
     red: "\x1b[31m",
     green: "\x1b[32m",
@@ -117,7 +118,7 @@ export class ConsoleLogger {
     const contextParts: string[] = [];
 
     // Add contexts in specified order
-    this.contextOrder.forEach((key) => {
+    for (const key of this.contextOrder) {
       const value = this.context[key];
       if (value !== undefined) {
         let formatted = "";
@@ -154,10 +155,10 @@ export class ConsoleLogger {
         );
         contextParts.push(this.colorize(color, `[${truncated}]`));
       }
-    });
+    }
 
     // Add any remaining context keys not in the order
-    Object.entries(this.context).forEach(([key, value]) => {
+    for (const [key, value] of Object.entries(this.context)) {
       if (!this.contextOrder.includes(key) && value !== undefined) {
         const formatted = this.truncateContext(
           `${key}:${value}`,
@@ -165,7 +166,7 @@ export class ConsoleLogger {
         );
         contextParts.push(this.colorize(this.colors.gray, `[${formatted}]`));
       }
-    });
+    }
 
     return contextParts.length > 0 ? `${contextParts.join(" ")} ` : "";
   }
@@ -225,6 +226,10 @@ export class ConsoleLogger {
     if (!this.shouldLog(level)) return;
 
     const levelMap = {
+      [LogLevel.NONE]: {
+        method: () => {},
+        color: this.colors.reset,
+      },
       [LogLevel.ERROR]: {
         method: console.error,
         color: this.colors.red,
@@ -349,10 +354,10 @@ export class ConsoleLogger {
     console.log(this.colorize(this.colors.blue + this.colors.bold, titleLine));
 
     if (details) {
-      details.forEach((detail) => {
+      for (const detail of details) {
         const detailLine = `${detail}`.padEnd(width);
         console.log(this.colorize(this.colors.blue, detailLine));
-      });
+      }
     }
 
     console.log(this.colorize(this.colors.blue + this.colors.bold, border));

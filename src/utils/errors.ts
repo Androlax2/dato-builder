@@ -165,7 +165,7 @@ export async function executeWithErrorHandling<T>(
       resourceDef,
       existingResource,
     );
-    console.error(errorMessage);
-    throw error;
+
+    throw new Error(errorMessage);
   }
 }

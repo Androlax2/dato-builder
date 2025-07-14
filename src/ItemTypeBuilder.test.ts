@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
+import { createMockConfig } from "@tests/utils/mockConfig";
+import type { DatoBuilderConfig } from "../src";
 import DatoApi from "../src/Api/DatoApi";
-import NotFoundError from "../src/Api/Error/NotFoundError";
-import * as configLoader from "../src/config/loader";
 import Field, { type FieldBody } from "../src/Fields/Field";
 import Integer from "../src/Fields/Integer";
 import Markdown from "../src/Fields/Markdown";
@@ -21,20 +21,16 @@ jest.mock("../src/Fields/Textarea");
 jest.mock("../src/Fields/StringRadioGroup");
 jest.mock("../src/Fields/StringSelect");
 jest.mock("../src/Fields/MultiLineText");
-jest.mock("../src/config/loader", () => ({
-  loadDatoBuilderConfig: jest.fn(() => ({
-    overwriteExistingFields: false,
-  })),
-}));
-jest.mock("../src/config", () => ({
-  getDatoClient: jest.fn(() => ({})),
-}));
 
 // Same TestItemTypeBuilder class as in the original file
 class TestItemTypeBuilder extends ItemTypeBuilder {
   // biome-ignore lint/suspicious/noExplicitAny: It's a test
-  constructor(type: ItemTypeBuilderType, body: any, config: any = {}) {
-    super(type, body, config);
+  constructor(
+    type: ItemTypeBuilderType,
+    body: any,
+    overwriteConfig?: Partial<DatoBuilderConfig>,
+  ) {
+    super({ type, body, config: createMockConfig(overwriteConfig) });
   }
 }
 
@@ -47,9 +43,6 @@ describe("ItemTypeBuilder", () => {
   let mockClientFields: any;
 
   beforeEach(() => {
-    // Wipe both the in-memory and on-disk caches
-    ItemTypeBuilder.clearCache();
-
     // Clear all mocks
     jest.clearAllMocks();
 
@@ -58,6 +51,7 @@ describe("ItemTypeBuilder", () => {
       create: jest.fn(async (_body) => ({ id: "item-123" })),
       update: jest.fn(async () => ({ id: "item-123" })),
       find: jest.fn(async () => ({ id: "item-123" })),
+      list: jest.fn(async () => []),
     };
 
     mockClientFields = {
@@ -104,7 +98,7 @@ describe("ItemTypeBuilder", () => {
         sortable: true,
         draft_mode_active: false,
         all_locales_required: true,
-        api_key: "test_model",
+        api_key: "test_model_custom_model",
         modular_block: false,
       });
     });
@@ -132,70 +126,22 @@ describe("ItemTypeBuilder", () => {
       });
 
       expect(blockBuilder.body.modular_block).toBe(true);
-      expect(blockBuilder.body.api_key).toBe("test_block");
-    });
-
-    it("should merge configs correctly", () => {
-      // Test default config
-      expect(builder.config).toEqual({
-        overwriteExistingFields: false,
-        debug: false,
-        blockApiKeySuffix: "",
-        modelApiKeySuffix: "",
-      });
-
-      // Test with global config override
-      (configLoader.loadDatoBuilderConfig as jest.Mock).mockReturnValueOnce({
-        overwriteExistingFields: true,
-        debug: true,
-        blockApiKeySuffix: "block_suffix",
-        modelApiKeySuffix: "model_suffix",
-      });
-
-      const globalConfigBuilder = new TestItemTypeBuilder("model", {
-        name: "Global Config Model",
-        singleton: false,
-        sortable: true,
-        draft_mode_active: false,
-        all_locales_required: true,
-      });
-
-      expect(globalConfigBuilder.config).toEqual({
-        overwriteExistingFields: true,
-        debug: true,
-        blockApiKeySuffix: "block_suffix",
-        modelApiKeySuffix: "model_suffix",
-      });
-
-      // Test with builder-specific config
-      const specificConfigBuilder = new TestItemTypeBuilder(
-        "model",
-        {
-          name: "Specific Config Model",
-          singleton: false,
-          sortable: true,
-          draft_mode_active: false,
-          all_locales_required: true,
-        },
-        {
-          overwriteExistingFields: true,
-          debug: false,
-          blockApiKeySuffix: "specific_block_suffix",
-          modelApiKeySuffix: "specific_model_suffix",
-        },
-      );
-
-      expect(specificConfigBuilder.config).toEqual({
-        overwriteExistingFields: true,
-        debug: false,
-        blockApiKeySuffix: "specific_block_suffix",
-        modelApiKeySuffix: "specific_model_suffix",
-      });
+      expect(blockBuilder.body.api_key).toBe("test_block_custom_block");
     });
   });
 
   describe("setOverrideExistingFields", () => {
     it("should update the config and return this", () => {
+      const builder = new TestItemTypeBuilder(
+        "model",
+        {
+          name: "Test Model",
+        },
+        {
+          overwriteExistingFields: false,
+        },
+      );
+
       expect(builder.config.overwriteExistingFields).toBe(false);
 
       const result = builder.setOverrideExistingFields(true);
@@ -216,9 +162,15 @@ describe("ItemTypeBuilder", () => {
   describe("api key suffix", () => {
     describe("item type block", () => {
       it("does not add a suffix to the api_key", () => {
-        const blockBuilder = new TestItemTypeBuilder("block", {
-          name: "Test",
-        });
+        const blockBuilder = new TestItemTypeBuilder(
+          "block",
+          {
+            name: "Test",
+          },
+          {
+            blockApiKeySuffix: null,
+          },
+        );
 
         expect(blockBuilder.body.api_key).toBe("test");
       });
@@ -240,9 +192,15 @@ describe("ItemTypeBuilder", () => {
 
     describe("item type model", () => {
       it("does not add a suffix to the api_key", () => {
-        const modelBuilder = new TestItemTypeBuilder("model", {
-          name: "Test",
-        });
+        const modelBuilder = new TestItemTypeBuilder(
+          "model",
+          {
+            name: "Test",
+          },
+          {
+            modelApiKeySuffix: null,
+          },
+        );
 
         expect(modelBuilder.body.api_key).toBe("test");
       });
@@ -265,9 +223,15 @@ describe("ItemTypeBuilder", () => {
 
   describe("plural api key", () => {
     it("should return the singular api_key of the item when the item name is plural", () => {
-      const pluralBuilder = new TestItemTypeBuilder("model", {
-        name: "Test Models",
-      });
+      const pluralBuilder = new TestItemTypeBuilder(
+        "model",
+        {
+          name: "Test Models",
+        },
+        {
+          modelApiKeySuffix: null,
+        },
+      );
 
       expect(pluralBuilder.body.api_key).toBe("test_model");
     });
@@ -416,13 +380,21 @@ describe("ItemTypeBuilder", () => {
 
       builder.addField(mockField);
 
+      mockClientItemTypes.list.mockResolvedValueOnce([
+        {
+          id: "item-123",
+          api_key: "test_model_custom_model",
+          name: "Test Model",
+        },
+      ]);
+
       const result = await builder.update();
 
-      expect(mockApiCall).toHaveBeenCalledTimes(3);
-      expect(mockClientItemTypes.update).toHaveBeenCalledWith(
-        "test_model",
-        builder.body,
-      );
+      expect(mockApiCall).toHaveBeenCalledTimes(4);
+      expect(mockClientItemTypes.update).toHaveBeenCalledWith("item-123", {
+        ...builder.body,
+        hint: null,
+      });
       expect(mockClientFields.list).toHaveBeenCalledWith("item-123");
       expect(mockClientFields.create).toHaveBeenCalledWith("item-123", {
         api_key: "test_field",
@@ -439,6 +411,14 @@ describe("ItemTypeBuilder", () => {
           .fn()
           .mockReturnValue({ api_key: "test_field", label: "Test Field" }),
       } as unknown as Field;
+
+      mockClientItemTypes.list.mockResolvedValueOnce([
+        {
+          id: "item-123",
+          api_key: "test_model_custom_model",
+          name: "Test Model",
+        },
+      ]);
 
       builder.addField(mockField);
 
@@ -460,39 +440,31 @@ describe("ItemTypeBuilder", () => {
 
   describe("upsert", () => {
     it("should update if the item type exists", async () => {
-      const updateSpy = jest
-        .spyOn(builder, "update")
-        .mockResolvedValue("item-123");
-      const createSpy = jest.spyOn(builder, "create");
+      const updateSpy = jest.spyOn(mockClientItemTypes, "update");
+      const createSpy = jest.spyOn(mockClientItemTypes, "create");
+
+      mockClientItemTypes.list.mockResolvedValueOnce([
+        { id: "item-123", name: "Test Model" },
+      ]);
 
       const result = await builder.upsert();
 
-      expect(mockClientItemTypes.find).toHaveBeenCalledWith("test_model");
+      expect(mockClientItemTypes.list).toHaveBeenCalled();
       expect(updateSpy).toHaveBeenCalled();
       expect(createSpy).not.toHaveBeenCalled();
       expect(result).toBe("item-123");
     });
 
     it("should create if the item type does not exist", async () => {
-      const updateSpy = jest.spyOn(builder, "update");
-      const createSpy = jest
-        .spyOn(builder, "create")
-        .mockResolvedValue("item-456");
+      const updateSpy = jest.spyOn(mockClientItemTypes, "update");
+      const createSpy = jest.spyOn(mockClientItemTypes, "create");
 
-      // Mock not found error
-      mockClientItemTypes.find.mockRejectedValueOnce(
-        new NotFoundError({
-          outerCode: "NOT_FOUND",
-          innerCode: "ITEM_TYPE_NOT_FOUND",
-          details: {},
-          docUrl: "",
-          transient: false,
-        }),
-      );
+      mockClientItemTypes.list.mockResolvedValueOnce([]);
+      mockClientItemTypes.create.mockResolvedValueOnce({ id: "item-456" });
 
       const result = await builder.upsert();
 
-      expect(mockClientItemTypes.find).toHaveBeenCalledWith("test_model");
+      expect(mockClientItemTypes.list).toHaveBeenCalled();
       expect(updateSpy).not.toHaveBeenCalled();
       expect(createSpy).toHaveBeenCalled();
       expect(result).toBe("item-456");
@@ -500,7 +472,7 @@ describe("ItemTypeBuilder", () => {
 
     it("should propagate other errors", async () => {
       const genericError = new Error("Generic error");
-      mockClientItemTypes.find.mockRejectedValueOnce(genericError);
+      mockClientItemTypes.list.mockRejectedValueOnce(genericError);
 
       await expect(builder.upsert()).rejects.toThrow(genericError);
     });
@@ -693,28 +665,70 @@ describe("ItemTypeBuilder", () => {
     });
   });
 
-  describe("syncFields", () => {
-    it("should create new fields that don't exist yet", async () => {
+  describe("Error handling", () => {
+    it("should propagate API errors when creating fields", async () => {
       const mockField = {
-        build: jest.fn().mockReturnValue({
-          api_key: "new_field",
-          label: "New Field",
-        }),
+        build: jest.fn().mockReturnValue({ api_key: "test_field" }),
       } as unknown as Field;
 
       builder.addField(mockField);
 
-      // Execute the private syncFields method via the public create method
-      await builder.create();
+      const apiError = new Error("API Error");
+      mockClientFields.create.mockRejectedValueOnce(apiError);
 
-      expect(mockClientFields.list).toHaveBeenCalledWith("item-123");
-      expect(mockClientFields.create).toHaveBeenCalledWith("item-123", {
-        api_key: "new_field",
-        label: "New Field",
-      });
-      // No updates or deletes should happen
-      expect(mockClientFields.update).not.toHaveBeenCalled();
-      expect(mockClientFields.destroy).not.toHaveBeenCalled();
+      await expect(builder.create()).rejects.toThrow(
+        'Failed to create field "test_field": API Error',
+      );
+    });
+
+    it("should propagate API errors when updating fields", async () => {
+      const mockField = {
+        build: jest.fn().mockReturnValue({ api_key: "test_field" }),
+      } as unknown as Field;
+
+      builder.addField(mockField);
+      builder.setOverrideExistingFields(true);
+
+      mockClientItemTypes.list.mockResolvedValueOnce([
+        { id: "item-123", name: "Test Model" },
+      ]);
+      mockClientFields.list.mockResolvedValueOnce([
+        { id: "field-123", api_key: "test_field" },
+      ]);
+
+      const apiError = new Error("API Error");
+      mockClientFields.update.mockRejectedValueOnce(apiError);
+
+      await expect(builder.update()).rejects.toThrow(
+        'Failed to update field "test_field" (id: field-123): API Error',
+      );
+    });
+
+    it("should propagate API errors when deleting fields", async () => {
+      builder.setOverrideExistingFields(true);
+
+      mockClientItemTypes.list.mockResolvedValueOnce([
+        { id: "item-123", name: "Test Model" },
+      ]);
+      mockClientFields.list.mockResolvedValueOnce([
+        { id: "field-123", api_key: "to_delete" },
+      ]);
+
+      const apiError = new Error("API Error");
+      mockClientFields.destroy.mockRejectedValueOnce(apiError);
+
+      await expect(builder.update()).rejects.toThrow(
+        'Failed to delete field "to_delete" (id: field-123): API Error',
+      );
+    });
+  });
+
+  describe("syncFields", () => {
+    beforeEach(() => {
+      mockClientItemTypes.list.mockResolvedValue([
+        { id: "item-123", name: "Test Model" },
+      ]);
+      mockClientFields.list.mockResolvedValue([]);
     });
 
     it("should update existing fields when overwriteExistingFields is true", async () => {
@@ -740,6 +754,8 @@ describe("ItemTypeBuilder", () => {
         api_key: "existing_field",
         label: "Updated Field",
       });
+      expect(mockClientFields.create).not.toHaveBeenCalled();
+      expect(mockClientFields.destroy).not.toHaveBeenCalled();
     });
 
     it("should delete fields no longer in the builder when overwriteExistingFields is true", async () => {
@@ -765,6 +781,11 @@ describe("ItemTypeBuilder", () => {
 
       // Should delete field2 since it's not in the builder
       expect(mockClientFields.destroy).toHaveBeenCalledWith("field-456");
+      expect(mockClientFields.create).not.toHaveBeenCalled();
+      expect(mockClientFields.update).toHaveBeenCalledWith("field-123", {
+        api_key: "field1",
+        label: "Field 1",
+      });
     });
 
     it("should not update or delete fields when overwriteExistingFields is false", async () => {
@@ -790,6 +811,33 @@ describe("ItemTypeBuilder", () => {
       await builder.update();
 
       // No updates or deletes should happen
+      expect(mockClientFields.update).not.toHaveBeenCalled();
+      expect(mockClientFields.destroy).not.toHaveBeenCalled();
+      expect(mockClientFields.create).not.toHaveBeenCalled();
+    });
+
+    it("should create new fields that do not exist", async () => {
+      // Mock existing fields
+      mockClientFields.list.mockResolvedValueOnce([
+        { id: "field-123", api_key: "field1", label: "Field 1" },
+      ]);
+
+      // Add a new field
+      const mockField = {
+        build: jest.fn().mockReturnValue({
+          api_key: "new_field",
+          label: "New Field",
+        }),
+      } as unknown as Field;
+
+      builder.addField(mockField);
+
+      await builder.update();
+
+      expect(mockClientFields.create).toHaveBeenCalledWith("item-123", {
+        api_key: "new_field",
+        label: "New Field",
+      });
       expect(mockClientFields.update).not.toHaveBeenCalled();
       expect(mockClientFields.destroy).not.toHaveBeenCalled();
     });
@@ -852,21 +900,6 @@ describe("ItemTypeBuilder", () => {
 
       // @ts-ignore
       expect(spy).toHaveBeenCalledWith(mockField);
-    });
-  });
-
-  describe("Error handling", () => {
-    it("should propagate API errors when creating fields", async () => {
-      const mockField = {
-        build: jest.fn().mockReturnValue({ api_key: "test_field" }),
-      } as unknown as Field;
-
-      builder.addField(mockField);
-
-      const apiError = new Error("API Error");
-      mockClientFields.create.mockRejectedValueOnce(apiError);
-
-      await expect(builder.create()).rejects.toThrow(apiError);
     });
   });
 
