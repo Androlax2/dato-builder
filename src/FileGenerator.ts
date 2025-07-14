@@ -10,11 +10,15 @@ type BlockValidatorMap = {
   [other: string]: unknown;
 };
 
+/**
+ * @deprecated This one is deprecated, use the one inside `FileGeneration/` folder
+ */
 export class FileGenerator {
   private readonly itemTypeReferences: Map<string, ItemType> = new Map();
 
   /**
    * Set references to all item types for resolving dependencies
+   * @deprecated This one is deprecated, use the one inside `FileGeneration/` folder
    */
   setItemTypeReferences(itemTypes: ItemType[]): void {
     this.itemTypeReferences.clear();
@@ -25,6 +29,8 @@ export class FileGenerator {
 
   /**
    * Generate a TypeScript file for a block or model using simple string templates
+   *
+   * @deprecated This one is deprecated, use the one inside `FileGeneration/` folder
    */
   generateFile(
     itemType: ItemType,

@@ -1,7 +1,7 @@
-import { BaseFieldGenerator } from "./BaseFieldGenerator";
+import { FieldGenerator } from "./FieldGenerator";
 
 // Base class for all text-related generators
-export abstract class TextGenerator extends BaseFieldGenerator {
+export abstract class TextGenerator extends FieldGenerator {
   abstract getMethodName(): string;
 
   generateMethodCall(): string {

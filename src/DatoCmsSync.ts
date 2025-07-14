@@ -6,9 +6,9 @@ import type {
 } from "@datocms/cma-client/src/generated/SimpleSchemaTypes";
 import { buildClient } from "@datocms/cma-client-node";
 import { confirm } from "@inquirer/prompts";
+import { FileGenerationService } from "@/FileGeneration/FileGenerationService";
 import DatoApi from "./Api/DatoApi";
 import type { CacheManager } from "./cache/CacheManager";
-import { FileGenerator } from "./FileGenerator";
 import type { ConsoleLogger } from "./logger";
 import type { DatoBuilderConfig } from "./types/DatoBuilderConfig";
 
@@ -25,14 +25,14 @@ export class DatoCmsSync {
   private readonly logger: ConsoleLogger;
   private readonly config: Required<DatoBuilderConfig>;
   private readonly cache: CacheManager;
-  private readonly fileGenerator: FileGenerator;
+  private readonly fileGenerationService: FileGenerationService;
 
   constructor(options: SyncOptions) {
     this.config = options.config;
     this.logger = options.logger;
     this.cache = options.cache;
     this.api = new DatoApi(buildClient({ apiToken: this.config.apiToken }));
-    this.fileGenerator = new FileGenerator();
+    this.fileGenerationService = new FileGenerationService();
   }
 
   /**
@@ -168,7 +168,7 @@ export class DatoCmsSync {
       }
 
       // Set item type references for the file generator
-      this.fileGenerator.setItemTypeReferences(itemTypes);
+      this.fileGenerationService.setItemTypeReferences(itemTypes);
 
       // Categorize into blocks and models
       const { blocks, models } = this.categorizeItemTypes(itemTypes);
@@ -235,12 +235,17 @@ export class DatoCmsSync {
           continue;
         }
 
+        // TODO: Remove, this is a temporary check for a specific API key
+        if (itemType.id !== "SDGeMOa4Q3CRgEQTXg8jbg") {
+          continue;
+        }
+
         // Generate file content
-        const fileContent = this.fileGenerator.generateFile(
+        const fileContent = this.fileGenerationService.generateFile({
           itemType,
           fields,
           type,
-        );
+        });
 
         // Determine file path
         const filePath = this.getFilePath(itemType, type);

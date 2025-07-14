@@ -2,7 +2,8 @@ import type {
   Field,
   ItemType,
 } from "@datocms/cma-client/src/generated/SimpleSchemaTypes";
-import { FileGenerator } from "./FileGenerator";
+import { FieldGeneratorFactory } from "@/FileGeneration/FieldGenerators/FieldGeneratorFactory";
+import { FileGenerator } from "@/FileGeneration/FileGenerator";
 
 type FileGenerationItem = {
   itemType: ItemType;
@@ -27,11 +28,14 @@ export class FileGenerationService {
    * Generate a TypeScript file for a block or model
    */
   public generateFile({ itemType, fields, type }: FileGenerationItem): string {
-    return new FileGenerator({
-      itemType,
-      fields,
-      type,
-      itemTypeReferences: this.itemTypeReferences,
-    }).generate();
+    return new FileGenerator(
+      {
+        itemType,
+        fields,
+        type,
+        itemTypeReferences: this.itemTypeReferences,
+      },
+      new FieldGeneratorFactory(),
+    ).generate();
   }
 }

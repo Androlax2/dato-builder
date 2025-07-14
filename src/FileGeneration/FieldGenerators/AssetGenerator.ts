@@ -1,7 +1,7 @@
-import { BaseFieldGenerator } from "./BaseFieldGenerator";
+import { FieldGenerator } from "./FieldGenerator";
 
 // Base class for all asset-related generators
-export abstract class AssetGenerator extends BaseFieldGenerator {
+export abstract class AssetGenerator extends FieldGenerator {
   abstract getMethodName(): string;
 
   generateMethodCall(): string {

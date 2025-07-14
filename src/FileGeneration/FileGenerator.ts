@@ -2,7 +2,7 @@ import type {
   Field,
   ItemType,
 } from "@datocms/cma-client/src/generated/SimpleSchemaTypes";
-import { FieldGeneratorFactory } from "./FieldGenerators/FieldGeneratorFactory";
+import type { FieldGeneratorFactory } from "@/FileGeneration/FieldGenerators/FieldGeneratorFactory";
 
 export interface FileGeneratorConfig {
   itemType: ItemType;
@@ -12,7 +12,10 @@ export interface FileGeneratorConfig {
 }
 
 export class FileGenerator {
-  constructor(private readonly config: FileGeneratorConfig) {}
+  constructor(
+    private readonly config: FileGeneratorConfig,
+    private readonly fieldGeneratorFactory: FieldGeneratorFactory,
+  ) {}
 
   /**
    * Generate a TypeScript file for a block or model
@@ -97,7 +100,7 @@ export default ${asyncKeyword}function ${functionName}(${params}: BuilderContext
 
     return sortedFields
       .map((field) => {
-        const generator = FieldGeneratorFactory.createGenerator({
+        const generator = this.fieldGeneratorFactory.createGenerator({
           field,
           needsAsync,
           itemTypeReferences: this.config.itemTypeReferences,
