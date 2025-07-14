@@ -2,7 +2,7 @@ import type { ConsoleLogger } from "../../logger";
 import type { FileInfo } from "./types";
 
 export class DependencyResolver {
-  constructor(private logger: ConsoleLogger) {
+  constructor(private readonly logger: ConsoleLogger) {
     this.logger.trace("Initializing DependencyResolver");
   }
 

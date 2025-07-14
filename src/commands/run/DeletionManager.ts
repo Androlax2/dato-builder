@@ -18,9 +18,9 @@ export interface DeletionOptions {
 
 export class DeletionManager {
   constructor(
-    private api: DatoApi,
-    private cache: CacheManager,
-    private logger: ConsoleLogger,
+    private readonly api: DatoApi,
+    private readonly cache: CacheManager,
+    private readonly logger: ConsoleLogger,
   ) {
     this.logger.trace("Initializing DeletionManager");
   }

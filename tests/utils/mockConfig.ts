@@ -1,4 +1,5 @@
 import type { DatoBuilderConfig } from "../../src";
+import { LogLevel } from "../../src/logger";
 
 export function createMockConfig(
   config?: Partial<DatoBuilderConfig>,
@@ -10,7 +11,7 @@ export function createMockConfig(
     blockApiKeySuffix: "custom-block",
     blocksPath: "/custom/blocks",
     modelsPath: "/custom/models",
-    logLevel: 0,
+    logLevel: LogLevel.NONE,
   };
 
   return {

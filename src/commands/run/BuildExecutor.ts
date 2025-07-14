@@ -3,14 +3,14 @@ import type { ItemBuilder } from "./ItemBuilder";
 import type { BuildResult, FileInfo } from "./types";
 
 export class BuildExecutor {
-  private buildPromises = new Map<
+  private readonly buildPromises = new Map<
     string,
     Promise<{ id: string; fromCache: boolean }>
   >();
 
   constructor(
-    private itemBuilder: ItemBuilder,
-    private logger: ConsoleLogger,
+    private readonly itemBuilder: ItemBuilder,
+    private readonly logger: ConsoleLogger,
   ) {
     this.logger.trace("Initializing BuildExecutor");
   }

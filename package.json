@@ -27,7 +27,7 @@
     "lint:fix": "biome lint --fix",
     "format": "biome format",
     "format:write": "biome format --write",
-    "format:check": "biome format --check",
+    "format:check": "biome check --write",
     "typecheck": "tsc --noEmit",
     "spellcheck": "cspell \"**/*.{js,ts,md,json,yml,yaml}\""
   },

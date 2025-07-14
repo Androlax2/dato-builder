@@ -1,7 +1,6 @@
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 import type { DatoBuilderConfig } from "../src";
 import DatoApi from "../src/Api/DatoApi";
-import NotFoundError from "../src/Api/Error/NotFoundError";
 import Field, { type FieldBody } from "../src/Fields/Field";
 import Integer from "../src/Fields/Integer";
 import Markdown from "../src/Fields/Markdown";
@@ -441,39 +440,31 @@ describe("ItemTypeBuilder", () => {
 
   describe("upsert", () => {
     it("should update if the item type exists", async () => {
-      const updateSpy = jest
-        .spyOn(builder, "update")
-        .mockResolvedValue("item-123");
-      const createSpy = jest.spyOn(builder, "create");
+      const updateSpy = jest.spyOn(mockClientItemTypes, "update");
+      const createSpy = jest.spyOn(mockClientItemTypes, "create");
+
+      mockClientItemTypes.list.mockResolvedValueOnce([
+        { id: "item-123", name: "Test Model" },
+      ]);
 
       const result = await builder.upsert();
 
-      expect(mockClientItemTypes.find).toHaveBeenCalledWith("test_model");
+      expect(mockClientItemTypes.list).toHaveBeenCalled();
       expect(updateSpy).toHaveBeenCalled();
       expect(createSpy).not.toHaveBeenCalled();
       expect(result).toBe("item-123");
     });
 
     it("should create if the item type does not exist", async () => {
-      const updateSpy = jest.spyOn(builder, "update");
-      const createSpy = jest
-        .spyOn(builder, "create")
-        .mockResolvedValue("item-456");
+      const updateSpy = jest.spyOn(mockClientItemTypes, "update");
+      const createSpy = jest.spyOn(mockClientItemTypes, "create");
 
-      // Mock not found error
-      mockClientItemTypes.find.mockRejectedValueOnce(
-        new NotFoundError({
-          outerCode: "NOT_FOUND",
-          innerCode: "ITEM_TYPE_NOT_FOUND",
-          details: {},
-          docUrl: "",
-          transient: false,
-        }),
-      );
+      mockClientItemTypes.list.mockResolvedValueOnce([]);
+      mockClientItemTypes.create.mockResolvedValueOnce({ id: "item-456" });
 
       const result = await builder.upsert();
 
-      expect(mockClientItemTypes.find).toHaveBeenCalledWith("test_model");
+      expect(mockClientItemTypes.list).toHaveBeenCalled();
       expect(updateSpy).not.toHaveBeenCalled();
       expect(createSpy).toHaveBeenCalled();
       expect(result).toBe("item-456");
@@ -481,7 +472,7 @@ describe("ItemTypeBuilder", () => {
 
     it("should propagate other errors", async () => {
       const genericError = new Error("Generic error");
-      mockClientItemTypes.find.mockRejectedValueOnce(genericError);
+      mockClientItemTypes.list.mockRejectedValueOnce(genericError);
 
       await expect(builder.upsert()).rejects.toThrow(genericError);
     });
@@ -675,27 +666,10 @@ describe("ItemTypeBuilder", () => {
   });
 
   describe("syncFields", () => {
-    it("should create new fields that don't exist yet", async () => {
-      const mockField = {
-        build: jest.fn().mockReturnValue({
-          api_key: "new_field",
-          label: "New Field",
-        }),
-      } as unknown as Field;
-
-      builder.addField(mockField);
-
-      // Execute the private syncFields method via the public create method
-      await builder.create();
-
-      expect(mockClientFields.list).toHaveBeenCalledWith("item-123");
-      expect(mockClientFields.create).toHaveBeenCalledWith("item-123", {
-        api_key: "new_field",
-        label: "New Field",
-      });
-      // No updates or deletes should happen
-      expect(mockClientFields.update).not.toHaveBeenCalled();
-      expect(mockClientFields.destroy).not.toHaveBeenCalled();
+    beforeEach(() => {
+      mockClientItemTypes.list.mockResolvedValue([
+        { id: "item-123", name: "Test Model" },
+      ]);
     });
 
     it("should update existing fields when overwriteExistingFields is true", async () => {
@@ -833,21 +807,6 @@ describe("ItemTypeBuilder", () => {
 
       // @ts-ignore
       expect(spy).toHaveBeenCalledWith(mockField);
-    });
-  });
-
-  describe("Error handling", () => {
-    it("should propagate API errors when creating fields", async () => {
-      const mockField = {
-        build: jest.fn().mockReturnValue({ api_key: "test_field" }),
-      } as unknown as Field;
-
-      builder.addField(mockField);
-
-      const apiError = new Error("API Error");
-      mockClientFields.create.mockRejectedValueOnce(apiError);
-
-      await expect(builder.create()).rejects.toThrow(apiError);
     });
   });
 

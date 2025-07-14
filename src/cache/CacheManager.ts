@@ -244,12 +244,16 @@ export class CacheManager {
       // Resolve all queued promises
       const queue = [...this.writeQueue];
       this.writeQueue = [];
-      queue.forEach(({ resolve }) => resolve());
+      for (const { resolve } of queue) {
+        resolve();
+      }
     } catch (error) {
       // Reject all queued promises
       const queue = [...this.writeQueue];
       this.writeQueue = [];
-      queue.forEach(({ reject }) => reject(error));
+      for (const { reject } of queue) {
+        reject(error);
+      }
     } finally {
       this.isWriting = false;
 
