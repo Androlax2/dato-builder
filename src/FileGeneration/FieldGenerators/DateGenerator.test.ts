@@ -264,6 +264,92 @@ describe("DateGenerator", () => {
           new Date("2025-12-31"),
         );
       });
+
+      it("preserves original format for date-only strings", () => {
+        const dateGenerator = new DateGenerator({
+          field: createMockField({
+            label: "Date Format Test",
+            api_key: "date-format-test",
+            validators: {
+              date_range: { min: "2020-01-01", max: "2025-12-31" },
+            },
+          }),
+        });
+
+        const methodCall = dateGenerator.generateMethodCall();
+
+        expect(methodCall).toContain('new Date("2020-01-01")');
+        expect(methodCall).toContain('new Date("2025-12-31")');
+        expect(methodCall).not.toContain("T00:00:00.000Z");
+      });
+
+      it("preserves ISO format for ISO string dates", () => {
+        const dateGenerator = new DateGenerator({
+          field: createMockField({
+            label: "ISO Date Test",
+            api_key: "iso-date-test",
+            validators: {
+              date_range: {
+                min: "2020-01-01T09:30:00.000Z",
+                max: "2025-12-31T23:59:59.999Z",
+              },
+            },
+          }),
+        });
+
+        const methodCall = dateGenerator.generateMethodCall();
+
+        expect(methodCall).toContain('new Date("2020-01-01T09:30:00.000Z")');
+        expect(methodCall).toContain('new Date("2025-12-31T23:59:59.999Z")');
+      });
+
+      it("handles mixed date-only and ISO formats", () => {
+        const dateGenerator = new DateGenerator({
+          field: createMockField({
+            label: "Mixed Format Test",
+            api_key: "mixed-format-test",
+            validators: {
+              date_range: {
+                min: "2020-01-01",
+                max: "2025-12-31T23:59:59.999Z",
+              },
+            },
+          }),
+        });
+
+        const methodCall = dateGenerator.generateMethodCall();
+
+        expect(methodCall).toContain('new Date("2020-01-01")');
+        expect(methodCall).toContain('new Date("2025-12-31T23:59:59.999Z")');
+      });
+
+      it("handles edge case date formats", () => {
+        const dateGenerator = new DateGenerator({
+          field: createMockField({
+            label: "Edge Case Dates",
+            api_key: "edge-case-dates",
+            validators: {
+              date_range: {
+                min: "1970-01-01",
+                max: "9999-12-31",
+              },
+            },
+          }),
+        });
+
+        const config = dateGenerator.generateBuildConfig();
+
+        expect(config.body?.validators?.date_range?.min).toBeInstanceOf(Date);
+        expect(config.body?.validators?.date_range?.max).toBeInstanceOf(Date);
+        expect(
+          config.body?.validators?.date_range?.min
+            ?.toISOString()
+            .startsWith("1970"),
+        ).toBe(true);
+        expect(config.body?.validators?.date_range?.max?.getFullYear()).toBe(
+          9999,
+        );
+      });
     });
   });
 });
