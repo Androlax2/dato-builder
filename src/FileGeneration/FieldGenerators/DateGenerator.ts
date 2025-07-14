@@ -6,7 +6,7 @@ export class DateGenerator extends FieldGenerator<"addDate"> {
     return "addDate" as const;
   }
 
-  generateBuildConfig(): MethodNameToConfig<"addDate"> {
+  generateBuildConfig() {
     const body: NonNullable<MethodNameToConfig<"addDate">["body"]> = {
       api_key: this.field.api_key,
       position: this.field.position,
