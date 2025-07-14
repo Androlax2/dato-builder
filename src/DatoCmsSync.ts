@@ -241,7 +241,7 @@ export class DatoCmsSync {
         }
 
         // Generate file content
-        const fileContent = this.fileGenerationService.generateFile({
+        const fileContent = await this.fileGenerationService.generateFile({
           itemType,
           fields,
           type,

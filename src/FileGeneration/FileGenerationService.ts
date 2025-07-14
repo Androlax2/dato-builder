@@ -27,7 +27,11 @@ export class FileGenerationService {
   /**
    * Generate a TypeScript file for a block or model
    */
-  public generateFile({ itemType, fields, type }: FileGenerationItem): string {
+  public async generateFile({
+    itemType,
+    fields,
+    type,
+  }: FileGenerationItem): Promise<string> {
     return new FileGenerator(
       {
         itemType,
