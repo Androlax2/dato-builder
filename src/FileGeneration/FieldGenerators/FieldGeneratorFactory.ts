@@ -1,10 +1,20 @@
 import type { Field } from "@datocms/cma-client/src/generated/SimpleSchemaTypes";
+import { AssetGalleryGenerator } from "./AssetGalleryGenerator";
+// Asset generators
+import { AssetGenerator } from "./AssetGenerator";
 import {
   BaseFieldGenerator,
   type FieldGeneratorConfig,
 } from "./BaseFieldGenerator";
-import { ImageFieldGenerator } from "./ImageFieldGenerator";
-import { TextFieldGenerator } from "./TextFieldGenerator";
+import { ImageGenerator } from "./ImageGenerator";
+import { MarkdownGenerator } from "./MarkdownGenerator";
+import { MultiLineTextGenerator } from "./MultiLineTextGenerator";
+import { SingleAssetGenerator } from "./SingleAssetGenerator";
+import { SingleLineStringGenerator } from "./SingleLineStringGenerator";
+import { TextareaGenerator } from "./TextareaGenerator";
+// Text generators
+import { TextGenerator } from "./TextGenerator";
+import { WysiwygGenerator } from "./WysiwygGenerator";
 
 /**
  * Default field generator for field types that don't have specialized generators
@@ -148,35 +158,171 @@ export class DefaultFieldGenerator extends BaseFieldGenerator {
 }
 
 export class FieldGeneratorFactory {
-  private static readonly FIELD_GENERATORS: Record<
+  private static readonly customGenerators: Map<
     string,
     typeof BaseFieldGenerator
-  > = {
-    string: TextFieldGenerator,
-    file: ImageFieldGenerator,
-  };
+  > = new Map();
 
+  /**
+   * Main factory method that determines the correct generator based on field type and appearance
+   */
   static createGenerator(config: FieldGeneratorConfig): BaseFieldGenerator {
-    const GeneratorClass =
-      FieldGeneratorFactory.FIELD_GENERATORS[config.field.field_type] ||
-      DefaultFieldGenerator;
+    const field = config.field;
+    const fieldType = field.field_type;
+
+    // Check for custom registered generators first
+    if (FieldGeneratorFactory.customGenerators.has(fieldType)) {
+      const GeneratorClass =
+        FieldGeneratorFactory.customGenerators.get(fieldType)!;
+      return new GeneratorClass(config);
+    }
+
+    // Use built-in mapping logic
+    const GeneratorClass = FieldGeneratorFactory.getGeneratorClass(field);
     return new GeneratorClass(config);
   }
 
   /**
-   * Register a new field generator for a specific field type
+   * Complex mapping logic to determine the correct generator class
+   */
+  private static getGeneratorClass(field: Field): typeof BaseFieldGenerator {
+    switch (field.field_type) {
+      case "string":
+        return SingleLineStringGenerator;
+
+      case "text":
+        return FieldGeneratorFactory.getTextGenerator(field);
+
+      case "file":
+        return FieldGeneratorFactory.getFileGenerator(field);
+
+      case "gallery":
+        return AssetGalleryGenerator;
+
+      default:
+        return DefaultFieldGenerator;
+    }
+  }
+
+  /**
+   * Determine the correct text generator based on appearance
+   */
+  private static getTextGenerator(field: Field): typeof BaseFieldGenerator {
+    const editor = field.appearance?.editor;
+
+    switch (editor) {
+      case "textarea":
+        return TextareaGenerator;
+      case "markdown":
+        return MarkdownGenerator;
+      case "wysiwyg":
+        return WysiwygGenerator;
+      default:
+        return MultiLineTextGenerator;
+    }
+  }
+
+  /**
+   * Determine the correct file generator based on validators
+   */
+  private static getFileGenerator(field: Field): typeof BaseFieldGenerator {
+    const extension = field.validators?.extension;
+
+    // Check if it's specifically constrained to images
+    if (extension) {
+      if (extension.predefined_list === "image") {
+        return ImageGenerator;
+      }
+
+      // Check if all custom extensions are image types
+      if (Array.isArray(extension.values)) {
+        const imageExtensions = [
+          "jpg",
+          "jpeg",
+          "png",
+          "gif",
+          "webp",
+          "svg",
+          "bmp",
+          "tiff",
+        ];
+        const allImagesExtensions = extension.values.every((ext) =>
+          imageExtensions.includes(ext.toLowerCase()),
+        );
+
+        if (allImagesExtensions) {
+          return ImageGenerator;
+        }
+      }
+    }
+
+    // Default to generic single asset
+    return SingleAssetGenerator;
+  }
+
+  /**
+   * Register a custom field generator for a specific field type
    */
   static registerGenerator(
     fieldType: string,
     generatorClass: typeof BaseFieldGenerator,
   ): void {
-    FieldGeneratorFactory.FIELD_GENERATORS[fieldType] = generatorClass;
+    FieldGeneratorFactory.customGenerators.set(fieldType, generatorClass);
+  }
+
+  /**
+   * Register a custom generator with appearance-based conditions
+   */
+  static registerGeneratorWithCondition(
+    fieldType: string,
+    condition: (field: Field) => boolean,
+    generatorClass: typeof BaseFieldGenerator,
+  ): void {
+    // Create a wrapper that applies the condition
+    class ConditionalGenerator extends BaseFieldGenerator {
+      static condition = condition;
+
+      constructor(config: FieldGeneratorConfig) {
+        if (condition(config.field)) {
+          return new generatorClass(config);
+        }
+        super(config);
+      }
+
+      getMethodName(): string {
+        return "addSingleLineString";
+      }
+
+      generateMethodCall(): string {
+        const config = this.generateConfig();
+        return `\n    .${this.getMethodName()}(${this.objectToString(config, 2)})`;
+      }
+    }
+
+    FieldGeneratorFactory.customGenerators.set(fieldType, ConditionalGenerator);
   }
 
   /**
    * Get all registered field types
    */
   static getRegisteredFieldTypes(): string[] {
-    return Object.keys(FieldGeneratorFactory.FIELD_GENERATORS);
+    return Array.from(FieldGeneratorFactory.customGenerators.keys());
+  }
+
+  /**
+   * Clear all custom generators (useful for testing)
+   */
+  static clearCustomGenerators(): void {
+    FieldGeneratorFactory.customGenerators.clear();
+  }
+
+  /**
+   * Get the generator class that would be used for a field (for debugging)
+   */
+  static getGeneratorClassForField(field: Field): typeof BaseFieldGenerator {
+    if (FieldGeneratorFactory.customGenerators.has(field.field_type)) {
+      return FieldGeneratorFactory.customGenerators.get(field.field_type)!;
+    }
+    return FieldGeneratorFactory.getGeneratorClass(field);
   }
 }
