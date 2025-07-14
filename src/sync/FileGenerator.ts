@@ -1,41 +1,15 @@
-interface ItemType {
-  id: string;
-  name: string;
-  api_key: string;
-  modular_block: boolean;
-  singleton?: boolean;
-  sortable?: boolean;
-  draft_mode_active?: boolean;
-  all_locales_required?: boolean;
-  description?: string;
-}
-
-interface Field {
-  id: string;
-  label: string;
-  api_key: string;
-  field_type: string;
-  localized?: boolean;
-  hint?: string;
-  position?: number;
-  validators?: Record<string, any>;
-  appearance?: Record<string, any>;
-}
-
-interface ItemTypeReference {
-  id: string;
-  api_key: string;
-  name: string;
-  modular_block: boolean;
-}
+import type {
+  Field,
+  ItemType,
+} from "@datocms/cma-client/src/generated/SimpleSchemaTypes";
 
 export class FileGenerator {
-  private itemTypeReferences: Map<string, ItemTypeReference> = new Map();
+  private readonly itemTypeReferences: Map<string, ItemType> = new Map();
 
   /**
    * Set references to all item types for resolving dependencies
    */
-  setItemTypeReferences(itemTypes: ItemTypeReference[]): void {
+  setItemTypeReferences(itemTypes: ItemType[]): void {
     this.itemTypeReferences.clear();
     for (const itemType of itemTypes) {
       this.itemTypeReferences.set(itemType.id, itemType);
@@ -134,7 +108,7 @@ export default ${asyncKeyword}function ${functionName}(${params}: BuilderContext
       config,
       options: {
         api_key: '${itemType.api_key}',
-        hint: '${itemType.description || ""}',
+        hint: '${itemType.hint || ""}',
       },
     }`;
     }

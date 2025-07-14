@@ -161,7 +161,6 @@ export class DatoCmsSync {
     try {
       // Fetch all item types
       const itemTypes = await this.fetchItemTypes();
-      console.log({ itemTypes });
 
       if (itemTypes.length === 0) {
         this.logger.warn("No item types found in DatoCMS");
