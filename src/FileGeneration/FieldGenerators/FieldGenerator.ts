@@ -32,6 +32,6 @@ export abstract class FieldGenerator<
     const methodName = this.getMethodCallName();
     const config = this.generateBuildConfig();
 
-    return `${methodName}(${JSON.stringify(config)})`;
+    return `.${methodName}(${JSON.stringify(config)})`;
   }
 }

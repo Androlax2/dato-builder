@@ -54,7 +54,7 @@ describe("FieldGenerator", () => {
       const methodCall = generator.generateMethodCall();
 
       expect(methodCall).toBe(
-        `addDate({"label":"Test Field","body":{"position":1}})`,
+        `.addDate({"label":"Test Field","body":{"position":1}})`,
       );
     });
   });
