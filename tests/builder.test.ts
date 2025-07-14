@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
+import type { DatoBuilderConfig } from "../src";
 import DatoApi from "../src/Api/DatoApi";
 import NotFoundError from "../src/Api/Error/NotFoundError";
-import * as configLoader from "../src/config/loader";
 import Field, { type FieldBody } from "../src/Fields/Field";
 import Integer from "../src/Fields/Integer";
 import Markdown from "../src/Fields/Markdown";
@@ -11,6 +11,7 @@ import StringSelect from "../src/Fields/StringSelect";
 import ItemTypeBuilder, {
   type ItemTypeBuilderType,
 } from "../src/ItemTypeBuilder";
+import { createMockConfig } from "./utils/mockConfig";
 
 jest.mock("../src/Api/DatoApi");
 jest.mock("../src/Fields/Integer");
@@ -21,20 +22,16 @@ jest.mock("../src/Fields/Textarea");
 jest.mock("../src/Fields/StringRadioGroup");
 jest.mock("../src/Fields/StringSelect");
 jest.mock("../src/Fields/MultiLineText");
-jest.mock("../src/config/loader", () => ({
-  loadDatoBuilderConfig: jest.fn(() => ({
-    overwriteExistingFields: false,
-  })),
-}));
-jest.mock("../src/config", () => ({
-  getDatoClient: jest.fn(() => ({})),
-}));
 
 // Same TestItemTypeBuilder class as in the original file
 class TestItemTypeBuilder extends ItemTypeBuilder {
   // biome-ignore lint/suspicious/noExplicitAny: It's a test
-  constructor(type: ItemTypeBuilderType, body: any, config: any = {}) {
-    super(type, body, config);
+  constructor(
+    type: ItemTypeBuilderType,
+    body: any,
+    overwriteConfig?: Partial<DatoBuilderConfig>,
+  ) {
+    super({ type, body, config: createMockConfig(overwriteConfig) });
   }
 }
 
@@ -47,9 +44,6 @@ describe("ItemTypeBuilder", () => {
   let mockClientFields: any;
 
   beforeEach(() => {
-    // Wipe both the in-memory and on-disk caches
-    ItemTypeBuilder.clearCache();
-
     // Clear all mocks
     jest.clearAllMocks();
 
@@ -58,6 +52,7 @@ describe("ItemTypeBuilder", () => {
       create: jest.fn(async (_body) => ({ id: "item-123" })),
       update: jest.fn(async () => ({ id: "item-123" })),
       find: jest.fn(async () => ({ id: "item-123" })),
+      list: jest.fn(async () => []),
     };
 
     mockClientFields = {
@@ -104,7 +99,7 @@ describe("ItemTypeBuilder", () => {
         sortable: true,
         draft_mode_active: false,
         all_locales_required: true,
-        api_key: "test_model",
+        api_key: "test_model_custom_model",
         modular_block: false,
       });
     });
@@ -132,70 +127,22 @@ describe("ItemTypeBuilder", () => {
       });
 
       expect(blockBuilder.body.modular_block).toBe(true);
-      expect(blockBuilder.body.api_key).toBe("test_block");
-    });
-
-    it("should merge configs correctly", () => {
-      // Test default config
-      expect(builder.config).toEqual({
-        overwriteExistingFields: false,
-        debug: false,
-        blockApiKeySuffix: "",
-        modelApiKeySuffix: "",
-      });
-
-      // Test with global config override
-      (configLoader.loadDatoBuilderConfig as jest.Mock).mockReturnValueOnce({
-        overwriteExistingFields: true,
-        debug: true,
-        blockApiKeySuffix: "block_suffix",
-        modelApiKeySuffix: "model_suffix",
-      });
-
-      const globalConfigBuilder = new TestItemTypeBuilder("model", {
-        name: "Global Config Model",
-        singleton: false,
-        sortable: true,
-        draft_mode_active: false,
-        all_locales_required: true,
-      });
-
-      expect(globalConfigBuilder.config).toEqual({
-        overwriteExistingFields: true,
-        debug: true,
-        blockApiKeySuffix: "block_suffix",
-        modelApiKeySuffix: "model_suffix",
-      });
-
-      // Test with builder-specific config
-      const specificConfigBuilder = new TestItemTypeBuilder(
-        "model",
-        {
-          name: "Specific Config Model",
-          singleton: false,
-          sortable: true,
-          draft_mode_active: false,
-          all_locales_required: true,
-        },
-        {
-          overwriteExistingFields: true,
-          debug: false,
-          blockApiKeySuffix: "specific_block_suffix",
-          modelApiKeySuffix: "specific_model_suffix",
-        },
-      );
-
-      expect(specificConfigBuilder.config).toEqual({
-        overwriteExistingFields: true,
-        debug: false,
-        blockApiKeySuffix: "specific_block_suffix",
-        modelApiKeySuffix: "specific_model_suffix",
-      });
+      expect(blockBuilder.body.api_key).toBe("test_block_custom_block");
     });
   });
 
   describe("setOverrideExistingFields", () => {
     it("should update the config and return this", () => {
+      const builder = new TestItemTypeBuilder(
+        "model",
+        {
+          name: "Test Model",
+        },
+        {
+          overwriteExistingFields: false,
+        },
+      );
+
       expect(builder.config.overwriteExistingFields).toBe(false);
 
       const result = builder.setOverrideExistingFields(true);
@@ -216,9 +163,15 @@ describe("ItemTypeBuilder", () => {
   describe("api key suffix", () => {
     describe("item type block", () => {
       it("does not add a suffix to the api_key", () => {
-        const blockBuilder = new TestItemTypeBuilder("block", {
-          name: "Test",
-        });
+        const blockBuilder = new TestItemTypeBuilder(
+          "block",
+          {
+            name: "Test",
+          },
+          {
+            blockApiKeySuffix: null,
+          },
+        );
 
         expect(blockBuilder.body.api_key).toBe("test");
       });
@@ -240,9 +193,15 @@ describe("ItemTypeBuilder", () => {
 
     describe("item type model", () => {
       it("does not add a suffix to the api_key", () => {
-        const modelBuilder = new TestItemTypeBuilder("model", {
-          name: "Test",
-        });
+        const modelBuilder = new TestItemTypeBuilder(
+          "model",
+          {
+            name: "Test",
+          },
+          {
+            modelApiKeySuffix: null,
+          },
+        );
 
         expect(modelBuilder.body.api_key).toBe("test");
       });
@@ -265,9 +224,15 @@ describe("ItemTypeBuilder", () => {
 
   describe("plural api key", () => {
     it("should return the singular api_key of the item when the item name is plural", () => {
-      const pluralBuilder = new TestItemTypeBuilder("model", {
-        name: "Test Models",
-      });
+      const pluralBuilder = new TestItemTypeBuilder(
+        "model",
+        {
+          name: "Test Models",
+        },
+        {
+          modelApiKeySuffix: null,
+        },
+      );
 
       expect(pluralBuilder.body.api_key).toBe("test_model");
     });
@@ -416,13 +381,21 @@ describe("ItemTypeBuilder", () => {
 
       builder.addField(mockField);
 
+      mockClientItemTypes.list.mockResolvedValueOnce([
+        {
+          id: "item-123",
+          api_key: "test_model_custom_model",
+          name: "Test Model",
+        },
+      ]);
+
       const result = await builder.update();
 
-      expect(mockApiCall).toHaveBeenCalledTimes(3);
-      expect(mockClientItemTypes.update).toHaveBeenCalledWith(
-        "test_model",
-        builder.body,
-      );
+      expect(mockApiCall).toHaveBeenCalledTimes(4);
+      expect(mockClientItemTypes.update).toHaveBeenCalledWith("item-123", {
+        ...builder.body,
+        hint: null,
+      });
       expect(mockClientFields.list).toHaveBeenCalledWith("item-123");
       expect(mockClientFields.create).toHaveBeenCalledWith("item-123", {
         api_key: "test_field",
@@ -439,6 +412,14 @@ describe("ItemTypeBuilder", () => {
           .fn()
           .mockReturnValue({ api_key: "test_field", label: "Test Field" }),
       } as unknown as Field;
+
+      mockClientItemTypes.list.mockResolvedValueOnce([
+        {
+          id: "item-123",
+          api_key: "test_model_custom_model",
+          name: "Test Model",
+        },
+      ]);
 
       builder.addField(mockField);
 

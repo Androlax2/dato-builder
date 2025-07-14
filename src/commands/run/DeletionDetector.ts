@@ -1,5 +1,5 @@
-import type { CacheManager } from "../../cache/CacheManager";
-import type { ConsoleLogger } from "../../logger";
+import type { CacheManager } from "@/cache/CacheManager";
+import type { ConsoleLogger } from "@/logger";
 import type { FileInfo } from "./types";
 
 export interface DeletionCandidate {
@@ -18,8 +18,8 @@ export interface DeletionSummary {
 
 export class DeletionDetector {
   constructor(
-    private cache: CacheManager,
-    private logger: ConsoleLogger,
+    private readonly cache: CacheManager,
+    private readonly logger: ConsoleLogger,
   ) {
     this.logger.trace("Initializing DeletionDetector");
   }
@@ -158,7 +158,9 @@ export class DeletionDetector {
     const name = key.substring(colonIndex + 1);
 
     if (type !== "block" && type !== "model") {
-      this.logger.warn(`Unknown item type in cache key: ${type}`);
+      if (type !== "sync") {
+        this.logger.warn(`Unknown item type in cache key: ${type}`);
+      }
       return [null, null];
     }
 

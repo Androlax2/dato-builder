@@ -1,10 +1,11 @@
 import type { DatoBuilderConfig } from "../../src";
 
-export function createMockConfig(): Required<DatoBuilderConfig> {
-  // We don't inline the variable to have type safety on this mock configuration object.
-  const mock: Required<DatoBuilderConfig> = {
+export function createMockConfig(
+  config?: Partial<DatoBuilderConfig>,
+): Required<DatoBuilderConfig> {
+  const defaultMockedConfig: Required<DatoBuilderConfig> = {
     apiToken: "custom-token",
-    overwriteExistingFields: true,
+    overwriteExistingFields: false,
     modelApiKeySuffix: "custom-model",
     blockApiKeySuffix: "custom-block",
     blocksPath: "/custom/blocks",
@@ -12,5 +13,8 @@ export function createMockConfig(): Required<DatoBuilderConfig> {
     logLevel: 0,
   };
 
-  return mock;
+  return {
+    ...defaultMockedConfig,
+    ...config,
+  };
 }
