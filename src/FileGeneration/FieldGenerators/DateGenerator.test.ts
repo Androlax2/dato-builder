@@ -4,7 +4,7 @@ import type { DateConfig } from "@/Fields/Date";
 import { DateGenerator } from "@/FileGeneration/FieldGenerators/DateGenerator";
 
 describe("DateGenerator", () => {
-  it("can generate a date with basic properties", () => {
+  it("can generate a date with label, position, api_key", () => {
     const mockField: Field = {
       id: "test-id",
       type: "field",
@@ -16,7 +16,7 @@ describe("DateGenerator", () => {
       validators: {},
       position: 1,
       appearance: { addons: [], editor: "date_picker", parameters: {} },
-      default_value: "2025-07-24",
+      default_value: null,
       deep_filtering_enabled: false,
       item_type: { id: "SDGeMOa4Q3CRgEQTXg8jbg", type: "item_type" },
       fieldset: null,

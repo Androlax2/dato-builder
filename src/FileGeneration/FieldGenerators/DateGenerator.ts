@@ -7,12 +7,9 @@ export class DateGenerator extends FieldGenerator<"addDate"> {
   }
 
   generateBuildConfig(): MethodNameToConfig<"addDate"> {
-    const config: MethodNameToConfig<"addDate"> = {
-      label: this.field.label,
-      body: {
-        api_key: this.field.api_key,
-        position: this.field.position,
-      },
+    const body: NonNullable<MethodNameToConfig<"addDate">["body"]> = {
+      api_key: this.field.api_key,
+      position: this.field.position,
     };
 
     // Handle validators
@@ -55,14 +52,17 @@ export class DateGenerator extends FieldGenerator<"addDate"> {
         };
       }
 
-      config.body.validators = validators;
+      body.validators = validators;
     }
 
     // Handle default value
     if (this.field.default_value) {
-      config.body.default_value = this.field.default_value;
+      body.default_value = this.field.default_value;
     }
 
-    return config;
+    return {
+      label: this.field.label,
+      body,
+    };
   }
 }
