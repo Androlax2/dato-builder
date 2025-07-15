@@ -31,8 +31,6 @@ type FieldGeneratorConstructor = new (
   config: FieldGeneratorConfig,
 ) => FieldGenerator<ItemTypeBuilderAddMethods>;
 
-// TODO: Remove the Partial type when all field types are implemented
-
 export class FieldGeneratorFactory {
   /**
    * Main factory method that determines the correct generator based on field type and appearance
@@ -65,8 +63,9 @@ export class FieldGeneratorFactory {
       return this.getStringFieldGenerator(field);
     }
 
-    const generatorMap: Partial<
-      Record<Field["field_type"], FieldGeneratorConstructor>
+    const generatorMap: Record<
+      Exclude<Field["field_type"], "text" | "boolean" | "string">,
+      FieldGeneratorConstructor
     > = {
       color: ColorPickerFieldGenerator,
       date: DateFieldGenerator,
