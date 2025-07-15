@@ -63,9 +63,9 @@ export class FieldGeneratorFactory {
       return this.getStringFieldGenerator(field);
     }
 
-    const generatorMap: Record<
-      Exclude<Field["field_type"], "text" | "boolean" | "string">,
-      FieldGeneratorConstructor
+    // TODO: Remove the Partial type when all field types are implemented (Put a Exclude<Field["field_type"], "xx" | "xx" | "xx">
+    const generatorMap: Partial<
+      Record<Field["field_type"], FieldGeneratorConstructor>
     > = {
       color: ColorPickerFieldGenerator,
       date: DateFieldGenerator,
