@@ -1,4 +1,5 @@
 import type { Field } from "@datocms/cma-client/src/generated/SimpleSchemaTypes";
+import { ColorPickerFieldGenerator } from "@/FileGeneration/FieldGenerators/ColorPickerFieldGenerator";
 import { DateFieldGenerator } from "@/FileGeneration/FieldGenerators/DateFieldGenerator";
 import { DateTimeFieldGenerator } from "@/FileGeneration/FieldGenerators/DateTimeFieldGenerator";
 import type {
@@ -34,6 +35,7 @@ export class FieldGeneratorFactory {
     const generatorMap: Partial<
       Record<Field["field_type"], FieldGeneratorConstructor>
     > = {
+      color: ColorPickerFieldGenerator,
       date: DateFieldGenerator,
       date_time: DateTimeFieldGenerator,
       lat_lon: LocationFieldGenerator,
