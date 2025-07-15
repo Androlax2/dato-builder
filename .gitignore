@@ -7,3 +7,4 @@ coverage/
 src/datocms/
 src/.itemTypeBuilderCache.json
 .dato-builder-cache
+CLAUDE.md

@@ -11,9 +11,13 @@ import { FloatFieldGenerator } from "@/FileGeneration/FieldGenerators/FloatField
 import { GalleryFieldGenerator } from "@/FileGeneration/FieldGenerators/GalleryFieldGenerator";
 import { IntegerFieldGenerator } from "@/FileGeneration/FieldGenerators/IntegerFieldGenerator";
 import { LocationFieldGenerator } from "@/FileGeneration/FieldGenerators/LocationFieldGenerator";
+import { MarkdownFieldGenerator } from "@/FileGeneration/FieldGenerators/MarkdownFieldGenerator";
+import { MultiLineTextFieldGenerator } from "@/FileGeneration/FieldGenerators/MultiLineTextFieldGenerator";
 import { SeoFieldGenerator } from "@/FileGeneration/FieldGenerators/SeoFieldGenerator";
 import { SingleAssetFieldGenerator } from "@/FileGeneration/FieldGenerators/SingleAssetFieldGenerator";
 import { SlugFieldGenerator } from "@/FileGeneration/FieldGenerators/SlugFieldGenerator";
+import { TextareaFieldGenerator } from "@/FileGeneration/FieldGenerators/TextareaFieldGenerator";
+import { WysiwygFieldGenerator } from "@/FileGeneration/FieldGenerators/WysiwygFieldGenerator";
 import type { ItemTypeBuilderAddMethods } from "@/types/ItemTypeBuilderFields";
 
 type FieldGeneratorConstructor = new (
@@ -39,6 +43,11 @@ export class FieldGeneratorFactory {
    * Complex mapping logic to determine the correct generator class
    */
   private getGeneratorClass(field: Field): FieldGeneratorConstructor {
+    // Handle text fields with special logic for appearance.editor
+    if (field.field_type === "text") {
+      return this.getTextFieldGenerator(field);
+    }
+
     const generatorMap: Partial<
       Record<Field["field_type"], FieldGeneratorConstructor>
     > = {
@@ -62,5 +71,23 @@ export class FieldGeneratorFactory {
     }
 
     return generatorClass;
+  }
+
+  /**
+   * Determine which text field generator to use based on appearance.editor
+   */
+  private getTextFieldGenerator(field: Field): FieldGeneratorConstructor {
+    const editor = field.appearance?.editor;
+
+    switch (editor) {
+      case "markdown":
+        return MarkdownFieldGenerator;
+      case "wysiwyg":
+        return WysiwygFieldGenerator;
+      case "textarea":
+        return TextareaFieldGenerator;
+      default:
+        return MultiLineTextFieldGenerator;
+    }
   }
 }
