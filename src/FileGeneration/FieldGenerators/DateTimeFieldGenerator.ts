@@ -53,81 +53,12 @@ export class DateTimeFieldGenerator extends FieldGenerator<"addDateTime"> {
     }
   }
 
-  private processRequiredValidator(
-    validators: NonNullable<
-      NonNullable<MethodNameToConfig<"addDateTime">["body"]>["validators"]
-    >,
-  ): void {
-    if (this.field.validators?.required) {
-      validators.required = true;
-    }
-  }
-
   private processDateTimeRangeValidator(
     validators: NonNullable<
       NonNullable<MethodNameToConfig<"addDateTime">["body"]>["validators"]
     >,
   ): void {
-    const dateTimeRange = this.getDateTimeRangeFromField();
-
-    if (!dateTimeRange) {
-      return;
-    }
-
-    const rangeValidator = this.buildDateTimeRangeValidator(dateTimeRange);
-
-    if (Object.keys(rangeValidator).length > 0) {
-      validators.date_time_range = rangeValidator;
-    }
-  }
-
-  private getDateTimeRangeFromField():
-    | { min?: string; max?: string }
-    | undefined {
-    return this.field.validators?.date_time_range as
-      | { min?: string; max?: string }
-      | undefined;
-  }
-
-  private buildDateTimeRangeValidator(dateTimeRange: {
-    min?: string;
-    max?: string;
-  }): {
-    min?: Date;
-    max?: Date;
-  } {
-    const rangeValidator: { min?: Date; max?: Date } = {};
-
-    if (dateTimeRange.min) {
-      rangeValidator.min = this.createPreservedDateValue(dateTimeRange.min);
-    }
-
-    if (dateTimeRange.max) {
-      rangeValidator.max = this.createPreservedDateValue(dateTimeRange.max);
-    }
-
-    return rangeValidator;
-  }
-
-  /**
-   * Create a Date object while preserving the original string format for code generation.
-   * ISO datetime strings are preserved as-is to maintain timezone information.
-   */
-  private createPreservedDateValue(
-    dateString: string,
-  ): Date & { _originalString?: string } {
-    const date = new Date(dateString) as Date & { _originalString?: string };
-
-    // For datetime fields, always preserve the original string to maintain timezone info
-    date._originalString = dateString;
-
-    return date;
-  }
-
-  private hasBodyContent(
-    body: NonNullable<MethodNameToConfig<"addDateTime">["body"]>,
-  ): boolean {
-    // Always include body if it has any properties (including api_key)
-    return Object.keys(body).length > 0;
+    // Use base class generic range validator - always preserve strings for datetime fields
+    this.processRangeValidator(validators, "date_time_range", true);
   }
 }
