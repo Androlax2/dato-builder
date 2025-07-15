@@ -63,7 +63,7 @@ describe("DateTimeFieldGenerator", () => {
         field: createMockField({
           label: "Date time",
           api_key: "date_time",
-          hint: "dfggdfs",
+          hint: "test hint",
         }),
       });
 
@@ -71,7 +71,7 @@ describe("DateTimeFieldGenerator", () => {
         label: "Date time",
         body: {
           api_key: "date_time",
-          hint: "dfggdfs",
+          hint: "test hint",
         },
       } satisfies DateTimeConfig);
     });
@@ -346,8 +346,8 @@ describe("DateTimeFieldGenerator", () => {
       it("handles edge case datetime formats", () => {
         const dateTimeGenerator = new DateTimeFieldGenerator({
           field: createMockField({
-            label: "Edge Case DateTimes",
-            api_key: "edge-case-datetimes",
+            label: "Edge Case Date Times",
+            api_key: "edge-case-date-times",
             validators: {
               date_time_range: {
                 min: "1970-01-01T00:00:00.000Z",
@@ -412,12 +412,12 @@ describe("DateTimeFieldGenerator", () => {
   describe("Real-world API response test", () => {
     it("can handle the exact API response from DatoCMS", () => {
       const apiResponseField: Field = {
-        id: "OXMgB7PNRK6mTuG6EKjPeA",
+        id: "field-id-123",
         type: "field",
         label: "Date time",
         field_type: "date_time",
         api_key: "date_time",
-        hint: "dfggdfs",
+        hint: "test hint",
         localized: false,
         validators: {
           required: {},
@@ -444,7 +444,7 @@ describe("DateTimeFieldGenerator", () => {
         label: "Date time",
         body: {
           api_key: "date_time",
-          hint: "dfggdfs",
+          hint: "test hint",
           default_value: "2025-07-10T05:00:00+01:00",
           validators: {
             required: true,
