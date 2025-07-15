@@ -3,6 +3,7 @@ import type {
   ItemType,
 } from "@datocms/cma-client/src/generated/SimpleSchemaTypes";
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
+import type { UsedFunctions } from "@/FileGeneration/FileGenerators/BlockReferenceAnalyzer";
 import { BuilderConfigGenerator } from "@/FileGeneration/FileGenerators/BuilderConfigGenerator";
 import { FieldMethodGenerator } from "@/FileGeneration/FileGenerators/FieldMethodGenerator";
 import { FunctionGenerator } from "@/FileGeneration/FileGenerators/FunctionGenerator";
@@ -24,9 +25,19 @@ describe("FunctionGenerator", () => {
   let mockFieldMethodGenerator: jest.Mocked<FieldMethodGenerator>;
   let mockItemType: ItemType;
   let mockFields: Field[];
+  let noAsyncFunctions: UsedFunctions;
+  let bothFunctions: UsedFunctions;
+  let onlyGetModel: UsedFunctions;
+  let onlyGetBlock: UsedFunctions;
 
   beforeEach(() => {
     jest.clearAllMocks();
+
+    // Initialize usedFunctions scenarios
+    noAsyncFunctions = { needsGetModel: false, needsGetBlock: false };
+    bothFunctions = { needsGetModel: true, needsGetBlock: true };
+    onlyGetModel = { needsGetModel: true, needsGetBlock: false };
+    onlyGetBlock = { needsGetModel: false, needsGetBlock: true };
 
     mockBuilderConfigGenerator = {
       generateBuilderConfig: jest.fn(),
@@ -111,6 +122,7 @@ describe("FunctionGenerator", () => {
         "buildTestBlock",
         "BlockBuilder",
         false,
+        noAsyncFunctions,
         mockItemType,
         "block",
         mockFields,
@@ -130,11 +142,12 @@ describe("FunctionGenerator", () => {
       ).toHaveBeenCalledWith(mockFields);
     });
 
-    it("should generate asynchronous function for block with async needs", () => {
+    it("should generate asynchronous function for block with both functions", () => {
       const result = generator.generateFunction(
         "buildTestBlock",
         "BlockBuilder",
         true,
+        bothFunctions,
         mockItemType,
         "block",
         mockFields,
@@ -146,11 +159,50 @@ describe("FunctionGenerator", () => {
       expect(result).toContain("async");
     });
 
+    it("should generate asynchronous function with only getModel", () => {
+      const result = generator.generateFunction(
+        "buildTestBlock",
+        "BlockBuilder",
+        true,
+        onlyGetModel,
+        mockItemType,
+        "block",
+        mockFields,
+      );
+
+      expect(result).toContain(
+        "export default async function buildTestBlock({ config, getModel }: BuilderContext)",
+      );
+      expect(result).toContain("async");
+      expect(result).toContain("getModel");
+      expect(result).not.toContain("getBlock");
+    });
+
+    it("should generate asynchronous function with only getBlock", () => {
+      const result = generator.generateFunction(
+        "buildTestBlock",
+        "BlockBuilder",
+        true,
+        onlyGetBlock,
+        mockItemType,
+        "block",
+        mockFields,
+      );
+
+      expect(result).toContain(
+        "export default async function buildTestBlock({ config, getBlock }: BuilderContext)",
+      );
+      expect(result).toContain("async");
+      expect(result).toContain("getBlock");
+      expect(result).not.toContain("getModel");
+    });
+
     it("should generate function for model type", () => {
       const result = generator.generateFunction(
         "buildTestModel",
         "ModelBuilder",
         false,
+        noAsyncFunctions,
         mockItemType,
         "model",
         mockFields,
@@ -174,6 +226,7 @@ describe("FunctionGenerator", () => {
         "buildTestBlock",
         "BlockBuilder",
         false,
+        noAsyncFunctions,
         mockItemType,
         "block",
         mockFields,
@@ -199,6 +252,7 @@ describe("FunctionGenerator", () => {
         "buildTestModel",
         "ModelBuilder",
         false,
+        noAsyncFunctions,
         mockItemType,
         "model",
         mockFields,
@@ -236,6 +290,7 @@ describe("FunctionGenerator", () => {
         "buildCustomBlock",
         "BlockBuilder",
         false,
+        noAsyncFunctions,
         mockItemType,
         "block",
         mockFields,
@@ -253,6 +308,7 @@ describe("FunctionGenerator", () => {
         "buildEmptyBlock",
         "BlockBuilder",
         false,
+        noAsyncFunctions,
         mockItemType,
         "block",
         [],
@@ -277,6 +333,7 @@ describe("FunctionGenerator", () => {
         "buildComplexBlock",
         "BlockBuilder",
         true,
+        bothFunctions,
         mockItemType,
         "block",
         mockFields,
@@ -296,6 +353,7 @@ describe("FunctionGenerator", () => {
         "buildSpecialBlock",
         "BlockBuilder",
         false,
+        noAsyncFunctions,
         specialItemType,
         "block",
         mockFields,
@@ -324,6 +382,7 @@ describe("FunctionGenerator", () => {
         "buildMultiLineBlock",
         "BlockBuilder",
         false,
+        noAsyncFunctions,
         mockItemType,
         "block",
         mockFields,
@@ -337,6 +396,7 @@ describe("FunctionGenerator", () => {
         "buildSyncBlock",
         "BlockBuilder",
         false,
+        noAsyncFunctions,
         mockItemType,
         "block",
         mockFields,
@@ -352,6 +412,7 @@ describe("FunctionGenerator", () => {
         "buildAsyncBlock",
         "BlockBuilder",
         true,
+        bothFunctions,
         mockItemType,
         "block",
         mockFields,
@@ -367,6 +428,7 @@ describe("FunctionGenerator", () => {
         "buildSyncModel",
         "ModelBuilder",
         false,
+        noAsyncFunctions,
         mockItemType,
         "model",
         mockFields,
@@ -382,6 +444,7 @@ describe("FunctionGenerator", () => {
         "buildAsyncModel",
         "ModelBuilder",
         true,
+        bothFunctions,
         mockItemType,
         "model",
         mockFields,
@@ -406,6 +469,7 @@ describe("FunctionGenerator", () => {
           "buildErrorBlock",
           "BlockBuilder",
           false,
+          noAsyncFunctions,
           mockItemType,
           "block",
           mockFields,
@@ -423,6 +487,7 @@ describe("FunctionGenerator", () => {
           "buildErrorBlock",
           "BlockBuilder",
           false,
+          noAsyncFunctions,
           mockItemType,
           "block",
           mockFields,
@@ -439,6 +504,7 @@ describe("FunctionGenerator", () => {
         longFunctionName,
         "BlockBuilder",
         false,
+        noAsyncFunctions,
         mockItemType,
         "block",
         mockFields,
@@ -457,6 +523,7 @@ describe("FunctionGenerator", () => {
         "buildEmptyNameBlock",
         "BlockBuilder",
         false,
+        noAsyncFunctions,
         emptyNameItemType,
         "block",
         mockFields,
@@ -475,6 +542,7 @@ describe("FunctionGenerator", () => {
         "buildEmptyApiKeyBlock",
         "BlockBuilder",
         false,
+        noAsyncFunctions,
         emptyApiKeyItemType,
         "block",
         mockFields,
@@ -493,6 +561,7 @@ describe("FunctionGenerator", () => {
         "buildLargeBlock",
         "BlockBuilder",
         false,
+        noAsyncFunctions,
         mockItemType,
         "block",
         largeFieldsArray,
@@ -512,6 +581,7 @@ describe("FunctionGenerator", () => {
         "buildTimestampBlock",
         "BlockBuilder",
         false,
+        noAsyncFunctions,
         mockItemType,
         "block",
         mockFields,

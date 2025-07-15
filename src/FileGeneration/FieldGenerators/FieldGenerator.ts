@@ -1,4 +1,7 @@
-import type { Field } from "@datocms/cma-client/src/generated/SimpleSchemaTypes";
+import type {
+  Field,
+  ItemType,
+} from "@datocms/cma-client/src/generated/SimpleSchemaTypes";
 import type {
   ItemTypeBuilderAddMethods,
   MethodNameToConfig,
@@ -6,6 +9,7 @@ import type {
 
 export interface FieldGeneratorConfig {
   field: Field;
+  itemTypeReferences?: Map<string, ItemType>;
 }
 
 /**
@@ -21,9 +25,11 @@ export abstract class FieldGenerator<
   TMethodName extends ItemTypeBuilderAddMethods,
 > {
   protected field: Field;
+  protected itemTypeReferences?: Map<string, ItemType>;
 
   constructor(config: FieldGeneratorConfig) {
     this.field = config.field;
+    this.itemTypeReferences = config.itemTypeReferences;
   }
 
   /**
@@ -62,8 +68,10 @@ export abstract class FieldGenerator<
   /**
    * Add hint to body if present in the field.
    */
+  // biome-ignore lint/suspicious/noExplicitAny: Generic body type requires any for dynamic property assignment
   protected addHintToBody<T extends Record<string, any>>(body: T): void {
     if (this.field.hint) {
+      // biome-ignore lint/suspicious/noExplicitAny: Type casting required for dynamic property assignment
       (body as any).hint = this.field.hint;
     }
   }
@@ -71,6 +79,7 @@ export abstract class FieldGenerator<
   /**
    * Add default value to body if present in the field.
    */
+  // biome-ignore lint/suspicious/noExplicitAny: Generic body type requires any for dynamic property assignment
   protected addDefaultValueToBody<T extends Record<string, any>>(
     body: T,
   ): void {
@@ -78,6 +87,7 @@ export abstract class FieldGenerator<
       this.field.default_value !== null &&
       this.field.default_value !== undefined
     ) {
+      // biome-ignore lint/suspicious/noExplicitAny: Type casting required for dynamic property assignment
       (body as any).default_value = this.field.default_value;
     }
   }
@@ -105,10 +115,12 @@ export abstract class FieldGenerator<
    * Sets validators.required = true if the field has a required validator.
    * Generic to maintain type safety with specific validator types.
    */
+  // biome-ignore lint/suspicious/noExplicitAny: Generic validator type requires any for flexible validator structures
   protected processRequiredValidator<T extends { required?: any }>(
     validators: T,
   ): void {
     if (this.field.validators?.required) {
+      // biome-ignore lint/suspicious/noExplicitAny: Type casting required for dynamic validator assignment
       (validators as any).required = true;
     }
   }
@@ -117,6 +129,7 @@ export abstract class FieldGenerator<
    * Check if body has any content (typically used to decide whether to include body property).
    * Generic to maintain type safety with specific body types.
    */
+  // biome-ignore lint/suspicious/noExplicitAny: Generic body type requires any for flexible body structures
   protected hasBodyContent<T extends Record<string, any>>(body: T): boolean {
     return Object.keys(body).length > 0;
   }
@@ -143,6 +156,7 @@ export abstract class FieldGenerator<
    * Handles both date_range and date_time_range validators.
    * Generic to maintain type safety - requires the range key to exist in validator type.
    */
+  // biome-ignore lint/suspicious/noExplicitAny: Generic validator type requires any for flexible validator structures
   protected processRangeValidator<
     T extends Record<string, any>,
     K extends keyof T,
@@ -188,6 +202,7 @@ export abstract class FieldGenerator<
     }
   }
 
+  // biome-ignore lint/suspicious/noExplicitAny: Serialization method needs to handle any type of configuration object
   private serializeConfig(obj: any): string {
     if (obj === null) return "null";
     if (obj === undefined) return "undefined";
@@ -195,6 +210,7 @@ export abstract class FieldGenerator<
     if (typeof obj === "number" || typeof obj === "boolean") return String(obj);
     if (obj instanceof Date) {
       // Check if this Date has an original string we should preserve
+      // biome-ignore lint/suspicious/noExplicitAny: Date object may have custom _originalString property
       const originalString = (obj as any)._originalString;
       if (originalString) {
         return `new Date(${JSON.stringify(originalString)})`;
@@ -207,6 +223,11 @@ export abstract class FieldGenerator<
     }
 
     if (typeof obj === "object") {
+      // Handle async call markers
+      if (obj.__async_call) {
+        return obj.__async_call;
+      }
+
       const entries = Object.entries(obj)
         .map(([key, value]) => `${key}: ${this.serializeConfig(value)}`)
         .join(", ");
@@ -214,5 +235,44 @@ export abstract class FieldGenerator<
     }
 
     return JSON.stringify(obj);
+  }
+
+  /**
+   * Convert item type IDs to getModel() or getBlock() calls
+   */
+  protected convertItemTypeIdsToGetCalls(
+    itemTypeIds: string[],
+  ): Array<{ __async_call: string }> {
+    if (!this.itemTypeReferences) {
+      // Throw error if no references available
+      throw new Error(
+        `Cannot resolve item type references for field ${this.field.api_key}. Item type references not available.`,
+      );
+    }
+
+    return itemTypeIds.map((id) => {
+      const itemType = this.itemTypeReferences!.get(id);
+      if (!itemType) {
+        // Throw error if item type not found
+        throw new Error(
+          `Item type with ID "${id}" not found in references for field ${this.field.api_key}`,
+        );
+      }
+
+      const functionName = itemType.modular_block ? "getBlock" : "getModel";
+      const apiKey = this.toPascalCase(itemType.name);
+      return { __async_call: `await ${functionName}("${apiKey}")` };
+    });
+  }
+
+  /**
+   * Convert a string to PascalCase
+   */
+  private toPascalCase(str: string): string {
+    return str
+      .replace(/(?:^\w|[A-Z]|\b\w)/g, (word) => {
+        return word.toUpperCase();
+      })
+      .replace(/\s+/g, "");
   }
 }

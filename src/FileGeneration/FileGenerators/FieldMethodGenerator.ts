@@ -1,7 +1,13 @@
-import type { Field } from "@datocms/cma-client/src/generated/SimpleSchemaTypes";
+import type {
+  Field,
+  ItemType,
+} from "@datocms/cma-client/src/generated/SimpleSchemaTypes";
 import type { FieldGeneratorFactory } from "@/FileGeneration/FieldGenerators/FieldGeneratorFactory";
 export class FieldMethodGenerator {
-  constructor(private readonly fieldGeneratorFactory: FieldGeneratorFactory) {}
+  constructor(
+    private readonly fieldGeneratorFactory: FieldGeneratorFactory,
+    private readonly itemTypeReferences?: Map<string, ItemType>,
+  ) {}
 
   public generateFieldMethods(fields: Field[]): string {
     if (!fields) {
@@ -23,7 +29,10 @@ export class FieldMethodGenerator {
   }
 
   private generateSingleMethodCall(field: Field): string {
-    const generator = this.fieldGeneratorFactory.createGenerator({ field });
+    const generator = this.fieldGeneratorFactory.createGenerator({
+      field,
+      itemTypeReferences: this.itemTypeReferences,
+    });
     return generator.generateMethodCall();
   }
 }

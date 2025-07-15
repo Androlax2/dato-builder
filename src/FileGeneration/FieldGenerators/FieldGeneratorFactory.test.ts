@@ -11,6 +11,8 @@ import { FieldGeneratorFactory } from "@/FileGeneration/FieldGenerators/FieldGen
 import { FloatFieldGenerator } from "@/FileGeneration/FieldGenerators/FloatFieldGenerator";
 import { GalleryFieldGenerator } from "@/FileGeneration/FieldGenerators/GalleryFieldGenerator";
 import { IntegerFieldGenerator } from "@/FileGeneration/FieldGenerators/IntegerFieldGenerator";
+import { LinkFieldGenerator } from "@/FileGeneration/FieldGenerators/LinkFieldGenerator";
+import { LinksFieldGenerator } from "@/FileGeneration/FieldGenerators/LinksFieldGenerator";
 import { LocationFieldGenerator } from "@/FileGeneration/FieldGenerators/LocationFieldGenerator";
 import { MarkdownFieldGenerator } from "@/FileGeneration/FieldGenerators/MarkdownFieldGenerator";
 import { MultiLineTextFieldGenerator } from "@/FileGeneration/FieldGenerators/MultiLineTextFieldGenerator";
@@ -171,6 +173,28 @@ describe("FieldGeneratorFactory", () => {
 
       const generator = factory.createGenerator({ field });
       expect(generator).toBeInstanceOf(ExternalVideoFieldGenerator);
+    });
+
+    it("creates LinkFieldGenerator for link fields", () => {
+      const field = createMockField({
+        label: "Link",
+        api_key: "link",
+        field_type: "link",
+      });
+
+      const generator = factory.createGenerator({ field });
+      expect(generator).toBeInstanceOf(LinkFieldGenerator);
+    });
+
+    it("creates LinksFieldGenerator for links fields", () => {
+      const field = createMockField({
+        label: "Links",
+        api_key: "links",
+        field_type: "links",
+      });
+
+      const generator = factory.createGenerator({ field });
+      expect(generator).toBeInstanceOf(LinksFieldGenerator);
     });
   });
 
@@ -482,6 +506,8 @@ describe("FieldGeneratorFactory", () => {
         { fieldType: "gallery", expected: "addAssetGallery" },
         { fieldType: "integer", expected: "addInteger" },
         { fieldType: "lat_lon", expected: "addLocation" },
+        { fieldType: "link", expected: "addLink" },
+        { fieldType: "links", expected: "addLinks" },
         { fieldType: "seo", expected: "addSeo" },
         { fieldType: "slug", expected: "addSlug" },
         { fieldType: "video", expected: "addExternalVideo" },
@@ -585,6 +611,8 @@ describe("FieldGeneratorFactory", () => {
         "gallery",
         "integer",
         "lat_lon",
+        "link",
+        "links",
         "seo",
         "slug",
         "video",

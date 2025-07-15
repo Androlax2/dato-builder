@@ -1,6 +1,45 @@
-import type { Field } from "@datocms/cma-client/src/generated/SimpleSchemaTypes";
+import type {
+  Field,
+  ItemType,
+} from "@datocms/cma-client/src/generated/SimpleSchemaTypes";
 import { beforeEach, describe, expect, it } from "@jest/globals";
 import { BlockReferenceAnalyzer } from "@/FileGeneration/FileGenerators/BlockReferenceAnalyzer";
+
+function createMockItemType(
+  name: string,
+  modular_block: boolean = false,
+): ItemType {
+  return {
+    id: `test-${name.toLowerCase()}-id`,
+    type: "item_type",
+    name,
+    api_key: name.toLowerCase().replace(/\s+/g, "_"),
+    collection_appearance: "table",
+    singleton: false,
+    all_locales_required: true,
+    sortable: false,
+    modular_block,
+    draft_mode_active: false,
+    draft_saving_active: false,
+    tree: false,
+    ordering_direction: null,
+    ordering_meta: null,
+    has_singleton_item: false,
+    hint: null,
+    inverse_relationships_enabled: false,
+    singleton_item: null,
+    fields: [],
+    fieldsets: [],
+    presentation_title_field: null,
+    presentation_image_field: null,
+    title_field: null,
+    image_preview_field: null,
+    excerpt_field: null,
+    ordering_field: null,
+    workflow: null,
+    meta: { has_singleton_item: false },
+  } as ItemType;
+}
 
 describe("BlockReferenceAnalyzer", () => {
   let analyzer: BlockReferenceAnalyzer;
@@ -416,6 +455,246 @@ describe("BlockReferenceAnalyzer", () => {
 
       const result = analyzer.hasBlockReferences(fields);
       expect(result).toBe(true);
+    });
+  });
+
+  describe("link field support", () => {
+    it("should detect link fields with item_item_type validator", () => {
+      const fields: Field[] = [
+        {
+          ...baseField,
+          field_type: "link",
+          validators: {
+            item_item_type: {
+              item_types: ["model-1"],
+            },
+          },
+        },
+      ];
+
+      const result = analyzer.hasBlockReferences(fields);
+      expect(result).toBe(true);
+    });
+
+    it("should detect links fields with items_item_type validator", () => {
+      const fields: Field[] = [
+        {
+          ...baseField,
+          field_type: "links",
+          validators: {
+            items_item_type: {
+              item_types: ["model-1", "model-2"],
+            },
+          },
+        },
+      ];
+
+      const result = analyzer.hasBlockReferences(fields);
+      expect(result).toBe(true);
+    });
+
+    it("should return false for link fields without item validators", () => {
+      const fields: Field[] = [
+        {
+          ...baseField,
+          field_type: "link",
+          validators: {
+            required: {},
+          },
+        },
+      ];
+
+      const result = analyzer.hasBlockReferences(fields);
+      expect(result).toBe(false);
+    });
+
+    it("should return false for links fields without item validators", () => {
+      const fields: Field[] = [
+        {
+          ...baseField,
+          field_type: "links",
+          validators: {
+            size: { min: 1, max: 5 },
+          },
+        },
+      ];
+
+      const result = analyzer.hasBlockReferences(fields);
+      expect(result).toBe(false);
+    });
+
+    it("should extract item_types from item_item_type validator", () => {
+      const field: Field = {
+        ...baseField,
+        field_type: "link",
+        validators: {
+          item_item_type: {
+            item_types: ["model-1", "model-2"],
+          },
+        },
+      };
+
+      const result = (analyzer as any).getReferencedItemIds(field);
+      expect(result).toEqual(["model-1", "model-2"]);
+    });
+
+    it("should extract item_types from items_item_type validator", () => {
+      const field: Field = {
+        ...baseField,
+        field_type: "links",
+        validators: {
+          items_item_type: {
+            item_types: ["block-1", "block-2", "model-1"],
+          },
+        },
+      };
+
+      const result = (analyzer as any).getReferencedItemIds(field);
+      expect(result).toEqual(["block-1", "block-2", "model-1"]);
+    });
+
+    it("should handle mixed field types with link fields", () => {
+      const fields: Field[] = [
+        {
+          ...baseField,
+          field_type: "string",
+          validators: {},
+        },
+        {
+          ...baseField,
+          id: "link-field",
+          field_type: "link",
+          validators: {
+            item_item_type: {
+              item_types: ["model-1"],
+            },
+          },
+        },
+        {
+          ...baseField,
+          id: "links-field",
+          field_type: "links",
+          validators: {
+            items_item_type: {
+              item_types: ["block-1", "block-2"],
+            },
+          },
+        },
+        {
+          ...baseField,
+          id: "rich-text-field",
+          field_type: "rich_text",
+          validators: {
+            rich_text_blocks: {
+              item_types: ["rich-block-1"],
+            },
+          },
+        },
+      ];
+
+      const result = analyzer.hasBlockReferences(fields);
+      expect(result).toBe(true);
+    });
+  });
+
+  describe("getUsedFunctions", () => {
+    it("should return needsGetModel true for model references", () => {
+      const itemTypeReferences = new Map([
+        ["model-1", createMockItemType("Test Model")],
+      ]);
+
+      const fields: Field[] = [
+        {
+          ...baseField,
+          field_type: "link",
+          validators: {
+            item_item_type: {
+              item_types: ["model-1"],
+            },
+          },
+        },
+      ];
+
+      const result = analyzer.getUsedFunctions(fields, itemTypeReferences);
+      expect(result.needsGetModel).toBe(true);
+      expect(result.needsGetBlock).toBe(false);
+    });
+
+    it("should return needsGetBlock true for block references", () => {
+      const itemTypeReferences = new Map([
+        ["block-1", createMockItemType("Test Block", true)],
+      ]);
+
+      const fields: Field[] = [
+        {
+          ...baseField,
+          field_type: "links",
+          validators: {
+            items_item_type: {
+              item_types: ["block-1"],
+            },
+          },
+        },
+      ];
+
+      const result = analyzer.getUsedFunctions(fields, itemTypeReferences);
+      expect(result.needsGetModel).toBe(false);
+      expect(result.needsGetBlock).toBe(true);
+    });
+
+    it("should return both true for mixed references", () => {
+      const itemTypeReferences = new Map([
+        ["model-1", createMockItemType("Test Model")],
+        ["block-1", createMockItemType("Test Block", true)],
+      ]);
+
+      const fields: Field[] = [
+        {
+          ...baseField,
+          field_type: "links",
+          validators: {
+            items_item_type: {
+              item_types: ["model-1", "block-1"],
+            },
+          },
+        },
+      ];
+
+      const result = analyzer.getUsedFunctions(fields, itemTypeReferences);
+      expect(result.needsGetModel).toBe(true);
+      expect(result.needsGetBlock).toBe(true);
+    });
+
+    it("should return both true when no itemTypeReferences provided but has references", () => {
+      const fields: Field[] = [
+        {
+          ...baseField,
+          field_type: "link",
+          validators: {
+            item_item_type: {
+              item_types: ["some-id"],
+            },
+          },
+        },
+      ];
+
+      const result = analyzer.getUsedFunctions(fields);
+      expect(result.needsGetModel).toBe(true);
+      expect(result.needsGetBlock).toBe(true);
+    });
+
+    it("should return both false when no references", () => {
+      const fields: Field[] = [
+        {
+          ...baseField,
+          field_type: "string",
+          validators: {},
+        },
+      ];
+
+      const result = analyzer.getUsedFunctions(fields);
+      expect(result.needsGetModel).toBe(false);
+      expect(result.needsGetBlock).toBe(false);
     });
   });
 });

@@ -9,7 +9,10 @@ import {
   FileGenerator,
   type FileGeneratorConfig,
 } from "@/FileGeneration/FileGenerator";
-import { BlockReferenceAnalyzer } from "@/FileGeneration/FileGenerators/BlockReferenceAnalyzer";
+import {
+  BlockReferenceAnalyzer,
+  type UsedFunctions,
+} from "@/FileGeneration/FileGenerators/BlockReferenceAnalyzer";
 import { BuilderConfigGenerator } from "@/FileGeneration/FileGenerators/BuilderConfigGenerator";
 import { FieldMethodGenerator } from "@/FileGeneration/FileGenerators/FieldMethodGenerator";
 import { FunctionGenerator } from "@/FileGeneration/FileGenerators/FunctionGenerator";
@@ -65,13 +68,20 @@ describe("FileGenerator", () => {
   let mockItemType: ItemType;
   let mockFields: Field[];
   let fileGenerator: FileGenerator;
+  let noAsyncFunctions: UsedFunctions;
+  let bothFunctions: UsedFunctions;
 
   beforeEach(() => {
     jest.clearAllMocks();
 
+    // Initialize usedFunctions scenarios
+    noAsyncFunctions = { needsGetModel: false, needsGetBlock: false };
+    bothFunctions = { needsGetModel: true, needsGetBlock: true };
+
     // Set up default mock return values
     mockBlockReferenceAnalyzer = {
       hasBlockReferences: jest.fn().mockReturnValue(false),
+      getUsedFunctions: jest.fn().mockReturnValue(noAsyncFunctions),
     } as any;
 
     mockItemType = {
@@ -171,6 +181,7 @@ describe("FileGenerator", () => {
       expect(MockedFieldMethodGenerator).toHaveBeenCalledTimes(1);
       expect(MockedFieldMethodGenerator).toHaveBeenCalledWith(
         mockFieldGeneratorFactory,
+        mockConfig.itemTypeReferences,
       );
       expect(MockedImportGenerator).toHaveBeenCalledTimes(1);
       expect(MockedFunctionGenerator).toHaveBeenCalledTimes(1);
@@ -194,6 +205,9 @@ describe("FileGenerator", () => {
   describe("generate", () => {
     beforeEach(() => {
       mockBlockReferenceAnalyzer.hasBlockReferences.mockReturnValue(false);
+      mockBlockReferenceAnalyzer.getUsedFunctions.mockReturnValue(
+        noAsyncFunctions,
+      );
       mockImportGenerator.generateImports.mockReturnValue("import statements");
       mockFunctionGenerator.generateFunction.mockReturnValue(
         "function definition",
@@ -204,9 +218,10 @@ describe("FileGenerator", () => {
     it("should generate block file with correct function name", async () => {
       const result = await fileGenerator.generate();
 
-      expect(
-        mockBlockReferenceAnalyzer.hasBlockReferences,
-      ).toHaveBeenCalledWith(mockFields);
+      expect(mockBlockReferenceAnalyzer.getUsedFunctions).toHaveBeenCalledWith(
+        mockFields,
+        mockConfig.itemTypeReferences,
+      );
       expect(mockImportGenerator.generateImports).toHaveBeenCalledWith(
         "BlockBuilder",
       );
@@ -214,6 +229,7 @@ describe("FileGenerator", () => {
         "buildPascalTestBlockName",
         "BlockBuilder",
         false,
+        noAsyncFunctions,
         mockItemType,
         "block",
         mockFields,
@@ -240,6 +256,7 @@ describe("FileGenerator", () => {
         "buildPascalTestBlockName",
         "ModelBuilder",
         false,
+        noAsyncFunctions,
         mockItemType,
         "model",
         mockFields,
@@ -247,7 +264,9 @@ describe("FileGenerator", () => {
     });
 
     it("should detect when async is needed for block references", async () => {
-      mockBlockReferenceAnalyzer.hasBlockReferences.mockReturnValue(true);
+      mockBlockReferenceAnalyzer.getUsedFunctions.mockReturnValue(
+        bothFunctions,
+      );
 
       await fileGenerator.generate();
 
@@ -255,6 +274,7 @@ describe("FileGenerator", () => {
         "buildPascalTestBlockName",
         "BlockBuilder",
         true,
+        bothFunctions,
         mockItemType,
         "block",
         mockFields,
@@ -292,17 +312,21 @@ describe("FileGenerator", () => {
         mockFieldGeneratorFactory,
       );
 
-      mockBlockReferenceAnalyzer.hasBlockReferences.mockReturnValue(true);
+      mockBlockReferenceAnalyzer.getUsedFunctions.mockReturnValue(
+        bothFunctions,
+      );
 
       await generatorWithBlockRef.generate();
 
-      expect(
-        mockBlockReferenceAnalyzer.hasBlockReferences,
-      ).toHaveBeenCalledWith(fieldsWithBlockRef);
+      expect(mockBlockReferenceAnalyzer.getUsedFunctions).toHaveBeenCalledWith(
+        fieldsWithBlockRef,
+        configWithBlockRef.itemTypeReferences,
+      );
       expect(mockFunctionGenerator.generateFunction).toHaveBeenCalledWith(
         "buildPascalTestBlockName",
         "BlockBuilder",
         true,
+        bothFunctions,
         mockItemType,
         "block",
         fieldsWithBlockRef,
@@ -414,6 +438,7 @@ describe("FileGenerator", () => {
         "buildPascalTestBlockName",
         "BlockBuilder",
         false,
+        noAsyncFunctions,
         mockItemType,
         "block",
         mockFields,
@@ -431,13 +456,15 @@ describe("FileGenerator", () => {
 
       await generatorWithNoFields.generate();
 
-      expect(
-        mockBlockReferenceAnalyzer.hasBlockReferences,
-      ).toHaveBeenCalledWith([]);
+      expect(mockBlockReferenceAnalyzer.getUsedFunctions).toHaveBeenCalledWith(
+        [],
+        configWithNoFields.itemTypeReferences,
+      );
       expect(mockFunctionGenerator.generateFunction).toHaveBeenCalledWith(
         "buildPascalTestBlockName",
         "BlockBuilder",
         false,
+        noAsyncFunctions,
         mockItemType,
         "block",
         [],
@@ -466,6 +493,7 @@ describe("FileGenerator", () => {
         "buildPascalTestBlockWithSpaces&Special-Chars",
         "BlockBuilder",
         false,
+        noAsyncFunctions,
         specialItemType,
         "block",
         mockFields,
@@ -494,6 +522,7 @@ describe("FileGenerator", () => {
         "buildPascalTestBlockName",
         "ModelBuilder",
         false,
+        noAsyncFunctions,
         singletonItemType,
         "model",
         mockFields,

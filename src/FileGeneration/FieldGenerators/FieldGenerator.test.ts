@@ -1,9 +1,48 @@
-import type { Field } from "@datocms/cma-client/src/generated/SimpleSchemaTypes";
+import type {
+  Field,
+  ItemType,
+} from "@datocms/cma-client/src/generated/SimpleSchemaTypes";
 import { beforeEach, describe, expect, it } from "@jest/globals";
 import {
   FieldGenerator,
   type FieldGeneratorConfig,
 } from "@/FileGeneration/FieldGenerators/FieldGenerator";
+
+function createMockItemType(
+  name: string,
+  modular_block: boolean = false,
+): ItemType {
+  return {
+    id: `test-${name.toLowerCase()}-id`,
+    type: "item_type",
+    name,
+    api_key: name.toLowerCase().replace(/\s+/g, "_"),
+    collection_appearance: "table",
+    singleton: false,
+    all_locales_required: true,
+    sortable: false,
+    modular_block,
+    draft_mode_active: false,
+    draft_saving_active: false,
+    tree: false,
+    ordering_direction: null,
+    ordering_meta: null,
+    has_singleton_item: false,
+    hint: null,
+    inverse_relationships_enabled: false,
+    singleton_item: null,
+    fields: [],
+    fieldsets: [],
+    presentation_title_field: null,
+    presentation_image_field: null,
+    title_field: null,
+    image_preview_field: null,
+    excerpt_field: null,
+    ordering_field: null,
+    workflow: null,
+    meta: { has_singleton_item: false },
+  } as ItemType;
+}
 
 // Mock concrete implementation for testing
 class MockDateGenerator extends FieldGenerator<"addDate"> {
@@ -72,6 +111,7 @@ describe("FieldGenerator", () => {
           return "addDate" as const;
         }
 
+        // biome-ignore lint/suspicious/noExplicitAny: Test mock needs to return any type for flexibility
         generateBuildConfig(): any {
           return {
             label: this.field.label,
@@ -98,6 +138,7 @@ describe("FieldGenerator", () => {
           return "addDate" as const;
         }
 
+        // biome-ignore lint/suspicious/noExplicitAny: Test mock needs to return any type for flexibility
         generateBuildConfig(): any {
           const date = new Date("2025-07-14") as Date & {
             _originalString?: string;
@@ -130,6 +171,7 @@ describe("FieldGenerator", () => {
           return "addDate" as const;
         }
 
+        // biome-ignore lint/suspicious/noExplicitAny: Test mock needs to return any type for flexibility
         generateBuildConfig(): any {
           const minDate = new Date("2020-01-01") as Date & {
             _originalString?: string;
@@ -173,6 +215,7 @@ describe("FieldGenerator", () => {
           return "addDate" as const;
         }
 
+        // biome-ignore lint/suspicious/noExplicitAny: Test mock needs to return any type for flexibility
         generateBuildConfig(): any {
           return {
             label: this.field.label,
@@ -202,6 +245,7 @@ describe("FieldGenerator", () => {
           return "addDate" as const;
         }
 
+        // biome-ignore lint/suspicious/noExplicitAny: Test mock needs to return any type for flexibility
         generateBuildConfig(): any {
           const date1 = new Date("2020-01-01") as Date & {
             _originalString?: string;
@@ -242,6 +286,7 @@ describe("FieldGenerator", () => {
           return "addDate" as const;
         }
 
+        // biome-ignore lint/suspicious/noExplicitAny: Test mock needs to return any type for flexibility
         generateBuildConfig(): any {
           return {
             label: 'Special "quotes" and \\backslashes',
@@ -274,6 +319,7 @@ describe("FieldGenerator", () => {
           return "addDate" as const;
         }
 
+        // biome-ignore lint/suspicious/noExplicitAny: Test mock needs to return any type for flexibility
         generateBuildConfig(): any {
           const date = new Date("2025-01-01") as Date & {
             _originalString?: string;
@@ -315,6 +361,7 @@ describe("FieldGenerator", () => {
           return "addDate" as const;
         }
 
+        // biome-ignore lint/suspicious/noExplicitAny: Test mock needs to return any type for flexibility
         generateBuildConfig(): any {
           return {
             label: this.field.label,
@@ -347,6 +394,7 @@ describe("FieldGenerator", () => {
           return "addDate" as const;
         }
 
+        // biome-ignore lint/suspicious/noExplicitAny: Test mock needs to return any type for flexibility
         generateBuildConfig(): any {
           return {
             label: this.field.label,
@@ -369,6 +417,267 @@ describe("FieldGenerator", () => {
       expect(methodCall).toContain("empty_array: []");
       expect(methodCall).toContain("empty_inside: {  }");
       expect(methodCall).toContain("array_inside: []");
+    });
+
+    it("should handle async call markers correctly", () => {
+      class MockGeneratorWithAsyncCalls extends FieldGenerator<"addDate"> {
+        constructor(config: FieldGeneratorConfig) {
+          super(config);
+        }
+
+        getMethodCallName() {
+          return "addDate" as const;
+        }
+
+        // biome-ignore lint/suspicious/noExplicitAny: Test mock needs to return any type for flexibility
+        generateBuildConfig(): any {
+          return {
+            label: this.field.label,
+            body: {
+              single_async: { __async_call: 'await getModel("Terminal")' },
+              array_with_async: [
+                { __async_call: 'await getModel("Terminal")' },
+                { __async_call: 'await getBlock("TestBlock")' },
+              ],
+              nested_async: {
+                validators: {
+                  item_types: [{ __async_call: 'await getModel("FooBar")' }],
+                },
+              },
+            },
+          };
+        }
+      }
+
+      const generator = new MockGeneratorWithAsyncCalls(config);
+      const methodCall = generator.generateMethodCall();
+
+      expect(methodCall).toContain('single_async: await getModel("Terminal")');
+      expect(methodCall).toContain(
+        'await getModel("Terminal"), await getBlock("TestBlock")',
+      );
+      expect(methodCall).toContain('await getModel("FooBar")');
+      expect(methodCall).not.toContain("__async_call");
+    });
+
+    it("should handle mixed async calls and regular values", () => {
+      class MockGeneratorWithMixed extends FieldGenerator<"addDate"> {
+        constructor(config: FieldGeneratorConfig) {
+          super(config);
+        }
+
+        getMethodCallName() {
+          return "addDate" as const;
+        }
+
+        // biome-ignore lint/suspicious/noExplicitAny: Test mock needs to return any type for flexibility
+        generateBuildConfig(): any {
+          return {
+            label: this.field.label,
+            body: {
+              regular_string: "normal value",
+              async_call: { __async_call: 'await getModel("Terminal")' },
+              number_value: 42,
+              mixed_array: [
+                "string",
+                { __async_call: 'await getBlock("TestBlock")' },
+                123,
+                true,
+              ],
+            },
+          };
+        }
+      }
+
+      const generator = new MockGeneratorWithMixed(config);
+      const methodCall = generator.generateMethodCall();
+
+      expect(methodCall).toContain('regular_string: "normal value"');
+      expect(methodCall).toContain('async_call: await getModel("Terminal")');
+      expect(methodCall).toContain("number_value: 42");
+      expect(methodCall).toContain(
+        '"string", await getBlock("TestBlock"), 123, true',
+      );
+    });
+  });
+
+  describe("convertItemTypeIdsToGetCalls", () => {
+    it("should convert item type IDs to getModel calls for models", () => {
+      const itemTypeReferences = new Map([
+        ["terminal-id", createMockItemType("Terminal")],
+        ["airline-id", createMockItemType("Airline")],
+      ]);
+
+      class TestGenerator extends FieldGenerator<"addDate"> {
+        constructor(config: FieldGeneratorConfig) {
+          super(config);
+        }
+
+        getMethodCallName() {
+          return "addDate" as const;
+        }
+
+        // biome-ignore lint/suspicious/noExplicitAny: Test mock needs to return any type for flexibility
+        generateBuildConfig(): any {
+          const calls = this.convertItemTypeIdsToGetCalls([
+            "terminal-id",
+            "airline-id",
+          ]);
+          return {
+            label: this.field.label,
+            body: {
+              item_types: calls,
+            },
+          };
+        }
+      }
+
+      const generator = new TestGenerator({
+        field: mockField,
+        itemTypeReferences,
+      });
+
+      const methodCall = generator.generateMethodCall();
+      expect(methodCall).toContain('await getModel("Terminal")');
+      expect(methodCall).toContain('await getModel("Airline")');
+    });
+
+    it("should convert item type IDs to getBlock calls for blocks", () => {
+      const itemTypeReferences = new Map([
+        ["block-id", createMockItemType("Test Block", true)],
+      ]);
+
+      class TestGenerator extends FieldGenerator<"addDate"> {
+        constructor(config: FieldGeneratorConfig) {
+          super(config);
+        }
+
+        getMethodCallName() {
+          return "addDate" as const;
+        }
+
+        // biome-ignore lint/suspicious/noExplicitAny: Test mock needs to return any type for flexibility
+        generateBuildConfig(): any {
+          const calls = this.convertItemTypeIdsToGetCalls(["block-id"]);
+          return {
+            label: this.field.label,
+            body: {
+              item_types: calls,
+            },
+          };
+        }
+      }
+
+      const generator = new TestGenerator({
+        field: mockField,
+        itemTypeReferences,
+      });
+
+      const methodCall = generator.generateMethodCall();
+      expect(methodCall).toContain('await getBlock("TestBlock")');
+    });
+
+    it("should handle complex names with PascalCase conversion", () => {
+      const itemTypeReferences = new Map([
+        ["foobar-id", createMockItemType("Foo Bar")],
+        ["multi-word-id", createMockItemType("Multi Word Block Name", true)],
+      ]);
+
+      class TestGenerator extends FieldGenerator<"addDate"> {
+        constructor(config: FieldGeneratorConfig) {
+          super(config);
+        }
+
+        getMethodCallName() {
+          return "addDate" as const;
+        }
+
+        // biome-ignore lint/suspicious/noExplicitAny: Test mock needs to return any type for flexibility
+        generateBuildConfig(): any {
+          const calls = this.convertItemTypeIdsToGetCalls([
+            "foobar-id",
+            "multi-word-id",
+          ]);
+          return {
+            label: this.field.label,
+            body: {
+              item_types: calls,
+            },
+          };
+        }
+      }
+
+      const generator = new TestGenerator({
+        field: mockField,
+        itemTypeReferences,
+      });
+
+      const methodCall = generator.generateMethodCall();
+      expect(methodCall).toContain('await getModel("FooBar")');
+      expect(methodCall).toContain('await getBlock("MultiWordBlockName")');
+    });
+
+    it("should throw error when item type reference is missing", () => {
+      class TestGenerator extends FieldGenerator<"addDate"> {
+        constructor(config: FieldGeneratorConfig) {
+          super(config);
+        }
+
+        getMethodCallName() {
+          return "addDate" as const;
+        }
+
+        // biome-ignore lint/suspicious/noExplicitAny: Test mock needs to return any type for flexibility
+        generateBuildConfig(): any {
+          const calls = this.convertItemTypeIdsToGetCalls(["nonexistent-id"]);
+          return {
+            label: this.field.label,
+            body: {
+              item_types: calls,
+            },
+          };
+        }
+      }
+
+      const generator = new TestGenerator({
+        field: mockField,
+        itemTypeReferences: new Map(),
+      });
+
+      expect(() => generator.generateMethodCall()).toThrow(
+        'Item type with ID "nonexistent-id" not found in references for field test-date-api-key',
+      );
+    });
+
+    it("should throw error when itemTypeReferences is not provided", () => {
+      class TestGenerator extends FieldGenerator<"addDate"> {
+        constructor(config: FieldGeneratorConfig) {
+          super(config);
+        }
+
+        getMethodCallName() {
+          return "addDate" as const;
+        }
+
+        // biome-ignore lint/suspicious/noExplicitAny: Test mock needs to return any type for flexibility
+        generateBuildConfig(): any {
+          const calls = this.convertItemTypeIdsToGetCalls(["some-id"]);
+          return {
+            label: this.field.label,
+            body: {
+              item_types: calls,
+            },
+          };
+        }
+      }
+
+      const generator = new TestGenerator({
+        field: mockField,
+      });
+
+      expect(() => generator.generateMethodCall()).toThrow(
+        "Cannot resolve item type references for field test-date-api-key. Item type references not available.",
+      );
     });
   });
 });

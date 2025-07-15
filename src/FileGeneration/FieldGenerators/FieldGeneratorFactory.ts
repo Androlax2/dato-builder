@@ -13,6 +13,8 @@ import type {
 import { FloatFieldGenerator } from "@/FileGeneration/FieldGenerators/FloatFieldGenerator";
 import { GalleryFieldGenerator } from "@/FileGeneration/FieldGenerators/GalleryFieldGenerator";
 import { IntegerFieldGenerator } from "@/FileGeneration/FieldGenerators/IntegerFieldGenerator";
+import { LinkFieldGenerator } from "@/FileGeneration/FieldGenerators/LinkFieldGenerator";
+import { LinksFieldGenerator } from "@/FileGeneration/FieldGenerators/LinksFieldGenerator";
 import { LocationFieldGenerator } from "@/FileGeneration/FieldGenerators/LocationFieldGenerator";
 import { MarkdownFieldGenerator } from "@/FileGeneration/FieldGenerators/MarkdownFieldGenerator";
 import { MultiLineTextFieldGenerator } from "@/FileGeneration/FieldGenerators/MultiLineTextFieldGenerator";
@@ -75,6 +77,8 @@ export class FieldGeneratorFactory {
       gallery: GalleryFieldGenerator,
       integer: IntegerFieldGenerator,
       lat_lon: LocationFieldGenerator,
+      link: LinkFieldGenerator,
+      links: LinksFieldGenerator,
       seo: SeoFieldGenerator,
       slug: SlugFieldGenerator,
       video: ExternalVideoFieldGenerator,

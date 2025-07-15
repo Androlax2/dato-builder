@@ -38,7 +38,10 @@ export class FileGenerator {
   ) {
     this.importGenerator = new ImportGenerator();
     this.builderConfigGenerator = new BuilderConfigGenerator();
-    this.fieldMethodGenerator = new FieldMethodGenerator(fieldGeneratorFactory);
+    this.fieldMethodGenerator = new FieldMethodGenerator(
+      fieldGeneratorFactory,
+      this.config.itemTypeReferences,
+    );
     this.blockReferenceAnalyzer = new BlockReferenceAnalyzer();
     this.functionGenerator = new FunctionGenerator(
       this.builderConfigGenerator,
@@ -58,13 +61,17 @@ export class FileGenerator {
   }
 
   private createGenerationContext() {
+    const usedFunctions = this.blockReferenceAnalyzer.getUsedFunctions(
+      this.config.fields,
+      this.config.itemTypeReferences,
+    );
+
     return {
       builderClass:
         this.config.type === "block" ? "BlockBuilder" : "ModelBuilder",
       functionName: `build${toPascalCase(this.config.itemType.name)}`,
-      needsAsync: this.blockReferenceAnalyzer.hasBlockReferences(
-        this.config.fields,
-      ),
+      needsAsync: usedFunctions.needsGetBlock || usedFunctions.needsGetModel,
+      usedFunctions,
     };
   }
 
@@ -72,12 +79,14 @@ export class FileGenerator {
     builderClass: string;
     functionName: string;
     needsAsync: boolean;
+    usedFunctions: any;
   }): string {
     const imports = this.importGenerator.generateImports(context.builderClass);
     const functionDef = this.functionGenerator.generateFunction(
       context.functionName,
       context.builderClass,
       context.needsAsync,
+      context.usedFunctions,
       this.config.itemType,
       this.config.type,
       this.config.fields,

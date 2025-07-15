@@ -2,17 +2,9 @@ import type {
   Field,
   ItemType,
 } from "@datocms/cma-client/src/generated/SimpleSchemaTypes";
+import type { UsedFunctions } from "@/FileGeneration/FileGenerators/BlockReferenceAnalyzer";
 import type { BuilderConfigGenerator } from "@/FileGeneration/FileGenerators/BuilderConfigGenerator";
 import type { FieldMethodGenerator } from "@/FileGeneration/FileGenerators/FieldMethodGenerator";
-
-interface FunctionGenerationContext {
-  functionName: string;
-  builderClass: string;
-  needsAsync: boolean;
-  itemType: ItemType;
-  type: "block" | "model";
-  fields: Field[];
-}
 
 export class FunctionGenerator {
   constructor(
@@ -24,6 +16,7 @@ export class FunctionGenerator {
     functionName: string,
     builderClass: string,
     needsAsync: boolean,
+    usedFunctions: UsedFunctions,
     itemType: ItemType,
     type: "block" | "model",
     fields: Field[],
@@ -33,6 +26,7 @@ export class FunctionGenerator {
     const functionSignature = this.createFunctionSignature(
       functionName,
       needsAsync,
+      usedFunctions,
     );
     const documentation = this.createDocumentation(itemType, type);
     const builderConfig = this.builderConfigGenerator.generateBuilderConfig(
@@ -67,10 +61,21 @@ ${functionSignature} {
   private createFunctionSignature(
     functionName: string,
     needsAsync: boolean,
+    usedFunctions: UsedFunctions,
   ): string {
     const asyncKeyword = needsAsync ? "async " : "";
-    const params = needsAsync ? "{ config, getBlock, getModel }" : "{ config }";
-    return `export default ${asyncKeyword}function ${functionName}(${params}: BuilderContext)`;
+
+    // Build parameter list based on what's actually used
+    const params = ["config"];
+    if (usedFunctions.needsGetBlock) {
+      params.push("getBlock");
+    }
+    if (usedFunctions.needsGetModel) {
+      params.push("getModel");
+    }
+
+    const paramString = `{ ${params.join(", ")} }`;
+    return `export default ${asyncKeyword}function ${functionName}(${paramString}: BuilderContext)`;
   }
 
   private createDocumentation(itemType: ItemType, type: string): string {
