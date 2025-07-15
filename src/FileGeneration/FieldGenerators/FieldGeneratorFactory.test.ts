@@ -5,6 +5,7 @@ import { BooleanRadioGroupFieldGenerator } from "@/FileGeneration/FieldGenerator
 import { ColorPickerFieldGenerator } from "@/FileGeneration/FieldGenerators/ColorPickerFieldGenerator";
 import { DateFieldGenerator } from "@/FileGeneration/FieldGenerators/DateFieldGenerator";
 import { DateTimeFieldGenerator } from "@/FileGeneration/FieldGenerators/DateTimeFieldGenerator";
+import { EmailFieldGenerator } from "@/FileGeneration/FieldGenerators/EmailFieldGenerator";
 import { ExternalVideoFieldGenerator } from "@/FileGeneration/FieldGenerators/ExternalVideoFieldGenerator";
 import { FieldGeneratorFactory } from "@/FileGeneration/FieldGenerators/FieldGeneratorFactory";
 import { FloatFieldGenerator } from "@/FileGeneration/FieldGenerators/FloatFieldGenerator";
@@ -15,8 +16,12 @@ import { MarkdownFieldGenerator } from "@/FileGeneration/FieldGenerators/Markdow
 import { MultiLineTextFieldGenerator } from "@/FileGeneration/FieldGenerators/MultiLineTextFieldGenerator";
 import { SeoFieldGenerator } from "@/FileGeneration/FieldGenerators/SeoFieldGenerator";
 import { SingleAssetFieldGenerator } from "@/FileGeneration/FieldGenerators/SingleAssetFieldGenerator";
+import { SingleLineStringFieldGenerator } from "@/FileGeneration/FieldGenerators/SingleLineStringFieldGenerator";
 import { SlugFieldGenerator } from "@/FileGeneration/FieldGenerators/SlugFieldGenerator";
+import { StringRadioGroupFieldGenerator } from "@/FileGeneration/FieldGenerators/StringRadioGroupFieldGenerator";
+import { StringSelectFieldGenerator } from "@/FileGeneration/FieldGenerators/StringSelectFieldGenerator";
 import { TextareaFieldGenerator } from "@/FileGeneration/FieldGenerators/TextareaFieldGenerator";
+import { UrlFieldGenerator } from "@/FileGeneration/FieldGenerators/UrlFieldGenerator";
 import { WysiwygFieldGenerator } from "@/FileGeneration/FieldGenerators/WysiwygFieldGenerator";
 
 function createMockField(
@@ -308,6 +313,126 @@ describe("FieldGeneratorFactory", () => {
     });
   });
 
+  describe("String field type mappings", () => {
+    it("creates EmailFieldGenerator for string fields with email format validator", () => {
+      const field = createMockField({
+        label: "Email",
+        api_key: "email",
+        field_type: "string",
+        validators: {
+          format: {
+            predefined_pattern: "email",
+          },
+        } as any,
+      });
+
+      const generator = factory.createGenerator({ field });
+      expect(generator).toBeInstanceOf(EmailFieldGenerator);
+    });
+
+    it("creates UrlFieldGenerator for string fields with url format validator", () => {
+      const field = createMockField({
+        label: "URL",
+        api_key: "url",
+        field_type: "string",
+        validators: {
+          format: {
+            predefined_pattern: "url",
+          },
+        } as any,
+      });
+
+      const generator = factory.createGenerator({ field });
+      expect(generator).toBeInstanceOf(UrlFieldGenerator);
+    });
+
+    it("creates SingleLineStringFieldGenerator for string fields with single_line editor", () => {
+      const field = createMockField({
+        label: "Single Line String",
+        api_key: "single_line_string",
+        field_type: "string",
+        appearance: {
+          addons: [],
+          editor: "single_line",
+          parameters: { heading: false, placeholder: "" },
+        } as any,
+      });
+
+      const generator = factory.createGenerator({ field });
+      expect(generator).toBeInstanceOf(SingleLineStringFieldGenerator);
+    });
+
+    it("creates StringRadioGroupFieldGenerator for string fields with string_radio_group editor", () => {
+      const field = createMockField({
+        label: "String Radio Group",
+        api_key: "string_radio_group",
+        field_type: "string",
+        appearance: {
+          addons: [],
+          editor: "string_radio_group",
+          parameters: {
+            radios: [
+              { label: "Option 1", value: "option1" },
+              { label: "Option 2", value: "option2" },
+            ],
+          },
+        } as any,
+      });
+
+      const generator = factory.createGenerator({ field });
+      expect(generator).toBeInstanceOf(StringRadioGroupFieldGenerator);
+    });
+
+    it("creates StringSelectFieldGenerator for string fields with string_select editor", () => {
+      const field = createMockField({
+        label: "String Select",
+        api_key: "string_select",
+        field_type: "string",
+        appearance: {
+          addons: [],
+          editor: "string_select",
+          parameters: {
+            options: [
+              { label: "Choice 1", value: "choice1" },
+              { label: "Choice 2", value: "choice2" },
+            ],
+          },
+        } as any,
+      });
+
+      const generator = factory.createGenerator({ field });
+      expect(generator).toBeInstanceOf(StringSelectFieldGenerator);
+    });
+
+    it("creates SingleLineStringFieldGenerator for string fields with no editor", () => {
+      const field = createMockField({
+        label: "Plain String",
+        api_key: "plain_string",
+        field_type: "string",
+        appearance: undefined as any,
+      });
+
+      const generator = factory.createGenerator({ field });
+      expect(generator).toBeInstanceOf(SingleLineStringFieldGenerator);
+    });
+
+    it("creates SingleLineStringFieldGenerator for string fields with unknown editor", () => {
+      const field = createMockField({
+        label: "Unknown Editor String",
+        api_key: "unknown_editor_string",
+        field_type: "string",
+        appearance: {
+          addons: [],
+          editor: "unknown_editor" as any,
+          parameters: {},
+        } as any,
+      });
+
+      const generator = factory.createGenerator({ field });
+      expect(generator).toBeInstanceOf(SingleLineStringFieldGenerator);
+    });
+  });
+
   describe("Error handling", () => {
     it("throws error for unsupported field type", () => {
       const field = createMockField({
@@ -418,6 +543,38 @@ describe("FieldGeneratorFactory", () => {
       });
     });
 
+    it("all string generators have correct method names", () => {
+      const testCases = [
+        {
+          validators: { format: { predefined_pattern: "email" } },
+          expected: "addEmail",
+        },
+        {
+          validators: { format: { predefined_pattern: "url" } },
+          expected: "addUrl",
+        },
+        { editor: "single_line", expected: "addSingleLineString" },
+        { editor: "string_radio_group", expected: "addStringRadioGroup" },
+        { editor: "string_select", expected: "addStringSelect" },
+        { editor: undefined, expected: "addSingleLineString" },
+      ];
+
+      testCases.forEach(({ validators, editor, expected }) => {
+        const field = createMockField({
+          label: "Test",
+          api_key: "test",
+          field_type: "string",
+          ...(validators && { validators: validators as any }),
+          appearance: editor
+            ? ({ addons: [], editor, parameters: {} } as any)
+            : (undefined as any),
+        });
+
+        const generator = factory.createGenerator({ field });
+        expect(generator.getMethodCallName()).toBe(expected);
+      });
+    });
+
     it("all generators can generate method calls", () => {
       const fieldTypes = [
         "color",
@@ -473,6 +630,33 @@ describe("FieldGeneratorFactory", () => {
           label: "Test",
           api_key: "test",
           field_type: "text",
+          appearance: editor
+            ? ({ addons: [], editor, parameters: {} } as any)
+            : (undefined as any),
+        });
+
+        const generator = factory.createGenerator({ field });
+        const methodCall = generator.generateMethodCall();
+        expect(methodCall).toContain(`.${generator.getMethodCallName()}(`);
+      });
+    });
+
+    it("all string generators can generate method calls", () => {
+      const testCases = [
+        { validators: { format: { predefined_pattern: "email" } } },
+        { validators: { format: { predefined_pattern: "url" } } },
+        { editor: "single_line" },
+        { editor: "string_radio_group" },
+        { editor: "string_select" },
+        { editor: undefined },
+      ];
+
+      testCases.forEach(({ validators, editor }) => {
+        const field = createMockField({
+          label: "Test",
+          api_key: "test",
+          field_type: "string",
+          ...(validators && { validators: validators as any }),
           appearance: editor
             ? ({ addons: [], editor, parameters: {} } as any)
             : (undefined as any),

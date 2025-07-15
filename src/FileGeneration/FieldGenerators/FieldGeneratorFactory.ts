@@ -4,6 +4,7 @@ import { BooleanRadioGroupFieldGenerator } from "@/FileGeneration/FieldGenerator
 import { ColorPickerFieldGenerator } from "@/FileGeneration/FieldGenerators/ColorPickerFieldGenerator";
 import { DateFieldGenerator } from "@/FileGeneration/FieldGenerators/DateFieldGenerator";
 import { DateTimeFieldGenerator } from "@/FileGeneration/FieldGenerators/DateTimeFieldGenerator";
+import { EmailFieldGenerator } from "@/FileGeneration/FieldGenerators/EmailFieldGenerator";
 import { ExternalVideoFieldGenerator } from "@/FileGeneration/FieldGenerators/ExternalVideoFieldGenerator";
 import type {
   FieldGenerator,
@@ -17,8 +18,12 @@ import { MarkdownFieldGenerator } from "@/FileGeneration/FieldGenerators/Markdow
 import { MultiLineTextFieldGenerator } from "@/FileGeneration/FieldGenerators/MultiLineTextFieldGenerator";
 import { SeoFieldGenerator } from "@/FileGeneration/FieldGenerators/SeoFieldGenerator";
 import { SingleAssetFieldGenerator } from "@/FileGeneration/FieldGenerators/SingleAssetFieldGenerator";
+import { SingleLineStringFieldGenerator } from "@/FileGeneration/FieldGenerators/SingleLineStringFieldGenerator";
 import { SlugFieldGenerator } from "@/FileGeneration/FieldGenerators/SlugFieldGenerator";
+import { StringRadioGroupFieldGenerator } from "@/FileGeneration/FieldGenerators/StringRadioGroupFieldGenerator";
+import { StringSelectFieldGenerator } from "@/FileGeneration/FieldGenerators/StringSelectFieldGenerator";
 import { TextareaFieldGenerator } from "@/FileGeneration/FieldGenerators/TextareaFieldGenerator";
+import { UrlFieldGenerator } from "@/FileGeneration/FieldGenerators/UrlFieldGenerator";
 import { WysiwygFieldGenerator } from "@/FileGeneration/FieldGenerators/WysiwygFieldGenerator";
 import type { ItemTypeBuilderAddMethods } from "@/types/ItemTypeBuilderFields";
 
@@ -53,6 +58,11 @@ export class FieldGeneratorFactory {
     // Handle boolean fields with special logic for appearance.editor
     if (field.field_type === "boolean") {
       return this.getBooleanFieldGenerator(field);
+    }
+
+    // Handle string fields with special logic for appearance.editor and validators
+    if (field.field_type === "string") {
+      return this.getStringFieldGenerator(field);
     }
 
     const generatorMap: Partial<
@@ -109,6 +119,37 @@ export class FieldGeneratorFactory {
         return BooleanRadioGroupFieldGenerator;
       default:
         return BooleanFieldGenerator;
+    }
+  }
+
+  /**
+   * Determine which string field generator to use based on appearance.editor and validators
+   */
+  private getStringFieldGenerator(field: Field): FieldGeneratorConstructor {
+    const editor = field.appearance?.editor;
+    const validators = field.validators as any;
+
+    // Check for email format validator
+    if (validators?.format?.predefined_pattern === "email") {
+      return EmailFieldGenerator;
+    }
+
+    // Check for URL format validator
+    if (validators?.format?.predefined_pattern === "url") {
+      return UrlFieldGenerator;
+    }
+
+    // Check appearance.editor for other string field types
+    switch (editor) {
+      case "single_line":
+        return SingleLineStringFieldGenerator;
+      case "string_radio_group":
+        return StringRadioGroupFieldGenerator;
+      case "string_select":
+        return StringSelectFieldGenerator;
+      default:
+        // Default to SingleLineString for plain string fields
+        return SingleLineStringFieldGenerator;
     }
   }
 }
