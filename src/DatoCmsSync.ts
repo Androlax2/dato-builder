@@ -237,8 +237,11 @@ export class DatoCmsSync {
           continue;
         }
 
-        // TODO: Remove, this is a temporary check for a specific API key
-        if (itemType.id !== "L8wgPpIdTSec3IjocdW5Dg") {
+        // TODO: Remove, this is a temporary check for specific API keys
+        if (
+          itemType.id !== "L8wgPpIdTSec3IjocdW5Dg" &&
+          itemType.id !== "Fw5taMrIRT-x5WLMlpsVvw"
+        ) {
           continue;
         }
 

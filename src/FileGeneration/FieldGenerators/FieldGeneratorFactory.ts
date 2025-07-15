@@ -6,6 +6,7 @@ import type {
   FieldGenerator,
   FieldGeneratorConfig,
 } from "@/FileGeneration/FieldGenerators/FieldGenerator";
+import { GalleryFieldGenerator } from "@/FileGeneration/FieldGenerators/GalleryFieldGenerator";
 import { LocationFieldGenerator } from "@/FileGeneration/FieldGenerators/LocationFieldGenerator";
 import { SeoFieldGenerator } from "@/FileGeneration/FieldGenerators/SeoFieldGenerator";
 import type { ItemTypeBuilderAddMethods } from "@/types/ItemTypeBuilderFields";
@@ -39,6 +40,7 @@ export class FieldGeneratorFactory {
       color: ColorPickerFieldGenerator,
       date: DateFieldGenerator,
       date_time: DateTimeFieldGenerator,
+      gallery: GalleryFieldGenerator,
       lat_lon: LocationFieldGenerator,
       seo: SeoFieldGenerator,
     };
