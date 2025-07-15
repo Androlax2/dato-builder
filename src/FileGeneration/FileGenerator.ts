@@ -20,11 +20,15 @@ export interface FileGeneratorConfig {
   formatting?: Options;
 }
 
+/**
+ * FileGenerator simplified without unnecessary interfaces
+ * Maintains dependency injection but removes interface overhead
+ */
 export class FileGenerator {
-  private readonly importGenerator = new ImportGenerator();
-  private readonly builderConfigGenerator = new BuilderConfigGenerator();
+  private readonly importGenerator: ImportGenerator;
+  private readonly builderConfigGenerator: BuilderConfigGenerator;
   private readonly fieldMethodGenerator: FieldMethodGenerator;
-  private readonly blockReferenceAnalyzer = new BlockReferenceAnalyzer();
+  private readonly blockReferenceAnalyzer: BlockReferenceAnalyzer;
   private readonly functionGenerator: FunctionGenerator;
   private readonly codeFormatter: CodeFormatter;
 
@@ -32,40 +36,48 @@ export class FileGenerator {
     private readonly config: FileGeneratorConfig,
     fieldGeneratorFactory: FieldGeneratorFactory,
   ) {
+    this.importGenerator = new ImportGenerator();
+    this.builderConfigGenerator = new BuilderConfigGenerator();
     this.fieldMethodGenerator = new FieldMethodGenerator(fieldGeneratorFactory);
+    this.blockReferenceAnalyzer = new BlockReferenceAnalyzer();
     this.functionGenerator = new FunctionGenerator(
       this.builderConfigGenerator,
       this.fieldMethodGenerator,
     );
-    this.codeFormatter = new CodeFormatter(config.formatting);
+    this.codeFormatter = new CodeFormatter(this.config.formatting);
   }
 
   /**
    * Generate a TypeScript file for a block or model
+   * Simplified to follow KISS principle
    */
   public async generate(): Promise<string> {
-    const builderClass =
-      this.config.type === "block" ? "BlockBuilder" : "ModelBuilder";
-    const functionName = `build${toPascalCase(this.config.itemType.name)}`;
-    const needsAsync = this.blockReferenceAnalyzer.hasBlockReferences(
-      this.config.fields,
-    );
-
-    return await this.codeFormatter.format(
-      this.buildFileContent(functionName, builderClass, needsAsync),
-    );
+    const context = this.createGenerationContext();
+    const content = this.buildFileContent(context);
+    return this.codeFormatter.format(content);
   }
 
-  private buildFileContent(
-    functionName: string,
-    builderClass: string,
-    needsAsync: boolean,
-  ): string {
-    const imports = this.importGenerator.generateImports(builderClass);
+  private createGenerationContext() {
+    return {
+      builderClass:
+        this.config.type === "block" ? "BlockBuilder" : "ModelBuilder",
+      functionName: `build${toPascalCase(this.config.itemType.name)}`,
+      needsAsync: this.blockReferenceAnalyzer.hasBlockReferences(
+        this.config.fields,
+      ),
+    };
+  }
+
+  private buildFileContent(context: {
+    builderClass: string;
+    functionName: string;
+    needsAsync: boolean;
+  }): string {
+    const imports = this.importGenerator.generateImports(context.builderClass);
     const functionDef = this.functionGenerator.generateFunction(
-      functionName,
-      builderClass,
-      needsAsync,
+      context.functionName,
+      context.builderClass,
+      context.needsAsync,
       this.config.itemType,
       this.config.type,
       this.config.fields,

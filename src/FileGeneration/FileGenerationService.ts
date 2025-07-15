@@ -5,14 +5,23 @@ import type {
 import { FieldGeneratorFactory } from "@/FileGeneration/FieldGenerators/FieldGeneratorFactory";
 import { FileGenerator } from "@/FileGeneration/FileGenerator";
 
-type FileGenerationItem = {
+export type FileGenerationRequest = {
   itemType: ItemType;
   fields: Field[];
   type: "block" | "model";
 };
 
+/**
+ * Service responsible for orchestrating file generation
+ * Simplified to remove unnecessary abstractions
+ */
 export class FileGenerationService {
   private readonly itemTypeReferences: Map<string, ItemType> = new Map();
+  private readonly fieldGeneratorFactory: FieldGeneratorFactory;
+
+  constructor() {
+    this.fieldGeneratorFactory = new FieldGeneratorFactory();
+  }
 
   /**
    * Set references to all item types for resolving dependencies
@@ -27,19 +36,17 @@ export class FileGenerationService {
   /**
    * Generate a TypeScript file for a block or model
    */
-  public async generateFile({
-    itemType,
-    fields,
-    type,
-  }: FileGenerationItem): Promise<string> {
-    return new FileGenerator(
+  public async generateFile(request: FileGenerationRequest): Promise<string> {
+    const fileGenerator = new FileGenerator(
       {
-        itemType,
-        fields,
-        type,
+        itemType: request.itemType,
+        fields: request.fields,
+        type: request.type,
         itemTypeReferences: this.itemTypeReferences,
       },
-      new FieldGeneratorFactory(),
-    ).generate();
+      this.fieldGeneratorFactory,
+    );
+
+    return fileGenerator.generate();
   }
 }

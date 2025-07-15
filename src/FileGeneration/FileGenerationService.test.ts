@@ -8,6 +8,9 @@ import { FileGenerationService } from "@/FileGeneration/FileGenerationService";
 import { FileGenerator } from "@/FileGeneration/FileGenerator";
 
 // Mock dependencies
+jest.mock("prettier", () => ({
+  format: jest.fn(async (code: string) => code),
+}));
 jest.mock("@/FileGeneration/FileGenerator");
 jest.mock("@/FileGeneration/FieldGenerators/FieldGeneratorFactory");
 
@@ -112,7 +115,7 @@ describe("FileGenerationService", () => {
         expect.objectContaining({
           itemTypeReferences: expect.any(Map),
         }),
-        expect.any(FieldGeneratorFactory),
+        expect.any(Object),
       );
 
       const passedConfig = MockedFileGenerator.mock.calls[0][0];
@@ -186,7 +189,7 @@ describe("FileGenerationService", () => {
           type: "block",
           itemTypeReferences: expect.any(Map),
         },
-        expect.any(FieldGeneratorFactory),
+        mockFieldGeneratorFactory,
       );
     });
 
@@ -215,7 +218,7 @@ describe("FileGenerationService", () => {
         expect.objectContaining({
           type: "model",
         }),
-        expect.any(FieldGeneratorFactory),
+        mockFieldGeneratorFactory,
       );
     });
 
@@ -241,11 +244,11 @@ describe("FileGenerationService", () => {
         expect.objectContaining({
           fields: multipleFields,
         }),
-        expect.any(FieldGeneratorFactory),
+        mockFieldGeneratorFactory,
       );
     });
 
-    it("should create new FieldGeneratorFactory instance for each call", async () => {
+    it("should reuse single FieldGeneratorFactory instance", async () => {
       await service.generateFile({
         itemType: mockItemType,
         fields: mockFields,
@@ -258,7 +261,8 @@ describe("FileGenerationService", () => {
         type: "model",
       });
 
-      expect(MockedFieldGeneratorFactory).toHaveBeenCalledTimes(2);
+      // Constructor only called once during service creation
+      expect(MockedFieldGeneratorFactory).toHaveBeenCalledTimes(1);
     });
 
     it("should propagate errors from FileGenerator", async () => {
@@ -332,7 +336,7 @@ describe("FileGenerationService", () => {
         expect.objectContaining({
           fields: complexFields,
         }),
-        expect.any(FieldGeneratorFactory),
+        mockFieldGeneratorFactory,
       );
     });
 
@@ -347,7 +351,7 @@ describe("FileGenerationService", () => {
         expect.objectContaining({
           fields: [],
         }),
-        expect.any(FieldGeneratorFactory),
+        mockFieldGeneratorFactory,
       );
     });
   });

@@ -1,6 +1,5 @@
 import { ESLint } from "eslint";
 import { format, type Options as PrettierOptions } from "prettier";
-
 export class CodeFormatter {
   private readonly prettierConfig: PrettierOptions = {
     parser: "typescript",

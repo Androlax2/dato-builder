@@ -194,10 +194,14 @@ describe("ImportGenerator", () => {
       expect(results.every((result) => result === results[0])).toBe(true);
     });
 
-    it("should handle null-like inputs gracefully", () => {
-      // These tests show current behavior - in practice these inputs wouldn't occur
-      expect(() => generator.generateImports(null as any)).not.toThrow();
-      expect(() => generator.generateImports(undefined as any)).not.toThrow();
+    it("should throw for null-like inputs", () => {
+      // These tests show current behavior - null/undefined inputs should throw
+      expect(() => generator.generateImports(null as any)).toThrow(
+        "Invalid input: builderClass cannot be null or undefined",
+      );
+      expect(() => generator.generateImports(undefined as any)).toThrow(
+        "Invalid input: builderClass cannot be null or undefined",
+      );
     });
 
     it("should handle numeric inputs", () => {

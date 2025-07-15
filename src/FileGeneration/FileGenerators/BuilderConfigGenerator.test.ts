@@ -157,7 +157,7 @@ describe("BuilderConfigGenerator", () => {
         "model",
       );
 
-      expect(result).toContain("name: 'Test's Model Name'");
+      expect(result).toContain("name: 'Test\\'s Model Name'");
     });
 
     it("should escape single quotes in api_key", () => {
@@ -171,7 +171,7 @@ describe("BuilderConfigGenerator", () => {
         "model",
       );
 
-      expect(result).toContain("api_key: 'test's_api_key'");
+      expect(result).toContain("api_key: 'test\\'s_api_key'");
     });
   });
 
@@ -242,7 +242,7 @@ describe("BuilderConfigGenerator", () => {
         "block",
       );
 
-      expect(result).toContain("name: 'Test's Block Name'");
+      expect(result).toContain("name: 'Test\\'s Block Name'");
     });
 
     it("should escape single quotes in api_key", () => {
@@ -256,7 +256,7 @@ describe("BuilderConfigGenerator", () => {
         "block",
       );
 
-      expect(result).toContain("api_key: 'test's_api_key'");
+      expect(result).toContain("api_key: 'test\\'s_api_key'");
     });
 
     it("should escape single quotes in hint", () => {
@@ -270,7 +270,7 @@ describe("BuilderConfigGenerator", () => {
         "block",
       );
 
-      expect(result).toContain("hint: 'This is a test's hint'");
+      expect(result).toContain("hint: 'This is a test\\'s hint'");
     });
 
     it("should handle multiline hints", () => {

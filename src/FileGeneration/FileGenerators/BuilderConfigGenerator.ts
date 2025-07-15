@@ -1,28 +1,46 @@
 import type { ItemType } from "@datocms/cma-client/src/generated/SimpleSchemaTypes";
-
 export class BuilderConfigGenerator {
   generateBuilderConfig(itemType: ItemType, type: "block" | "model"): string {
-    if (type === "model") {
-      return `{
-      name: '${itemType.name}',
-      config,
+    const baseConfig = this.generateBaseConfig(itemType);
+    const typeSpecificConfig =
+      type === "model"
+        ? this.generateModelConfig(itemType)
+        : this.generateBlockConfig(itemType);
+
+    return `{${baseConfig}${typeSpecificConfig}
+    }`;
+  }
+
+  private generateBaseConfig(itemType: ItemType): string {
+    return `
+      name: '${this.escapeString(itemType.name)}',
+      config,`;
+  }
+
+  private generateModelConfig(itemType: ItemType): string {
+    return `
       body: {
-        api_key: '${itemType.api_key}',
-        singleton: ${itemType.singleton || false},
-        sortable: ${itemType.sortable || false},
-        draft_mode_active: ${itemType.draft_mode_active || false},
-        all_locales_required: ${itemType.all_locales_required || false},
-      },
-    }`;
-    } else {
-      return `{
-      name: '${itemType.name}',
-      config,
+        api_key: '${this.escapeString(itemType.api_key)}',
+        singleton: ${this.normalizeBooleanValue(itemType.singleton)},
+        sortable: ${this.normalizeBooleanValue(itemType.sortable)},
+        draft_mode_active: ${this.normalizeBooleanValue(itemType.draft_mode_active)},
+        all_locales_required: ${this.normalizeBooleanValue(itemType.all_locales_required)},
+      },`;
+  }
+
+  private generateBlockConfig(itemType: ItemType): string {
+    return `
       options: {
-        api_key: '${itemType.api_key}',
-        hint: '${itemType.hint || ""}',
-      },
-    }`;
-    }
+        api_key: '${this.escapeString(itemType.api_key)}',
+        hint: '${this.escapeString(itemType.hint || "")}',
+      },`;
+  }
+
+  private normalizeBooleanValue(value: boolean | undefined | null): boolean {
+    return Boolean(value);
+  }
+
+  private escapeString(value: string): string {
+    return value.replace(/'/g, "\\'").replace(/"/g, '\\"');
   }
 }

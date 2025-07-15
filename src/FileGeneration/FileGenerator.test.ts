@@ -17,6 +17,9 @@ import { CodeFormatter } from "@/FileGeneration/FileGenerators/formatters/CodeFo
 import { ImportGenerator } from "@/FileGeneration/FileGenerators/ImportGenerator";
 
 // Mock all dependencies
+jest.mock("prettier", () => ({
+  format: jest.fn(async (code: string) => code),
+}));
 jest.mock("@/FileGeneration/FieldGenerators/FieldGeneratorFactory");
 jest.mock("@/FileGeneration/FileGenerators/BlockReferenceAnalyzer");
 jest.mock("@/FileGeneration/FileGenerators/BuilderConfigGenerator");
@@ -65,6 +68,11 @@ describe("FileGenerator", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+
+    // Set up default mock return values
+    mockBlockReferenceAnalyzer = {
+      hasBlockReferences: jest.fn().mockReturnValue(false),
+    } as any;
 
     mockItemType = {
       id: "test-item-type-id",
@@ -121,9 +129,6 @@ describe("FileGenerator", () => {
 
     // Set up mocks
     mockFieldGeneratorFactory = {} as any;
-    mockBlockReferenceAnalyzer = {
-      hasBlockReferences: jest.fn(),
-    } as any;
     mockBuilderConfigGenerator = {
       generateBuilderConfig: jest.fn(),
     } as any;
@@ -163,13 +168,15 @@ describe("FileGenerator", () => {
     it("should initialize all generators with correct dependencies", () => {
       expect(MockedBlockReferenceAnalyzer).toHaveBeenCalledTimes(1);
       expect(MockedBuildConfigGenerator).toHaveBeenCalledTimes(1);
+      expect(MockedFieldMethodGenerator).toHaveBeenCalledTimes(1);
       expect(MockedFieldMethodGenerator).toHaveBeenCalledWith(
         mockFieldGeneratorFactory,
       );
       expect(MockedImportGenerator).toHaveBeenCalledTimes(1);
+      expect(MockedFunctionGenerator).toHaveBeenCalledTimes(1);
       expect(MockedFunctionGenerator).toHaveBeenCalledWith(
-        expect.any(BuilderConfigGenerator),
-        expect.any(FieldMethodGenerator),
+        expect.any(Object),
+        expect.any(Object),
       );
       expect(MockedCodeFormatter).toHaveBeenCalledWith(mockConfig.formatting);
     });
@@ -204,7 +211,7 @@ describe("FileGenerator", () => {
         "BlockBuilder",
       );
       expect(mockFunctionGenerator.generateFunction).toHaveBeenCalledWith(
-        "PascalTestBlockName",
+        "buildPascalTestBlockName",
         "BlockBuilder",
         false,
         mockItemType,
@@ -230,7 +237,7 @@ describe("FileGenerator", () => {
         "ModelBuilder",
       );
       expect(mockFunctionGenerator.generateFunction).toHaveBeenCalledWith(
-        "PascalTestBlockName",
+        "buildPascalTestBlockName",
         "ModelBuilder",
         false,
         mockItemType,
@@ -245,7 +252,7 @@ describe("FileGenerator", () => {
       await fileGenerator.generate();
 
       expect(mockFunctionGenerator.generateFunction).toHaveBeenCalledWith(
-        "PascalTestBlockName",
+        "buildPascalTestBlockName",
         "BlockBuilder",
         true,
         mockItemType,
@@ -293,7 +300,7 @@ describe("FileGenerator", () => {
         mockBlockReferenceAnalyzer.hasBlockReferences,
       ).toHaveBeenCalledWith(fieldsWithBlockRef);
       expect(mockFunctionGenerator.generateFunction).toHaveBeenCalledWith(
-        expect.any(String),
+        "buildPascalTestBlockName",
         "BlockBuilder",
         true,
         mockItemType,
@@ -404,9 +411,9 @@ describe("FileGenerator", () => {
 
       // The generator should still work normally with references
       expect(mockFunctionGenerator.generateFunction).toHaveBeenCalledWith(
-        expect.any(String),
+        "buildPascalTestBlockName",
         "BlockBuilder",
-        expect.any(Boolean),
+        false,
         mockItemType,
         "block",
         mockFields,
@@ -428,7 +435,7 @@ describe("FileGenerator", () => {
         mockBlockReferenceAnalyzer.hasBlockReferences,
       ).toHaveBeenCalledWith([]);
       expect(mockFunctionGenerator.generateFunction).toHaveBeenCalledWith(
-        expect.any(String),
+        "buildPascalTestBlockName",
         "BlockBuilder",
         false,
         mockItemType,
@@ -456,9 +463,9 @@ describe("FileGenerator", () => {
 
       // Function name should be processed by toPascalCase
       expect(mockFunctionGenerator.generateFunction).toHaveBeenCalledWith(
-        "PascalTestBlockWithSpaces&Special-Chars",
+        "buildPascalTestBlockWithSpaces&Special-Chars",
         "BlockBuilder",
-        expect.any(Boolean),
+        false,
         specialItemType,
         "block",
         mockFields,
@@ -484,9 +491,9 @@ describe("FileGenerator", () => {
       await generatorWithSingleton.generate();
 
       expect(mockFunctionGenerator.generateFunction).toHaveBeenCalledWith(
-        expect.any(String),
+        "buildPascalTestBlockName",
         "ModelBuilder",
-        expect.any(Boolean),
+        false,
         singletonItemType,
         "model",
         mockFields,

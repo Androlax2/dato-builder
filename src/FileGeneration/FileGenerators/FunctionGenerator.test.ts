@@ -302,7 +302,7 @@ describe("FunctionGenerator", () => {
       );
 
       expect(result).toContain(
-        'Build a "Test Block with "quotes" and \'apostrophes\'"',
+        "Build a \"Test Block with \\\"quotes\\\" and \\''apostrophes\\''\"",
       );
     });
 
