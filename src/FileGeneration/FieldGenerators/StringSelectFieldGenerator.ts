@@ -7,20 +7,33 @@ export class StringSelectFieldGenerator extends FieldGenerator<"addStringSelect"
   }
 
   generateBuildConfig(): MethodNameToConfig<"addStringSelect"> {
-    const config = this.createBaseConfig();
-    const body = this.createBaseBody();
-
-    this.addHintToBody(body);
-    this.addDefaultValueToBody(body);
-    this.addValidatorsToBody(body);
+    const config =
+      this.createBaseConfig() as MethodNameToConfig<"addStringSelect">;
+    const body = this.buildStringSelectFieldBody();
 
     const options = this.extractOptions();
 
-    return {
-      ...config,
-      options,
-      ...(this.hasBodyContent(body) && { body }),
-    };
+    config.options = options;
+
+    if (this.hasBodyContent(body)) {
+      config.body = body;
+    }
+
+    return config;
+  }
+
+  private buildStringSelectFieldBody(): NonNullable<
+    MethodNameToConfig<"addStringSelect">["body"]
+  > {
+    const body = this.createBaseBody() as NonNullable<
+      MethodNameToConfig<"addStringSelect">["body"]
+    >;
+
+    this.addHintToBody(body);
+    this.addDefaultValueToBody(body);
+    this.addStringSelectValidators(body);
+
+    return body;
   }
 
   private extractOptions(): MethodNameToConfig<"addStringSelect">["options"] {
@@ -34,16 +47,16 @@ export class StringSelectFieldGenerator extends FieldGenerator<"addStringSelect"
     }));
   }
 
-  private addValidatorsToBody(
-    body: NonNullable<MethodNameToConfig<"addStringSelect">>["body"],
+  private addStringSelectValidators(
+    body: NonNullable<MethodNameToConfig<"addStringSelect">["body"]>,
   ): void {
     if (!this.hasValidators()) {
       return;
     }
 
     const validators = {} as NonNullable<
-      NonNullable<MethodNameToConfig<"addStringSelect">>["body"]
-    >["validators"];
+      NonNullable<MethodNameToConfig<"addStringSelect">["body"]>["validators"]
+    >;
 
     this.processRequiredValidator(validators);
 

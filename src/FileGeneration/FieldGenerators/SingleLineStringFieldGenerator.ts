@@ -7,21 +7,36 @@ export class SingleLineStringFieldGenerator extends FieldGenerator<"addSingleLin
   }
 
   generateBuildConfig(): MethodNameToConfig<"addSingleLineString"> {
-    const config = this.createBaseConfig();
-    const body = this.createBaseBody();
-
-    this.addHintToBody(body);
-    this.addDefaultValueToBody(body);
-    this.addValidatorsToBody(body);
+    const config =
+      this.createBaseConfig() as MethodNameToConfig<"addSingleLineString">;
+    const body = this.buildSingleLineStringFieldBody();
 
     // Extract appearance parameters
     const options = this.extractSingleLineStringOptions();
 
-    return {
-      ...config,
-      ...(options && { options }),
-      ...(this.hasBodyContent(body) && { body }),
-    };
+    if (options) {
+      config.options = options;
+    }
+
+    if (this.hasBodyContent(body)) {
+      config.body = body;
+    }
+
+    return config;
+  }
+
+  private buildSingleLineStringFieldBody(): NonNullable<
+    MethodNameToConfig<"addSingleLineString">["body"]
+  > {
+    const body = this.createBaseBody() as NonNullable<
+      MethodNameToConfig<"addSingleLineString">["body"]
+    >;
+
+    this.addHintToBody(body);
+    this.addDefaultValueToBody(body);
+    this.addSingleLineStringValidators(body);
+
+    return body;
   }
 
   private extractSingleLineStringOptions(): MethodNameToConfig<"addSingleLineString">["options"] {
@@ -46,16 +61,18 @@ export class SingleLineStringFieldGenerator extends FieldGenerator<"addSingleLin
     return Object.keys(options).length > 0 ? options : undefined;
   }
 
-  private addValidatorsToBody(
-    body: NonNullable<MethodNameToConfig<"addSingleLineString">>["body"],
+  private addSingleLineStringValidators(
+    body: NonNullable<MethodNameToConfig<"addSingleLineString">["body"]>,
   ): void {
     if (!this.hasValidators()) {
       return;
     }
 
     const validators = {} as NonNullable<
-      NonNullable<MethodNameToConfig<"addSingleLineString">>["body"]
-    >["validators"];
+      NonNullable<
+        MethodNameToConfig<"addSingleLineString">["body"]
+      >["validators"]
+    >;
 
     this.processRequiredValidator(validators);
 

@@ -7,20 +7,33 @@ export class StringRadioGroupFieldGenerator extends FieldGenerator<"addStringRad
   }
 
   generateBuildConfig(): MethodNameToConfig<"addStringRadioGroup"> {
-    const config = this.createBaseConfig();
-    const body = this.createBaseBody();
-
-    this.addHintToBody(body);
-    this.addDefaultValueToBody(body);
-    this.addValidatorsToBody(body);
+    const config =
+      this.createBaseConfig() as MethodNameToConfig<"addStringRadioGroup">;
+    const body = this.buildStringRadioGroupFieldBody();
 
     const radios = this.extractRadios();
 
-    return {
-      ...config,
-      radios,
-      ...(this.hasBodyContent(body) && { body }),
-    };
+    config.radios = radios;
+
+    if (this.hasBodyContent(body)) {
+      config.body = body;
+    }
+
+    return config;
+  }
+
+  private buildStringRadioGroupFieldBody(): NonNullable<
+    MethodNameToConfig<"addStringRadioGroup">["body"]
+  > {
+    const body = this.createBaseBody() as NonNullable<
+      MethodNameToConfig<"addStringRadioGroup">["body"]
+    >;
+
+    this.addHintToBody(body);
+    this.addDefaultValueToBody(body);
+    this.addStringRadioGroupValidators(body);
+
+    return body;
   }
 
   private extractRadios(): MethodNameToConfig<"addStringRadioGroup">["radios"] {
@@ -34,16 +47,18 @@ export class StringRadioGroupFieldGenerator extends FieldGenerator<"addStringRad
     }));
   }
 
-  private addValidatorsToBody(
-    body: NonNullable<MethodNameToConfig<"addStringRadioGroup">>["body"],
+  private addStringRadioGroupValidators(
+    body: NonNullable<MethodNameToConfig<"addStringRadioGroup">["body"]>,
   ): void {
     if (!this.hasValidators()) {
       return;
     }
 
     const validators = {} as NonNullable<
-      NonNullable<MethodNameToConfig<"addStringRadioGroup">>["body"]
-    >["validators"];
+      NonNullable<
+        MethodNameToConfig<"addStringRadioGroup">["body"]
+      >["validators"]
+    >;
 
     this.processRequiredValidator(validators);
 
