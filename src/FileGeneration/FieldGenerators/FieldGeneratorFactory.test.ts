@@ -1,5 +1,7 @@
 import type { Field } from "@datocms/cma-client/src/generated/SimpleSchemaTypes";
 import { beforeEach, describe, expect, it } from "@jest/globals";
+import { BooleanFieldGenerator } from "@/FileGeneration/FieldGenerators/BooleanFieldGenerator";
+import { BooleanRadioGroupFieldGenerator } from "@/FileGeneration/FieldGenerators/BooleanRadioGroupFieldGenerator";
 import { ColorPickerFieldGenerator } from "@/FileGeneration/FieldGenerators/ColorPickerFieldGenerator";
 import { DateFieldGenerator } from "@/FileGeneration/FieldGenerators/DateFieldGenerator";
 import { DateTimeFieldGenerator } from "@/FileGeneration/FieldGenerators/DateTimeFieldGenerator";
@@ -167,6 +169,55 @@ describe("FieldGeneratorFactory", () => {
     });
   });
 
+  describe("Boolean field type mappings", () => {
+    it("creates BooleanFieldGenerator for boolean fields with no editor", () => {
+      const field = createMockField({
+        label: "Boolean",
+        api_key: "boolean",
+        field_type: "boolean",
+        appearance: undefined as any,
+      });
+
+      const generator = factory.createGenerator({ field });
+      expect(generator).toBeInstanceOf(BooleanFieldGenerator);
+    });
+
+    it("creates BooleanRadioGroupFieldGenerator for boolean fields with boolean_radio_group editor", () => {
+      const field = createMockField({
+        label: "Boolean Radio Group",
+        api_key: "boolean_radio_group",
+        field_type: "boolean",
+        appearance: {
+          addons: [],
+          editor: "boolean_radio_group",
+          parameters: {
+            positive_radio: { label: "Yes" },
+            negative_radio: { label: "No" },
+          },
+        } as any,
+      });
+
+      const generator = factory.createGenerator({ field });
+      expect(generator).toBeInstanceOf(BooleanRadioGroupFieldGenerator);
+    });
+
+    it("creates BooleanFieldGenerator for boolean fields with unknown editor", () => {
+      const field = createMockField({
+        label: "Unknown Editor Boolean",
+        api_key: "unknown_editor_boolean",
+        field_type: "boolean",
+        appearance: {
+          addons: [],
+          editor: "unknown_editor" as any,
+          parameters: {},
+        } as any,
+      });
+
+      const generator = factory.createGenerator({ field });
+      expect(generator).toBeInstanceOf(BooleanFieldGenerator);
+    });
+  });
+
   describe("Text field type mappings", () => {
     it("creates MarkdownFieldGenerator for text fields with markdown editor", () => {
       const field = createMockField({
@@ -323,6 +374,27 @@ describe("FieldGeneratorFactory", () => {
       });
     });
 
+    it("all boolean generators have correct method names", () => {
+      const testCases = [
+        { editor: "boolean_radio_group", expected: "addBooleanRadioGroup" },
+        { editor: undefined, expected: "addBoolean" },
+      ];
+
+      testCases.forEach(({ editor, expected }) => {
+        const field = createMockField({
+          label: "Test",
+          api_key: "test",
+          field_type: "boolean",
+          appearance: editor
+            ? ({ addons: [], editor, parameters: {} } as any)
+            : (undefined as any),
+        });
+
+        const generator = factory.createGenerator({ field });
+        expect(generator.getMethodCallName()).toBe(expected);
+      });
+    });
+
     it("all text generators have correct method names", () => {
       const testCases = [
         { editor: "markdown", expected: "addMarkdown" },
@@ -366,6 +438,25 @@ describe("FieldGeneratorFactory", () => {
           label: "Test",
           api_key: "test",
           field_type: fieldType as any,
+        });
+
+        const generator = factory.createGenerator({ field });
+        const methodCall = generator.generateMethodCall();
+        expect(methodCall).toContain(`.${generator.getMethodCallName()}(`);
+      });
+    });
+
+    it("all boolean generators can generate method calls", () => {
+      const editors = ["boolean_radio_group", undefined];
+
+      editors.forEach((editor) => {
+        const field = createMockField({
+          label: "Test",
+          api_key: "test",
+          field_type: "boolean",
+          appearance: editor
+            ? ({ addons: [], editor, parameters: {} } as any)
+            : (undefined as any),
         });
 
         const generator = factory.createGenerator({ field });

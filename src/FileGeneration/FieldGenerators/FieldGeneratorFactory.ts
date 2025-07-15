@@ -1,4 +1,6 @@
 import type { Field } from "@datocms/cma-client/src/generated/SimpleSchemaTypes";
+import { BooleanFieldGenerator } from "@/FileGeneration/FieldGenerators/BooleanFieldGenerator";
+import { BooleanRadioGroupFieldGenerator } from "@/FileGeneration/FieldGenerators/BooleanRadioGroupFieldGenerator";
 import { ColorPickerFieldGenerator } from "@/FileGeneration/FieldGenerators/ColorPickerFieldGenerator";
 import { DateFieldGenerator } from "@/FileGeneration/FieldGenerators/DateFieldGenerator";
 import { DateTimeFieldGenerator } from "@/FileGeneration/FieldGenerators/DateTimeFieldGenerator";
@@ -48,6 +50,11 @@ export class FieldGeneratorFactory {
       return this.getTextFieldGenerator(field);
     }
 
+    // Handle boolean fields with special logic for appearance.editor
+    if (field.field_type === "boolean") {
+      return this.getBooleanFieldGenerator(field);
+    }
+
     const generatorMap: Partial<
       Record<Field["field_type"], FieldGeneratorConstructor>
     > = {
@@ -88,6 +95,20 @@ export class FieldGeneratorFactory {
         return TextareaFieldGenerator;
       default:
         return MultiLineTextFieldGenerator;
+    }
+  }
+
+  /**
+   * Determine which boolean field generator to use based on appearance.editor
+   */
+  private getBooleanFieldGenerator(field: Field): FieldGeneratorConstructor {
+    const editor = field.appearance?.editor;
+
+    switch (editor) {
+      case "boolean_radio_group":
+        return BooleanRadioGroupFieldGenerator;
+      default:
+        return BooleanFieldGenerator;
     }
   }
 }
