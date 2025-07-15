@@ -50,6 +50,9 @@ describe("StringRadioGroupFieldGenerator", () => {
       expect(config).toEqual({
         label: "Test String Radio Group",
         radios: [],
+        body: {
+          api_key: "test_string_radio_group",
+        },
       });
     });
 

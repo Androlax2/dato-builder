@@ -49,6 +49,9 @@ describe("SingleLineStringFieldGenerator", () => {
 
       expect(config).toEqual({
         label: "Test Single Line String",
+        body: {
+          api_key: "test_single_line_string",
+        },
       });
     });
 

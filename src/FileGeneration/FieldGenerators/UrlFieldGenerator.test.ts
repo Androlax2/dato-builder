@@ -47,6 +47,9 @@ describe("UrlFieldGenerator", () => {
 
       expect(config).toEqual({
         label: "Test URL",
+        body: {
+          api_key: "test_url",
+        },
       });
     });
 

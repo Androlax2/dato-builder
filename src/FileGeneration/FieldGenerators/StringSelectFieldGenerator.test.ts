@@ -48,6 +48,9 @@ describe("StringSelectFieldGenerator", () => {
       expect(config).toEqual({
         label: "Test String Select",
         options: [],
+        body: {
+          api_key: "test_string_select",
+        },
       });
     });
 
