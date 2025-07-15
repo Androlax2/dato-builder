@@ -7,6 +7,7 @@ import type {
   FieldGeneratorConfig,
 } from "@/FileGeneration/FieldGenerators/FieldGenerator";
 import { LocationFieldGenerator } from "@/FileGeneration/FieldGenerators/LocationFieldGenerator";
+import { SeoFieldGenerator } from "@/FileGeneration/FieldGenerators/SeoFieldGenerator";
 import type { ItemTypeBuilderAddMethods } from "@/types/ItemTypeBuilderFields";
 
 type FieldGeneratorConstructor = new (
@@ -39,6 +40,7 @@ export class FieldGeneratorFactory {
       date: DateFieldGenerator,
       date_time: DateTimeFieldGenerator,
       lat_lon: LocationFieldGenerator,
+      seo: SeoFieldGenerator,
     };
 
     const generatorClass = generatorMap[field.field_type];
