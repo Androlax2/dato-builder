@@ -1,5 +1,6 @@
 import type { Field } from "@datocms/cma-client/src/generated/SimpleSchemaTypes";
 import { DateFieldGenerator } from "@/FileGeneration/FieldGenerators/DateFieldGenerator";
+import { DateTimeFieldGenerator } from "@/FileGeneration/FieldGenerators/DateTimeFieldGenerator";
 import type {
   FieldGenerator,
   FieldGeneratorConfig,
@@ -9,6 +10,8 @@ import type { ItemTypeBuilderAddMethods } from "@/types/ItemTypeBuilderFields";
 type FieldGeneratorConstructor = new (
   config: FieldGeneratorConfig,
 ) => FieldGenerator<ItemTypeBuilderAddMethods>;
+
+// TODO: Remove the Partial type when all field types are implemented
 
 export class FieldGeneratorFactory {
   /**
@@ -27,10 +30,12 @@ export class FieldGeneratorFactory {
    * Complex mapping logic to determine the correct generator class
    */
   private getGeneratorClass(field: Field): FieldGeneratorConstructor {
-    const generatorMap: Record<Field["field_type"], FieldGeneratorConstructor> =
-      {
-        date: DateFieldGenerator,
-      };
+    const generatorMap: Partial<
+      Record<Field["field_type"], FieldGeneratorConstructor>
+    > = {
+      date: DateFieldGenerator,
+      date_time: DateTimeFieldGenerator,
+    };
 
     const generatorClass = generatorMap[field.field_type];
 
