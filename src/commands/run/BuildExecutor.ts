@@ -1,5 +1,5 @@
 import type { ConsoleLogger } from "../../logger";
-import type { ItemBuilder } from "./ItemBuilder";
+import { ItemBuildError, type ItemBuilder } from "./ItemBuilder";
 import type { BuildResult, FileInfo } from "./types";
 
 export class BuildExecutor {
@@ -59,8 +59,9 @@ export class BuildExecutor {
           };
         } catch (error: unknown) {
           const err = error as Error;
-          this.logger.error(
-            `Failed to build ${fileInfo.type} "${fileInfo.name}": ${err.message}`,
+          this.logger.errorJson(
+            `Failed to build ${fileInfo.type} "${fileInfo.name}"`,
+            err,
           );
           this.logger.traceJson("Build failed", {
             type: fileInfo.type,
@@ -123,6 +124,23 @@ export class BuildExecutor {
         fromCache: result.fromCache,
       });
       return result;
+    } catch (error: unknown) {
+      if (error instanceof ItemBuildError) {
+        this.logger.errorJson(`Error building item ${fileKey}`, error);
+      } else {
+        this.logger.errorJson(
+          `Unexpected error building item ${fileKey}`,
+          error,
+        );
+      }
+
+      this.logger.traceJson("Build promise failed", {
+        fileKey,
+        error: (error as Error).message,
+        stack: (error as Error).stack,
+      });
+
+      return Promise.reject(error);
     } finally {
       this.logger.traceJson("Cleaning up build promise", { fileKey });
       this.buildPromises.delete(fileKey);
