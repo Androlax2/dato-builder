@@ -209,7 +209,12 @@ describe("DeletionManager", () => {
         },
       ]);
 
-      expect(mockApi.call).toHaveBeenCalledWith(expect.any(Function));
+      expect(mockApi.call).toHaveBeenCalledWith(
+        expect.any(Function),
+        3,
+        500,
+        "itemTypes.destroy(id1, block1)",
+      );
       expect(mockCacheManager.delete).toHaveBeenCalledWith("block:block1");
     });
 

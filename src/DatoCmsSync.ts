@@ -33,7 +33,7 @@ export class DatoCmsSync {
     this.config = options.config;
     this.logger = options.logger;
     this.cache = options.cache;
-    this.api = new DatoApi(buildClient({ apiToken: this.config.apiToken }));
+    this.api = new DatoApi(buildClient({ apiToken: this.config.apiToken }), this.logger);
     this.fileGenerationService = new FileGenerationService();
   }
 
@@ -44,8 +44,11 @@ export class DatoCmsSync {
     this.logger.trace("Fetching item types from DatoCMS");
 
     try {
-      const response = await this.api.call(() =>
-        this.api.client.itemTypes.list(),
+      const response = await this.api.call(
+        () => this.api.client.itemTypes.list(),
+        3, 
+        500, 
+        'itemTypes.list()'
       );
       this.logger.debug(`Fetched ${response.length} item types from DatoCMS`);
       return response;
@@ -64,8 +67,11 @@ export class DatoCmsSync {
     this.logger.trace(`Fetching fields for item type: ${itemTypeId}`);
 
     try {
-      const fields = await this.api.call(() =>
-        this.api.client.fields.list(itemTypeId),
+      const fields = await this.api.call(
+        () => this.api.client.fields.list(itemTypeId),
+        3, 
+        500, 
+        `fields.list(${itemTypeId})`
       );
       this.logger.trace(
         `Fetched ${fields.length} fields for item type: ${itemTypeId}`,
