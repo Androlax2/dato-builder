@@ -34,7 +34,7 @@ export default class FormatValidator implements Validator {
 
     if (custom_pattern) {
       return {
-        custom_pattern: custom_pattern.toString(),
+        custom_pattern: custom_pattern.source,
         description,
       };
     }
