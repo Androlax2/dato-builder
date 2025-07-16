@@ -19,14 +19,17 @@ import { LinksFieldGenerator } from "@/FileGeneration/FieldGenerators/LinksField
 import { LocationFieldGenerator } from "@/FileGeneration/FieldGenerators/LocationFieldGenerator";
 import { MarkdownFieldGenerator } from "@/FileGeneration/FieldGenerators/MarkdownFieldGenerator";
 import { MultiLineTextFieldGenerator } from "@/FileGeneration/FieldGenerators/MultiLineTextFieldGenerator";
+import { RichTextFieldGenerator } from "@/FileGeneration/FieldGenerators/RichTextFieldGenerator";
 import { SeoFieldGenerator } from "@/FileGeneration/FieldGenerators/SeoFieldGenerator";
 import { SingleAssetFieldGenerator } from "@/FileGeneration/FieldGenerators/SingleAssetFieldGenerator";
+import { SingleBlockFieldGenerator } from "@/FileGeneration/FieldGenerators/SingleBlockFieldGenerator";
 import { SingleLineStringFieldGenerator } from "@/FileGeneration/FieldGenerators/SingleLineStringFieldGenerator";
 import { SlugFieldGenerator } from "@/FileGeneration/FieldGenerators/SlugFieldGenerator";
 import { StringCheckboxGroupFieldGenerator } from "@/FileGeneration/FieldGenerators/StringCheckboxGroupFieldGenerator";
 import { StringMultiSelectFieldGenerator } from "@/FileGeneration/FieldGenerators/StringMultiSelectFieldGenerator";
 import { StringRadioGroupFieldGenerator } from "@/FileGeneration/FieldGenerators/StringRadioGroupFieldGenerator";
 import { StringSelectFieldGenerator } from "@/FileGeneration/FieldGenerators/StringSelectFieldGenerator";
+import { StructuredTextFieldGenerator } from "@/FileGeneration/FieldGenerators/StructuredTextFieldGenerator";
 import { TextareaFieldGenerator } from "@/FileGeneration/FieldGenerators/TextareaFieldGenerator";
 import { UrlFieldGenerator } from "@/FileGeneration/FieldGenerators/UrlFieldGenerator";
 import { WysiwygFieldGenerator } from "@/FileGeneration/FieldGenerators/WysiwygFieldGenerator";
@@ -73,9 +76,9 @@ export class FieldGeneratorFactory {
       return this.getJsonFieldGenerator(field);
     }
 
-    // TODO: Remove the Partial type when all field types are implemented (Put a Exclude<Field["field_type"], "xx" | "xx" | "xx">
-    const generatorMap: Partial<
-      Record<Field["field_type"], FieldGeneratorConstructor>
+    const generatorMap: Record<
+      Exclude<Field["field_type"], "text" | "boolean" | "string" | "json">,
+      FieldGeneratorConstructor
     > = {
       color: ColorPickerFieldGenerator,
       date: DateFieldGenerator,
@@ -86,6 +89,9 @@ export class FieldGeneratorFactory {
       integer: IntegerFieldGenerator,
       lat_lon: LocationFieldGenerator,
       link: LinkFieldGenerator,
+      rich_text: RichTextFieldGenerator,
+      single_block: SingleBlockFieldGenerator,
+      structured_text: StructuredTextFieldGenerator,
       links: LinksFieldGenerator,
       seo: SeoFieldGenerator,
       slug: SlugFieldGenerator,

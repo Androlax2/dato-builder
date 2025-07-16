@@ -17,14 +17,17 @@ import { LinksFieldGenerator } from "@/FileGeneration/FieldGenerators/LinksField
 import { LocationFieldGenerator } from "@/FileGeneration/FieldGenerators/LocationFieldGenerator";
 import { MarkdownFieldGenerator } from "@/FileGeneration/FieldGenerators/MarkdownFieldGenerator";
 import { MultiLineTextFieldGenerator } from "@/FileGeneration/FieldGenerators/MultiLineTextFieldGenerator";
+import { RichTextFieldGenerator } from "@/FileGeneration/FieldGenerators/RichTextFieldGenerator";
 import { SeoFieldGenerator } from "@/FileGeneration/FieldGenerators/SeoFieldGenerator";
 import { SingleAssetFieldGenerator } from "@/FileGeneration/FieldGenerators/SingleAssetFieldGenerator";
+import { SingleBlockFieldGenerator } from "@/FileGeneration/FieldGenerators/SingleBlockFieldGenerator";
 import { SingleLineStringFieldGenerator } from "@/FileGeneration/FieldGenerators/SingleLineStringFieldGenerator";
 import { SlugFieldGenerator } from "@/FileGeneration/FieldGenerators/SlugFieldGenerator";
 import { StringCheckboxGroupFieldGenerator } from "@/FileGeneration/FieldGenerators/StringCheckboxGroupFieldGenerator";
 import { StringMultiSelectFieldGenerator } from "@/FileGeneration/FieldGenerators/StringMultiSelectFieldGenerator";
 import { StringRadioGroupFieldGenerator } from "@/FileGeneration/FieldGenerators/StringRadioGroupFieldGenerator";
 import { StringSelectFieldGenerator } from "@/FileGeneration/FieldGenerators/StringSelectFieldGenerator";
+import { StructuredTextFieldGenerator } from "@/FileGeneration/FieldGenerators/StructuredTextFieldGenerator";
 import { TextareaFieldGenerator } from "@/FileGeneration/FieldGenerators/TextareaFieldGenerator";
 import { UrlFieldGenerator } from "@/FileGeneration/FieldGenerators/UrlFieldGenerator";
 import { WysiwygFieldGenerator } from "@/FileGeneration/FieldGenerators/WysiwygFieldGenerator";
@@ -532,6 +535,41 @@ describe("FieldGeneratorFactory", () => {
     });
   });
 
+  describe("New field type mappings", () => {
+    it("creates RichTextFieldGenerator for rich_text fields", () => {
+      const field = createMockField({
+        label: "Rich Text",
+        api_key: "rich_text",
+        field_type: "rich_text",
+      });
+
+      const generator = factory.createGenerator({ field });
+      expect(generator).toBeInstanceOf(RichTextFieldGenerator);
+    });
+
+    it("creates SingleBlockFieldGenerator for single_block fields", () => {
+      const field = createMockField({
+        label: "Single Block",
+        api_key: "single_block",
+        field_type: "single_block",
+      });
+
+      const generator = factory.createGenerator({ field });
+      expect(generator).toBeInstanceOf(SingleBlockFieldGenerator);
+    });
+
+    it("creates StructuredTextFieldGenerator for structured_text fields", () => {
+      const field = createMockField({
+        label: "Structured Text",
+        api_key: "structured_text",
+        field_type: "structured_text",
+      });
+
+      const generator = factory.createGenerator({ field });
+      expect(generator).toBeInstanceOf(StructuredTextFieldGenerator);
+    });
+  });
+
   describe("Error handling", () => {
     it("throws error for unsupported field type", () => {
       const field = createMockField({
@@ -586,6 +624,9 @@ describe("FieldGeneratorFactory", () => {
         { fieldType: "seo", expected: "addSeo" },
         { fieldType: "slug", expected: "addSlug" },
         { fieldType: "video", expected: "addExternalVideo" },
+        { fieldType: "rich_text", expected: "addModularContent" },
+        { fieldType: "single_block", expected: "addSingleBlock" },
+        { fieldType: "structured_text", expected: "addStructuredText" },
       ];
 
       testCases.forEach(({ fieldType, expected }) => {

@@ -29,7 +29,7 @@ function createMockItemType(
     inverse_relationships_enabled: false,
     singleton_item: null,
     fields: [],
-    fieldsets: [],
+    fieldset: [],
     presentation_title_field: null,
     presentation_image_field: null,
     title_field: null,
@@ -120,7 +120,7 @@ describe("BlockReferenceAnalyzer", () => {
           ...baseField,
           field_type: "single_block",
           validators: {
-            single_block: {
+            single_block_blocks: {
               item_types: ["block-1"],
             },
           },
@@ -312,11 +312,11 @@ describe("BlockReferenceAnalyzer", () => {
       expect(result).toEqual(["block-1", "block-2"]);
     });
 
-    it("should extract item_types from single_block validator", () => {
+    it("should extract item_types from single_block_blocks validator", () => {
       const field: Field = {
         ...baseField,
         validators: {
-          single_block: {
+          single_block_blocks: {
             item_types: ["single-block-1"],
           },
         },
@@ -347,7 +347,7 @@ describe("BlockReferenceAnalyzer", () => {
           rich_text_blocks: {
             item_types: ["rich-1", "rich-2"],
           },
-          single_block: {
+          single_block_blocks: {
             item_types: ["single-1"],
           },
           structured_text_blocks: {
@@ -365,7 +365,7 @@ describe("BlockReferenceAnalyzer", () => {
         ...baseField,
         validators: {
           rich_text_blocks: {},
-          single_block: {
+          single_block_blocks: {
             item_types: ["single-1"],
           },
           structured_text_blocks: {},
@@ -695,6 +695,126 @@ describe("BlockReferenceAnalyzer", () => {
       const result = analyzer.getUsedFunctions(fields);
       expect(result.needsGetModel).toBe(false);
       expect(result.needsGetBlock).toBe(false);
+    });
+
+    it("should detect structured_text_blocks validator", () => {
+      const itemTypeReferences = new Map([
+        ["block-1", createMockItemType("Test Block", true)],
+      ]);
+
+      const fields: Field[] = [
+        {
+          ...baseField,
+          field_type: "structured_text",
+          validators: {
+            structured_text_blocks: {
+              item_types: ["block-1"],
+            },
+          },
+        },
+      ];
+
+      const result = analyzer.getUsedFunctions(fields, itemTypeReferences);
+      expect(result.needsGetBlock).toBe(true);
+      expect(result.needsGetModel).toBe(false);
+    });
+
+    it("should detect structured_text_links validator", () => {
+      const itemTypeReferences = new Map([
+        ["model-1", createMockItemType("Test Model")],
+      ]);
+
+      const fields: Field[] = [
+        {
+          ...baseField,
+          field_type: "structured_text",
+          validators: {
+            structured_text_links: {
+              item_types: ["model-1"],
+              on_publish_with_unpublished_references_strategy: "fail",
+              on_reference_unpublish_strategy: "delete_references",
+              on_reference_delete_strategy: "delete_references",
+            },
+          },
+        },
+      ];
+
+      const result = analyzer.getUsedFunctions(fields, itemTypeReferences);
+      expect(result.needsGetModel).toBe(true);
+      expect(result.needsGetBlock).toBe(false);
+    });
+
+    it("should detect both structured_text_blocks and structured_text_links validators", () => {
+      const itemTypeReferences = new Map([
+        ["block-1", createMockItemType("Test Block", true)],
+        ["model-1", createMockItemType("Test Model")],
+      ]);
+
+      const fields: Field[] = [
+        {
+          ...baseField,
+          field_type: "structured_text",
+          validators: {
+            structured_text_blocks: {
+              item_types: ["block-1"],
+            },
+            structured_text_links: {
+              item_types: ["model-1"],
+              on_publish_with_unpublished_references_strategy: "fail",
+              on_reference_unpublish_strategy: "delete_references",
+              on_reference_delete_strategy: "delete_references",
+            },
+          },
+        },
+      ];
+
+      const result = analyzer.getUsedFunctions(fields, itemTypeReferences);
+      expect(result.needsGetBlock).toBe(true);
+      expect(result.needsGetModel).toBe(true);
+    });
+
+    it("should detect single_block_blocks validator", () => {
+      const itemTypeReferences = new Map([
+        ["block-1", createMockItemType("Test Block", true)],
+      ]);
+
+      const fields: Field[] = [
+        {
+          ...baseField,
+          field_type: "single_block",
+          validators: {
+            single_block_blocks: {
+              item_types: ["block-1"],
+            },
+          },
+        },
+      ];
+
+      const result = analyzer.getUsedFunctions(fields, itemTypeReferences);
+      expect(result.needsGetBlock).toBe(true);
+      expect(result.needsGetModel).toBe(false);
+    });
+
+    it("should detect rich_text_blocks validator", () => {
+      const itemTypeReferences = new Map([
+        ["block-1", createMockItemType("Test Block", true)],
+      ]);
+
+      const fields: Field[] = [
+        {
+          ...baseField,
+          field_type: "rich_text",
+          validators: {
+            rich_text_blocks: {
+              item_types: ["block-1"],
+            },
+          },
+        },
+      ];
+
+      const result = analyzer.getUsedFunctions(fields, itemTypeReferences);
+      expect(result.needsGetBlock).toBe(true);
+      expect(result.needsGetModel).toBe(false);
     });
   });
 });

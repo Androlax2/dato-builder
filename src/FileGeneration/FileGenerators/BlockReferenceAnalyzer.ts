@@ -66,11 +66,14 @@ export class BlockReferenceAnalyzer {
     if (validators?.rich_text_blocks?.item_types) {
       itemIds.push(...validators.rich_text_blocks.item_types);
     }
-    if (validators?.single_block?.item_types) {
-      itemIds.push(...validators.single_block.item_types);
+    if (validators?.single_block_blocks?.item_types) {
+      itemIds.push(...validators.single_block_blocks.item_types);
     }
     if (validators?.structured_text_blocks?.item_types) {
       itemIds.push(...validators.structured_text_blocks.item_types);
+    }
+    if (validators?.structured_text_links?.item_types) {
+      itemIds.push(...validators.structured_text_links.item_types);
     }
     if (validators?.item_item_type?.item_types) {
       itemIds.push(...validators.item_item_type.item_types);
