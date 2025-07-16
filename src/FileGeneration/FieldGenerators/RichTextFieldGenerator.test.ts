@@ -148,17 +148,23 @@ describe("RichTextFieldGenerator", () => {
       ]);
     });
 
-    it("should handle required validator", () => {
+    it("should handle size validator", () => {
       const field = createRichTextField({
         validators: {
-          required: true,
+          size: {
+            min: 1,
+            max: 5,
+          },
         },
       });
 
       generator = new RichTextFieldGenerator({ field, itemTypeReferences });
       const config = generator.generateBuildConfig();
 
-      expect(config.body?.validators?.required).toBe(true);
+      expect(config.body?.validators?.size).toEqual({
+        min: 1,
+        max: 5,
+      });
     });
 
     it("should combine multiple validators", () => {
@@ -170,7 +176,6 @@ describe("RichTextFieldGenerator", () => {
           size: {
             min: 2,
           },
-          required: true,
         },
       });
 
@@ -181,7 +186,6 @@ describe("RichTextFieldGenerator", () => {
         { __async_call: 'await getBlock("TestBlock")' },
       ]);
       expect(config.body?.validators?.size).toEqual({ min: 2 });
-      expect(config.body?.validators?.required).toBe(true);
     });
 
     it("should handle default value", () => {
