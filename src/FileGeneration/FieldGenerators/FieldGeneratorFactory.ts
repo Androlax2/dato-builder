@@ -13,6 +13,7 @@ import type {
 import { FloatFieldGenerator } from "@/FileGeneration/FieldGenerators/FloatFieldGenerator";
 import { GalleryFieldGenerator } from "@/FileGeneration/FieldGenerators/GalleryFieldGenerator";
 import { IntegerFieldGenerator } from "@/FileGeneration/FieldGenerators/IntegerFieldGenerator";
+import { JsonFieldGenerator } from "@/FileGeneration/FieldGenerators/JsonFieldGenerator";
 import { LinkFieldGenerator } from "@/FileGeneration/FieldGenerators/LinkFieldGenerator";
 import { LinksFieldGenerator } from "@/FileGeneration/FieldGenerators/LinksFieldGenerator";
 import { LocationFieldGenerator } from "@/FileGeneration/FieldGenerators/LocationFieldGenerator";
@@ -22,6 +23,8 @@ import { SeoFieldGenerator } from "@/FileGeneration/FieldGenerators/SeoFieldGene
 import { SingleAssetFieldGenerator } from "@/FileGeneration/FieldGenerators/SingleAssetFieldGenerator";
 import { SingleLineStringFieldGenerator } from "@/FileGeneration/FieldGenerators/SingleLineStringFieldGenerator";
 import { SlugFieldGenerator } from "@/FileGeneration/FieldGenerators/SlugFieldGenerator";
+import { StringCheckboxGroupFieldGenerator } from "@/FileGeneration/FieldGenerators/StringCheckboxGroupFieldGenerator";
+import { StringMultiSelectFieldGenerator } from "@/FileGeneration/FieldGenerators/StringMultiSelectFieldGenerator";
 import { StringRadioGroupFieldGenerator } from "@/FileGeneration/FieldGenerators/StringRadioGroupFieldGenerator";
 import { StringSelectFieldGenerator } from "@/FileGeneration/FieldGenerators/StringSelectFieldGenerator";
 import { TextareaFieldGenerator } from "@/FileGeneration/FieldGenerators/TextareaFieldGenerator";
@@ -63,6 +66,11 @@ export class FieldGeneratorFactory {
     // Handle string fields with special logic for appearance.editor and validators
     if (field.field_type === "string") {
       return this.getStringFieldGenerator(field);
+    }
+
+    // Handle json fields with special logic for appearance.editor
+    if (field.field_type === "json") {
+      return this.getJsonFieldGenerator(field);
     }
 
     // TODO: Remove the Partial type when all field types are implemented (Put a Exclude<Field["field_type"], "xx" | "xx" | "xx">
@@ -153,6 +161,22 @@ export class FieldGeneratorFactory {
       default:
         // Default to SingleLineString for plain string fields
         return SingleLineStringFieldGenerator;
+    }
+  }
+
+  /**
+   * Determine which JSON field generator to use based on appearance.editor
+   */
+  private getJsonFieldGenerator(field: Field): FieldGeneratorConstructor {
+    const editor = field.appearance?.editor;
+
+    switch (editor) {
+      case "string_multi_select":
+        return StringMultiSelectFieldGenerator;
+      case "string_checkbox_group":
+        return StringCheckboxGroupFieldGenerator;
+      default:
+        return JsonFieldGenerator;
     }
   }
 }

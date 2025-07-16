@@ -11,6 +11,7 @@ import { FieldGeneratorFactory } from "@/FileGeneration/FieldGenerators/FieldGen
 import { FloatFieldGenerator } from "@/FileGeneration/FieldGenerators/FloatFieldGenerator";
 import { GalleryFieldGenerator } from "@/FileGeneration/FieldGenerators/GalleryFieldGenerator";
 import { IntegerFieldGenerator } from "@/FileGeneration/FieldGenerators/IntegerFieldGenerator";
+import { JsonFieldGenerator } from "@/FileGeneration/FieldGenerators/JsonFieldGenerator";
 import { LinkFieldGenerator } from "@/FileGeneration/FieldGenerators/LinkFieldGenerator";
 import { LinksFieldGenerator } from "@/FileGeneration/FieldGenerators/LinksFieldGenerator";
 import { LocationFieldGenerator } from "@/FileGeneration/FieldGenerators/LocationFieldGenerator";
@@ -20,6 +21,8 @@ import { SeoFieldGenerator } from "@/FileGeneration/FieldGenerators/SeoFieldGene
 import { SingleAssetFieldGenerator } from "@/FileGeneration/FieldGenerators/SingleAssetFieldGenerator";
 import { SingleLineStringFieldGenerator } from "@/FileGeneration/FieldGenerators/SingleLineStringFieldGenerator";
 import { SlugFieldGenerator } from "@/FileGeneration/FieldGenerators/SlugFieldGenerator";
+import { StringCheckboxGroupFieldGenerator } from "@/FileGeneration/FieldGenerators/StringCheckboxGroupFieldGenerator";
+import { StringMultiSelectFieldGenerator } from "@/FileGeneration/FieldGenerators/StringMultiSelectFieldGenerator";
 import { StringRadioGroupFieldGenerator } from "@/FileGeneration/FieldGenerators/StringRadioGroupFieldGenerator";
 import { StringSelectFieldGenerator } from "@/FileGeneration/FieldGenerators/StringSelectFieldGenerator";
 import { TextareaFieldGenerator } from "@/FileGeneration/FieldGenerators/TextareaFieldGenerator";
@@ -457,6 +460,78 @@ describe("FieldGeneratorFactory", () => {
     });
   });
 
+  describe("JSON field type mappings", () => {
+    it("creates JsonFieldGenerator for json fields with no editor", () => {
+      const field = createMockField({
+        label: "JSON",
+        api_key: "json",
+        field_type: "json",
+        appearance: undefined as any,
+      });
+
+      const generator = factory.createGenerator({ field });
+      expect(generator).toBeInstanceOf(JsonFieldGenerator);
+    });
+
+    it("creates StringMultiSelectFieldGenerator for json fields with string_multi_select editor", () => {
+      const field = createMockField({
+        label: "String Multi Select",
+        api_key: "string_multi_select",
+        field_type: "json",
+        appearance: {
+          addons: [],
+          editor: "string_multi_select",
+          parameters: {
+            options: [
+              { label: "Option 1", value: "option1" },
+              { label: "Option 2", value: "option2" },
+            ],
+          },
+        } as any,
+      });
+
+      const generator = factory.createGenerator({ field });
+      expect(generator).toBeInstanceOf(StringMultiSelectFieldGenerator);
+    });
+
+    it("creates StringCheckboxGroupFieldGenerator for json fields with string_checkbox_group editor", () => {
+      const field = createMockField({
+        label: "String Checkbox Group",
+        api_key: "string_checkbox_group",
+        field_type: "json",
+        appearance: {
+          addons: [],
+          editor: "string_checkbox_group",
+          parameters: {
+            options: [
+              { label: "Feature A", value: "feature_a" },
+              { label: "Feature B", value: "feature_b" },
+            ],
+          },
+        } as any,
+      });
+
+      const generator = factory.createGenerator({ field });
+      expect(generator).toBeInstanceOf(StringCheckboxGroupFieldGenerator);
+    });
+
+    it("creates JsonFieldGenerator for json fields with unknown editor", () => {
+      const field = createMockField({
+        label: "Unknown Editor JSON",
+        api_key: "unknown_editor_json",
+        field_type: "json",
+        appearance: {
+          addons: [],
+          editor: "unknown_editor" as any,
+          parameters: {},
+        } as any,
+      });
+
+      const generator = factory.createGenerator({ field });
+      expect(generator).toBeInstanceOf(JsonFieldGenerator);
+    });
+  });
+
   describe("Error handling", () => {
     it("throws error for unsupported field type", () => {
       const field = createMockField({
@@ -569,6 +644,28 @@ describe("FieldGeneratorFactory", () => {
       });
     });
 
+    it("all json generators have correct method names", () => {
+      const testCases = [
+        { editor: "string_multi_select", expected: "addStringMultiSelect" },
+        { editor: "string_checkbox_group", expected: "addStringCheckboxGroup" },
+        { editor: undefined, expected: "addJson" },
+      ];
+
+      testCases.forEach(({ editor, expected }) => {
+        const field = createMockField({
+          label: "Test",
+          api_key: "test",
+          field_type: "json",
+          appearance: editor
+            ? ({ addons: [], editor, parameters: {} } as any)
+            : (undefined as any),
+        });
+
+        const generator = factory.createGenerator({ field });
+        expect(generator.getMethodCallName()).toBe(expected);
+      });
+    });
+
     it("all string generators have correct method names", () => {
       const testCases = [
         {
@@ -658,6 +755,29 @@ describe("FieldGeneratorFactory", () => {
           label: "Test",
           api_key: "test",
           field_type: "text",
+          appearance: editor
+            ? ({ addons: [], editor, parameters: {} } as any)
+            : (undefined as any),
+        });
+
+        const generator = factory.createGenerator({ field });
+        const methodCall = generator.generateMethodCall();
+        expect(methodCall).toContain(`.${generator.getMethodCallName()}(`);
+      });
+    });
+
+    it("all json generators can generate method calls", () => {
+      const editors = [
+        "string_multi_select",
+        "string_checkbox_group",
+        undefined,
+      ];
+
+      editors.forEach((editor) => {
+        const field = createMockField({
+          label: "Test",
+          api_key: "test",
+          field_type: "json",
           appearance: editor
             ? ({ addons: [], editor, parameters: {} } as any)
             : (undefined as any),
