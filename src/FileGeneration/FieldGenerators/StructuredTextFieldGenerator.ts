@@ -59,19 +59,10 @@ export class StructuredTextFieldGenerator extends FieldGenerator<"addStructuredT
 
       // Process structured_text_inline_blocks validator
       if (this.field.validators?.structured_text_inline_blocks) {
-        const inlineBlocks = {
+        // Inline blocks validator doesn't convert item_types - it passes them as-is
+        validators.structured_text_inline_blocks = {
           ...this.field.validators.structured_text_inline_blocks,
-        } as any;
-
-        // Convert item_types from IDs to getModel/getBlock calls if they exist
-        if (inlineBlocks.item_types) {
-          const getCalls = this.convertItemTypeIdsToGetCalls(
-            inlineBlocks.item_types,
-          );
-          inlineBlocks.item_types = getCalls;
-        }
-
-        validators.structured_text_inline_blocks = inlineBlocks;
+        };
       }
 
       // Process structured_text_blocks validator
