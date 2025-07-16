@@ -60,9 +60,8 @@ export class StructuredTextFieldGenerator extends FieldGenerator<"addStructuredT
       // Process structured_text_inline_blocks validator
       if (this.field.validators?.structured_text_inline_blocks) {
         // Inline blocks validator doesn't convert item_types - it passes them as-is
-        validators.structured_text_inline_blocks = {
-          ...this.field.validators.structured_text_inline_blocks,
-        };
+        validators.structured_text_inline_blocks =
+          this.field.validators.structured_text_inline_blocks;
       }
 
       // Process structured_text_blocks validator
