@@ -29,7 +29,7 @@ function createMockItemType(
     inverse_relationships_enabled: false,
     singleton_item: null,
     fields: [],
-    fieldset: [],
+    fieldsets: [],
     presentation_title_field: null,
     presentation_image_field: null,
     title_field: null,

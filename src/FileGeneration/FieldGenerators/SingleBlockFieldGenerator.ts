@@ -11,7 +11,7 @@ export class SingleBlockFieldGenerator extends FieldGenerator<"addSingleBlock"> 
   }
 
   generateBuildConfig(): MethodNameToConfig<"addSingleBlock"> {
-    const config = this.createBaseConfig();
+    const config = this.createBaseConfig() as any;
     const body = this.createBaseBody() as any;
 
     // Extract appearance parameters
@@ -32,9 +32,7 @@ export class SingleBlockFieldGenerator extends FieldGenerator<"addSingleBlock"> 
     }
 
     // Add validators (required for single_block fields)
-    const validators: NonNullable<
-      NonNullable<MethodNameToConfig<"addSingleBlock">["body"]>["validators"]
-    > = {};
+    const validators = {} as any;
 
     // Process single_block_blocks validator (required)
     if (this.field.validators?.single_block_blocks) {

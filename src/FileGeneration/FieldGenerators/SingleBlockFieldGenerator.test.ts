@@ -100,6 +100,7 @@ describe("SingleBlockFieldGenerator", () => {
       const field = createSingleBlockField({
         appearance: {
           editor: "frameless_single_block",
+          addons: [],
           parameters: {
             start_collapsed: true,
           },
@@ -210,6 +211,7 @@ describe("SingleBlockFieldGenerator", () => {
         },
         appearance: {
           editor: "single_block",
+          addons: [],
           parameters: {
             start_collapsed: false,
           },

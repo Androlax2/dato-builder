@@ -309,6 +309,8 @@ describe("StructuredTextFieldGenerator", () => {
         label: "Test Structured Text",
         hint: "Enter rich content",
         appearance: {
+          editor: "structured_text",
+          addons: [],
           parameters: {
             nodes: ["heading", "paragraph"],
             marks: ["strong"],
