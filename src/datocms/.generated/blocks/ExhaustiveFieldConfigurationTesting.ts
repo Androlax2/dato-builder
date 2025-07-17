@@ -1,0 +1,1469 @@
+import BlockBuilder from "../../BlockBuilder";
+import type { BuilderContext } from "../../types/BuilderContext";
+
+/**
+ * Build a "Exhaustive Field Configuration Testing" block in DatoCMS.
+ * Generated from DatoCMS API on 2025-07-16T17:30:37.908Z
+ * API Key: test_exhaustive_fields_block
+ */
+export default async function buildExhaustiveFieldConfigurationTesting({
+  config,
+  getBlock,
+  getModel,
+}: BuilderContext) {
+  return new BlockBuilder({
+    name: "Exhaustive Field Configuration Testing",
+    config,
+    options: {
+      api_key: "test_exhaustive_fields_block",
+      hint: "Tests every possible field configuration combination for blocks",
+    },
+  })
+    .addSingleLineString({
+      label: "Text Basic",
+      options: {
+        heading: false,
+      },
+      body: {
+        api_key: "text_basic",
+      },
+    })
+    .addSingleLineString({
+      label: "Text With Hint",
+      options: {
+        heading: false,
+      },
+      body: {
+        api_key: "text_hint",
+        hint: "This is a hint",
+      },
+    })
+    .addSingleLineString({
+      label: "Text With Default",
+      options: {
+        heading: false,
+      },
+      body: {
+        api_key: "text_default",
+        default_value: "Default text",
+      },
+    })
+    .addSingleLineString({
+      label: "Text Required",
+      options: {
+        heading: false,
+      },
+      body: {
+        api_key: "text_required",
+        validators: {
+          required: {},
+        },
+      },
+    })
+    .addSingleLineString({
+      label: "Text Min Length",
+      options: {
+        heading: false,
+      },
+      body: {
+        api_key: "text_min_length",
+        validators: {
+          length: { min: 5 },
+        },
+      },
+    })
+    .addSingleLineString({
+      label: "Text Max Length",
+      options: {
+        heading: false,
+      },
+      body: {
+        api_key: "text_max_length",
+        validators: {
+          length: {
+            max: 100,
+          },
+        },
+      },
+    })
+    .addSingleLineString({
+      label: "Text Exact Length",
+      options: {
+        heading: false,
+      },
+      body: {
+        api_key: "text_exact_length",
+        validators: {
+          length: { eq: 10 },
+        },
+      },
+    })
+    .addSingleLineString({
+      label: "Text Min Max Length",
+      options: {
+        heading: false,
+      },
+      body: {
+        api_key: "text_min_max_length",
+        validators: {
+          length: {
+            min: 10,
+            max: 50,
+          },
+        },
+      },
+    })
+    .addSingleLineString({
+      label: "Text Custom Pattern",
+      options: {
+        heading: false,
+      },
+      body: {
+        api_key: "text_custom_pattern",
+        validators: {
+          format: {
+            custom_pattern: "/^[A-Z][a-z]+$/",
+          },
+        },
+      },
+    })
+    .addSingleLineString({
+      label: "Text Phone Pattern",
+      options: {
+        heading: false,
+      },
+      body: {
+        api_key: "text_phone_pattern",
+        validators: {
+          format: {
+            custom_pattern: "/d{3}-d{3}-d{4}/",
+            description: "Format: 123-456-7890",
+          },
+        },
+      },
+    })
+    .addSingleLineString({
+      label: "Text Enum",
+      options: {
+        heading: false,
+      },
+      body: {
+        api_key: "text_enum",
+        validators: {
+          enum: {
+            values: ["Option A", "Option B", "Option C"],
+          },
+        },
+      },
+    })
+    .addSingleLineString({
+      label: "Text Required + Length",
+      options: {
+        heading: false,
+      },
+      body: {
+        api_key: "text_required_length",
+        validators: {
+          required: {},
+          length: {
+            min: 5,
+            max: 25,
+          },
+        },
+      },
+    })
+    .addSingleLineString({
+      label: "Text Required + Format",
+      options: {
+        heading: false,
+      },
+      body: {
+        api_key: "text_required_format",
+        validators: {
+          required: {},
+          format: {
+            custom_pattern: "/^[A-Z]{3}\\d{3}$/",
+          },
+        },
+      },
+    })
+    .addSingleLineString({
+      label: "Text All Validators",
+      options: {
+        heading: false,
+      },
+      body: {
+        api_key: "text_all_validators",
+        hint: "Complex validation example",
+        default_value: "ABC123",
+        validators: {
+          required: {},
+          length: {
+            min: 6,
+            max: 20,
+          },
+          format: {
+            custom_pattern: "^[A-Z]{3}\\d{3}$",
+          },
+          enum: {
+            values: ["ABC123", "DEF456", "GHI789"],
+          },
+        },
+      },
+    })
+    .addInteger({
+      label: "Integer Basic",
+      body: {
+        api_key: "integer_basic",
+      },
+    })
+    .addInteger({
+      label: "Integer With Default",
+      body: {
+        api_key: "integer_default",
+        default_value: 42,
+      },
+    })
+    .addInteger({
+      label: "Integer Required",
+      body: {
+        api_key: "integer_required",
+        validators: {
+          required: true,
+        },
+      },
+    })
+    .addInteger({
+      label: "Integer Min Range",
+      body: {
+        api_key: "integer_min",
+        validators: {
+          number_range: {
+            min: 1,
+          },
+        },
+      },
+    })
+    .addInteger({
+      label: "Integer Max Range",
+      body: {
+        api_key: "integer_max",
+        validators: {
+          number_range: {
+            max: 100,
+          },
+        },
+      },
+    })
+    .addInteger({
+      label: "Integer Min Max Range",
+      body: {
+        api_key: "integer_min_max",
+        validators: {
+          number_range: {
+            min: 10,
+            max: 50,
+          },
+        },
+      },
+    })
+    .addInteger({
+      label: "Integer Required + Range",
+      body: {
+        api_key: "integer_required_range",
+        hint: "Number between 1 and 1000",
+        default_value: 100,
+        validators: {
+          required: true,
+          number_range: {
+            min: 1,
+            max: 1000,
+          },
+        },
+      },
+    })
+    .addFloat({
+      label: "Float Basic",
+      body: {
+        api_key: "float_basic",
+      },
+    })
+    .addFloat({
+      label: "Float With Default",
+      body: {
+        api_key: "float_default",
+        default_value: 3.14,
+      },
+    })
+    .addFloat({
+      label: "Float Required",
+      body: {
+        api_key: "float_required",
+        validators: {
+          required: true,
+        },
+      },
+    })
+    .addFloat({
+      label: "Float Min Range",
+      body: {
+        api_key: "float_min",
+        validators: {
+          number_range: {
+            min: 0.1,
+          },
+        },
+      },
+    })
+    .addFloat({
+      label: "Float Max Range",
+      body: {
+        api_key: "float_max",
+        validators: {
+          number_range: {
+            max: 99.9,
+          },
+        },
+      },
+    })
+    .addFloat({
+      label: "Float Min Max Range",
+      body: {
+        api_key: "float_min_max",
+        validators: {
+          number_range: {
+            min: 1.5,
+            max: 10.5,
+          },
+        },
+      },
+    })
+    .addFloat({
+      label: "Float Required + Range",
+      body: {
+        api_key: "float_required_range",
+        hint: "Decimal between 0.1 and 100.0",
+        default_value: 50,
+        validators: {
+          required: true,
+          number_range: {
+            min: 0.1,
+            max: 100,
+          },
+        },
+      },
+    })
+    .addDate({
+      label: "Date Basic",
+      body: {
+        api_key: "date_basic",
+      },
+    })
+    .addDate({
+      label: "Date With Default",
+      body: {
+        api_key: "date_default",
+        default_value: "2024-01-01",
+      },
+    })
+    .addDate({
+      label: "Date Required",
+      body: {
+        api_key: "date_required",
+        validators: {
+          required: true,
+        },
+      },
+    })
+    .addDate({
+      label: "Date Min Range",
+      body: {
+        api_key: "date_min",
+        validators: {
+          date_range: {
+            min: new Date("2024-01-01T00:00:00.000Z"),
+          },
+        },
+      },
+    })
+    .addDate({
+      label: "Date Max Range",
+      body: {
+        api_key: "date_max",
+        validators: {
+          date_range: {
+            max: new Date("2024-12-31T00:00:00.000Z"),
+          },
+        },
+      },
+    })
+    .addDate({
+      label: "Date Min Max Range",
+      body: {
+        api_key: "date_min_max",
+        validators: {
+          date_range: {
+            min: new Date("2024-06-01T00:00:00.000Z"),
+            max: new Date("2024-08-31T00:00:00.000Z"),
+          },
+        },
+      },
+    })
+    .addDate({
+      label: "Date Required + Range",
+      body: {
+        api_key: "date_required_range",
+        hint: "Date in 2024 only",
+        default_value: "2024-07-01",
+        validators: {
+          required: true,
+          date_range: {
+            min: new Date("2024-01-01T00:00:00.000Z"),
+            max: new Date("2024-12-31T00:00:00.000Z"),
+          },
+        },
+      },
+    })
+    .addDateTime({
+      label: "DateTime Basic",
+      body: {
+        api_key: "datetime_basic",
+      },
+    })
+    .addDateTime({
+      label: "DateTime With Default",
+      body: {
+        api_key: "datetime_default",
+        default_value: "2024-01-01T12:00:00+00:00",
+      },
+    })
+    .addDateTime({
+      label: "DateTime Required",
+      body: {
+        api_key: "datetime_required",
+        validators: {
+          required: true,
+        },
+      },
+    })
+    .addDateTime({
+      label: "DateTime Min Range",
+      body: {
+        api_key: "datetime_min",
+        validators: {
+          date_time_range: {
+            min: new Date("2024-01-01T00:00:00+00:00"),
+          },
+        },
+      },
+    })
+    .addDateTime({
+      label: "DateTime Max Range",
+      body: {
+        api_key: "datetime_max",
+        validators: {
+          date_time_range: {
+            max: new Date("2024-12-31T23:59:59+00:00"),
+          },
+        },
+      },
+    })
+    .addDateTime({
+      label: "DateTime Required + Range",
+      body: {
+        api_key: "datetime_required_range",
+        hint: "DateTime in first quarter 2024",
+        default_value: "2024-02-15T12:00:00+00:00",
+        validators: {
+          required: true,
+          date_time_range: {
+            min: new Date("2024-01-01T00:00:00+00:00"),
+            max: new Date("2024-04-01T00:59:59+01:00"),
+          },
+        },
+      },
+    })
+    .addBoolean({
+      label: "Boolean Basic",
+      body: {
+        api_key: "boolean_basic",
+      },
+    })
+    .addBoolean({
+      label: "Boolean Default True",
+      body: {
+        api_key: "boolean_default_true",
+        default_value: true,
+      },
+    })
+    .addBoolean({
+      label: "Boolean Default False",
+      body: {
+        api_key: "boolean_default_false",
+        default_value: false,
+      },
+    })
+    .addBoolean({
+      label: "Boolean With Hint",
+      body: {
+        api_key: "boolean_hint",
+        hint: "Check this box to enable feature",
+      },
+    })
+    .addStringSelect({
+      label: "String Select Basic",
+      options: [
+        {
+          label: "Option 1",
+          value: "option1",
+        },
+        {
+          label: "Option 2",
+          value: "option2",
+        },
+        {
+          label: "Option 3",
+          value: "option3",
+        },
+      ],
+      body: {
+        api_key: "string_select_basic",
+      },
+    })
+    .addStringSelect({
+      label: "String Select Required",
+      options: [
+        {
+          label: "Red",
+          value: "red",
+          hint: "The color red",
+        },
+        {
+          label: "Green",
+          value: "green",
+          hint: "The color green",
+        },
+        {
+          label: "Blue",
+          value: "blue",
+          hint: "The color blue",
+        },
+      ],
+      body: {
+        api_key: "string_select_required",
+        hint: "Choose your favorite color",
+        validators: {
+          required: {},
+        },
+      },
+    })
+    .addStringRadioGroup({
+      label: "String Radio Basic",
+      radios: [
+        {
+          label: "Small",
+          value: "s",
+        },
+        {
+          label: "Medium",
+          value: "m",
+        },
+        {
+          label: "Large",
+          value: "l",
+        },
+      ],
+      body: {
+        api_key: "string_radio_basic",
+      },
+    })
+    .addStringRadioGroup({
+      label: "String Radio Required",
+      radios: [
+        {
+          label: "High Priority",
+          value: "high",
+          hint: "Urgent items",
+        },
+        {
+          label: "Medium Priority",
+          value: "medium",
+          hint: "Standard items",
+        },
+        {
+          label: "Low Priority",
+          value: "low",
+          hint: "Future items",
+        },
+      ],
+      body: {
+        api_key: "string_radio_required",
+        hint: "Select priority level",
+        validators: {
+          required: {},
+        },
+      },
+    })
+    .addEmail({
+      label: "Email Basic",
+      body: {
+        api_key: "email_basic",
+        validators: {
+          format: {
+            predefined_pattern: "email",
+          },
+        },
+      },
+    })
+    .addEmail({
+      label: "Email Required",
+      body: {
+        api_key: "email_required",
+        validators: {
+          required: {},
+          format: {
+            predefined_pattern: "email",
+          },
+        },
+      },
+    })
+    .addEmail({
+      label: "Email With Length",
+      body: {
+        api_key: "email_length",
+        validators: {
+          format: {
+            predefined_pattern: "email",
+          },
+          length: {
+            min: 5,
+            max: 100,
+          },
+        },
+      },
+    })
+    .addEmail({
+      label: "Email Required + Length",
+      body: {
+        api_key: "email_required_length",
+        hint: "Valid email address required",
+        default_value: "user@example.com",
+        validators: {
+          required: {},
+          format: {
+            predefined_pattern: "email",
+          },
+          length: {
+            min: 10,
+            max: 50,
+          },
+        },
+      },
+    })
+    .addUrl({
+      label: "URL Basic",
+      body: {
+        api_key: "url_basic",
+        validators: {
+          format: {
+            predefined_pattern: "url",
+          },
+        },
+      },
+    })
+    .addUrl({
+      label: "URL Required",
+      body: {
+        api_key: "url_required",
+        validators: {
+          required: {},
+          format: {
+            predefined_pattern: "url",
+          },
+        },
+      },
+    })
+    .addUrl({
+      label: "URL With Length",
+      body: {
+        api_key: "url_length",
+        validators: {
+          format: {
+            predefined_pattern: "url",
+          },
+          length: {
+            min: 10,
+            max: 200,
+          },
+        },
+      },
+    })
+    .addUrl({
+      label: "URL Required + Length",
+      body: {
+        api_key: "url_required_length",
+        hint: "Valid URL required",
+        default_value: "https://example.com",
+        validators: {
+          required: {},
+          format: {
+            predefined_pattern: "url",
+          },
+          length: {
+            min: 10,
+            max: 100,
+          },
+        },
+      },
+    })
+    .addMarkdown({
+      label: "MultiLine Basic",
+      toolbar: [
+        "heading",
+        "bold",
+        "italic",
+        "strikethrough",
+        "code",
+        "unordered_list",
+        "ordered_list",
+        "quote",
+        "link",
+        "image",
+        "fullscreen",
+      ],
+      body: {
+        api_key: "multiline_basic",
+      },
+    })
+    .addMarkdown({
+      label: "MultiLine Required",
+      toolbar: [
+        "heading",
+        "bold",
+        "italic",
+        "strikethrough",
+        "code",
+        "unordered_list",
+        "ordered_list",
+        "quote",
+        "link",
+        "image",
+        "fullscreen",
+      ],
+      body: {
+        api_key: "multiline_required",
+        validators: {
+          required: true,
+        },
+      },
+    })
+    .addMarkdown({
+      label: "MultiLine Length",
+      toolbar: [
+        "heading",
+        "bold",
+        "italic",
+        "strikethrough",
+        "code",
+        "unordered_list",
+        "ordered_list",
+        "quote",
+        "link",
+        "image",
+        "fullscreen",
+      ],
+      body: {
+        api_key: "multiline_length",
+        validators: {
+          length: {
+            min: 10,
+            max: 500,
+          },
+        },
+      },
+    })
+    .addMarkdown({
+      label: "MultiLine All Validators",
+      toolbar: [
+        "heading",
+        "bold",
+        "italic",
+        "strikethrough",
+        "code",
+        "unordered_list",
+        "ordered_list",
+        "quote",
+        "link",
+        "image",
+        "fullscreen",
+      ],
+      body: {
+        api_key: "multiline_all_validators",
+        hint: "Multi-line text with validation",
+        default_value: "This is a multi-line text\nwith line breaks",
+        validators: {
+          required: true,
+          length: {
+            min: 20,
+            max: 1000,
+          },
+          format: {
+            custom_pattern: ".*\\n.*",
+          },
+        },
+      },
+    })
+    .addSingleLineString({
+      label: "Heading Basic",
+      options: {
+        heading: true,
+      },
+      body: {
+        api_key: "heading_basic",
+      },
+    })
+    .addSingleLineString({
+      label: "Heading Required",
+      options: {
+        heading: true,
+      },
+      body: {
+        api_key: "heading_required",
+        validators: {
+          required: {},
+        },
+      },
+    })
+    .addSingleLineString({
+      label: "Heading Length",
+      options: {
+        heading: true,
+      },
+      body: {
+        api_key: "heading_length",
+        validators: {
+          length: { max: 60 },
+        },
+      },
+    })
+    .addTextarea({
+      label: "Textarea Basic",
+      body: {
+        api_key: "textarea_basic",
+      },
+    })
+    .addTextarea({
+      label: "Textarea Required",
+      body: {
+        api_key: "textarea_required",
+        validators: {
+          required: true,
+        },
+      },
+    })
+    .addTextarea({
+      label: "Textarea Length",
+      body: {
+        api_key: "textarea_length",
+        validators: {
+          length: {
+            min: 10,
+            max: 500,
+          },
+        },
+      },
+    })
+    .addMarkdown({
+      label: "Markdown Basic",
+      toolbar: [
+        "heading",
+        "bold",
+        "italic",
+        "strikethrough",
+        "code",
+        "unordered_list",
+        "ordered_list",
+        "quote",
+        "link",
+        "image",
+        "fullscreen",
+      ],
+      body: {
+        api_key: "markdown_basic",
+      },
+    })
+    .addMarkdown({
+      label: "Markdown Required",
+      toolbar: [
+        "heading",
+        "bold",
+        "italic",
+        "strikethrough",
+        "code",
+        "unordered_list",
+        "ordered_list",
+        "quote",
+        "link",
+        "image",
+        "fullscreen",
+      ],
+      body: {
+        api_key: "markdown_required",
+        validators: {
+          required: true,
+        },
+      },
+    })
+    .addMarkdown({
+      label: "Markdown Full Toolbar",
+      toolbar: [
+        "heading",
+        "bold",
+        "italic",
+        "strikethrough",
+        "code",
+        "unordered_list",
+        "ordered_list",
+        "quote",
+        "link",
+        "image",
+        "fullscreen",
+      ],
+      body: {
+        api_key: "markdown_full_toolbar",
+        validators: {
+          length: {
+            min: 20,
+            max: 2000,
+          },
+        },
+      },
+    })
+    .addWysiwyg({
+      label: "WYSIWYG Basic",
+      toolbar: [
+        "format",
+        "bold",
+        "italic",
+        "strikethrough",
+        "code",
+        "ordered_list",
+        "unordered_list",
+        "quote",
+        "table",
+        "link",
+        "image",
+        "show_source",
+        "undo",
+        "redo",
+        "align_left",
+        "align_center",
+        "align_right",
+        "align_justify",
+        "outdent",
+        "indent",
+        "fullscreen",
+      ],
+      body: {
+        api_key: "wysiwyg_basic",
+      },
+    })
+    .addWysiwyg({
+      label: "WYSIWYG Required",
+      toolbar: [
+        "format",
+        "bold",
+        "italic",
+        "strikethrough",
+        "code",
+        "ordered_list",
+        "unordered_list",
+        "quote",
+        "table",
+        "link",
+        "image",
+        "show_source",
+        "undo",
+        "redo",
+        "align_left",
+        "align_center",
+        "align_right",
+        "align_justify",
+        "outdent",
+        "indent",
+        "fullscreen",
+      ],
+      body: {
+        api_key: "wysiwyg_required",
+        validators: {
+          required: true,
+        },
+      },
+    })
+    .addWysiwyg({
+      label: "WYSIWYG Full Toolbar",
+      toolbar: [
+        "format",
+        "bold",
+        "italic",
+        "strikethrough",
+        "code",
+        "ordered_list",
+        "unordered_list",
+        "quote",
+        "table",
+        "link",
+        "image",
+        "show_source",
+        "undo",
+        "redo",
+        "align_left",
+        "align_center",
+        "align_right",
+        "align_justify",
+        "outdent",
+        "indent",
+        "fullscreen",
+      ],
+      body: {
+        api_key: "wysiwyg_full_toolbar",
+        validators: {
+          length: {
+            min: 50,
+            max: 5000,
+          },
+        },
+      },
+    })
+    .addBooleanRadioGroup({
+      label: "Boolean Radio Basic",
+      positive_radio: {
+        label: "Yes",
+      },
+      negative_radio: {
+        label: "No",
+      },
+      body: {
+        api_key: "boolean_radio_basic",
+      },
+    })
+    .addBooleanRadioGroup({
+      label: "Boolean Radio Custom",
+      positive_radio: {
+        label: "Yes",
+        hint: "Choose yes",
+      },
+      negative_radio: {
+        label: "No",
+        hint: "Choose no",
+      },
+      body: {
+        api_key: "boolean_radio_custom",
+        hint: "Select yes or no",
+      },
+    })
+    .addStringMultiSelect({
+      label: "String Multi Basic",
+      options: [
+        {
+          label: "Option 1",
+          value: "opt1",
+        },
+        {
+          label: "Option 2",
+          value: "opt2",
+        },
+        {
+          label: "Option 3",
+          value: "opt3",
+        },
+      ],
+    })
+    .addStringMultiSelect({
+      label: "String Multi Required",
+      options: [
+        {
+          label: "Red",
+          value: "red",
+        },
+        {
+          label: "Green",
+          value: "green",
+        },
+        {
+          label: "Blue",
+          value: "blue",
+        },
+      ],
+      body: {
+        api_key: "string_multi_required",
+        validators: {
+          required: true,
+        },
+      },
+    })
+    .addStringCheckboxGroup({
+      label: "String Checkbox Basic",
+      options: [
+        {
+          label: "Feature A",
+          value: "feat_a",
+        },
+        {
+          label: "Feature B",
+          value: "feat_b",
+        },
+        {
+          label: "Feature C",
+          value: "feat_c",
+        },
+      ],
+    })
+    .addStringCheckboxGroup({
+      label: "String Checkbox Required",
+      options: [
+        {
+          label: "High",
+          value: "high",
+        },
+        {
+          label: "Medium",
+          value: "medium",
+        },
+        {
+          label: "Low",
+          value: "low",
+        },
+      ],
+      body: {
+        api_key: "string_checkbox_required",
+        validators: {
+          required: true,
+        },
+      },
+    })
+    .addLink({
+      label: "Link Basic",
+      appearance: "compact",
+      body: {
+        api_key: "link_basic",
+        validators: {
+          item_item_type: {
+            on_publish_with_unpublished_references_strategy: "fail",
+            on_reference_unpublish_strategy: "delete_references",
+            on_reference_delete_strategy: "delete_references",
+            item_types: [await getModel("TestReferenceModel")],
+          },
+        },
+      },
+    })
+    .addLink({
+      label: "Link Required",
+      appearance: "compact",
+      body: {
+        api_key: "link_required",
+        validators: {
+          item_item_type: {
+            on_publish_with_unpublished_references_strategy: "fail",
+            on_reference_unpublish_strategy: "delete_references",
+            on_reference_delete_strategy: "delete_references",
+            item_types: [await getModel("TestReferenceModel")],
+          },
+          required: true,
+        },
+      },
+    })
+    .addLink({
+      label: "Link Compact",
+      appearance: "compact",
+      body: {
+        api_key: "link_compact",
+        hint: "Compact appearance",
+        validators: {
+          item_item_type: {
+            on_publish_with_unpublished_references_strategy: "fail",
+            on_reference_unpublish_strategy: "delete_references",
+            on_reference_delete_strategy: "delete_references",
+            item_types: [await getModel("TestReferenceModel")],
+          },
+        },
+      },
+    })
+    .addLink({
+      label: "Link Expanded",
+      appearance: "expanded",
+      body: {
+        api_key: "link_expanded",
+        hint: "Expanded appearance",
+        validators: {
+          item_item_type: {
+            on_publish_with_unpublished_references_strategy: "fail",
+            on_reference_unpublish_strategy: "delete_references",
+            on_reference_delete_strategy: "delete_references",
+            item_types: [await getModel("TestReferenceModel")],
+          },
+        },
+      },
+    })
+    .addLinks({
+      label: "Links Basic",
+      appearance: "compact",
+      body: {
+        api_key: "links_basic",
+        validators: {
+          items_item_type: {
+            on_publish_with_unpublished_references_strategy: "fail",
+            on_reference_unpublish_strategy: "fail",
+            on_reference_delete_strategy: "delete_references",
+            item_types: [await getModel("TestReferenceModel")],
+          },
+        },
+      },
+    })
+    .addLinks({
+      label: "Links Required",
+      appearance: "compact",
+      body: {
+        api_key: "links_required",
+        validators: {
+          items_item_type: {
+            on_publish_with_unpublished_references_strategy: "fail",
+            on_reference_unpublish_strategy: "fail",
+            on_reference_delete_strategy: "delete_references",
+            item_types: [await getModel("TestReferenceModel")],
+          },
+        },
+      },
+    })
+    .addLinks({
+      label: "Links Compact",
+      appearance: "compact",
+      body: {
+        api_key: "links_compact",
+        validators: {
+          items_item_type: {
+            on_publish_with_unpublished_references_strategy: "fail",
+            on_reference_unpublish_strategy: "fail",
+            on_reference_delete_strategy: "delete_references",
+            item_types: [await getModel("TestReferenceModel")],
+          },
+          size: {
+            min: 1,
+            max: 5,
+          },
+        },
+      },
+    })
+    .addLinks({
+      label: "Links Expanded",
+      appearance: "expanded",
+      body: {
+        api_key: "links_expanded",
+        validators: {
+          items_item_type: {
+            on_publish_with_unpublished_references_strategy: "fail",
+            on_reference_unpublish_strategy: "fail",
+            on_reference_delete_strategy: "delete_references",
+            item_types: [await getModel("TestReferenceModel")],
+          },
+          size: {
+            min: 2,
+            max: 10,
+          },
+        },
+      },
+    })
+    .addModularContent({
+      label: "Modular Content Basic",
+      start_collapsed: false,
+      body: {
+        api_key: "modular_content_basic",
+        validators: {
+          rich_text_blocks: {
+            item_types: [await getBlock("TestReferenceBlock")],
+          },
+        },
+      },
+    })
+    .addModularContent({
+      label: "Modular Content Required",
+      start_collapsed: false,
+      body: {
+        api_key: "modular_content_required",
+        validators: {
+          rich_text_blocks: {
+            item_types: [await getBlock("TestReferenceBlock")],
+          },
+        },
+      },
+    })
+    .addModularContent({
+      label: "Modular Content Collapsed",
+      start_collapsed: true,
+      body: {
+        api_key: "modular_content_collapsed",
+        validators: {
+          rich_text_blocks: {
+            item_types: [await getBlock("TestReferenceBlock")],
+          },
+          size: {
+            min: 1,
+            max: 20,
+          },
+        },
+      },
+    })
+    .addSingleBlock({
+      label: "Single Block Basic",
+      type: "framed_single_block",
+      start_collapsed: false,
+      body: {
+        api_key: "single_block_basic",
+        validators: {
+          single_block_blocks: {
+            item_types: [await getBlock("TestReferenceBlock")],
+          },
+        },
+      },
+    })
+    .addSingleBlock({
+      label: "Single Block Required",
+      type: "framed_single_block",
+      start_collapsed: false,
+      body: {
+        api_key: "single_block_required",
+        validators: {
+          single_block_blocks: {
+            item_types: [await getBlock("TestReferenceBlock")],
+          },
+          required: true,
+        },
+      },
+    })
+    .addSingleBlock({
+      label: "Single Block Framed",
+      type: "framed_single_block",
+      start_collapsed: false,
+      body: {
+        api_key: "single_block_framed",
+        validators: {
+          single_block_blocks: {
+            item_types: [await getBlock("TestReferenceBlock")],
+          },
+        },
+        hint: "Framed appearance",
+      },
+    })
+    .addSingleBlock({
+      label: "Single Block Frameless",
+      type: "frameless_single_block",
+      body: {
+        api_key: "single_block_frameless",
+        validators: {
+          single_block_blocks: {
+            item_types: [await getBlock("TestReferenceBlock")],
+          },
+        },
+        hint: "Frameless appearance",
+      },
+    })
+    .addStructuredText({
+      label: "Structured Text Basic",
+      nodes: ["blockquote", "code", "heading", "link", "list", "thematicBreak"],
+      marks: [
+        "strong",
+        "emphasis",
+        "underline",
+        "strikethrough",
+        "code",
+        "highlight",
+      ],
+      heading_levels: [1, 2, 3, 4, 5, 6],
+      blocks_start_collapsed: false,
+      show_links_target_blank: false,
+      show_links_meta_editor: false,
+      body: {
+        api_key: "structured_text_basic",
+        validators: {
+          structured_text_blocks: {
+            item_types: [],
+          },
+          structured_text_links: {
+            on_publish_with_unpublished_references_strategy: "fail",
+            on_reference_unpublish_strategy: "delete_references",
+            on_reference_delete_strategy: "delete_references",
+            item_types: [],
+          },
+        },
+      },
+    })
+    .addStructuredText({
+      label: "Structured Text Required",
+      nodes: ["blockquote", "code", "heading", "link", "list", "thematicBreak"],
+      marks: [
+        "strong",
+        "emphasis",
+        "underline",
+        "strikethrough",
+        "code",
+        "highlight",
+      ],
+      heading_levels: [1, 2, 3, 4, 5, 6],
+      blocks_start_collapsed: false,
+      show_links_target_blank: false,
+      show_links_meta_editor: false,
+      body: {
+        api_key: "structured_text_required",
+        validators: {
+          length: {
+            min: 1,
+            max: 10000,
+          },
+          structured_text_blocks: {
+            item_types: [],
+          },
+          structured_text_links: {
+            on_publish_with_unpublished_references_strategy: "fail",
+            on_reference_unpublish_strategy: "delete_references",
+            on_reference_delete_strategy: "delete_references",
+            item_types: [],
+          },
+        },
+      },
+    })
+    .addStructuredText({
+      label: "Structured Text Full Config",
+      nodes: ["blockquote", "code", "heading", "link", "list", "thematicBreak"],
+      marks: [
+        "strong",
+        "emphasis",
+        "underline",
+        "strikethrough",
+        "code",
+        "highlight",
+      ],
+      heading_levels: [1, 2, 3, 4, 5, 6],
+      blocks_start_collapsed: true,
+      show_links_target_blank: true,
+      show_links_meta_editor: true,
+      body: {
+        api_key: "structured_text_full_config",
+        validators: {
+          length: {
+            min: 100,
+            max: 10000,
+          },
+          structured_text_blocks: {
+            item_types: [],
+          },
+          structured_text_links: {
+            on_publish_with_unpublished_references_strategy: "fail",
+            on_reference_unpublish_strategy: "delete_references",
+            on_reference_delete_strategy: "delete_references",
+            item_types: [],
+          },
+        },
+        hint: "Full structured text configuration",
+      },
+    });
+}
