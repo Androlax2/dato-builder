@@ -1,7 +1,9 @@
 export class ImportGenerator {
-  private static readonly BUILDER_CONTEXT_IMPORT =
-    'import type { BuilderContext } from "../../types/BuilderContext";';
-  private static readonly IMPORT_PATH_PREFIX = "../../";
+  private readonly isLocalDevelopment: boolean;
+
+  constructor(isLocalDevelopment = false) {
+    this.isLocalDevelopment = isLocalDevelopment;
+  }
 
   public generateImports(builderClass: string): string {
     if (builderClass === null || builderClass === undefined) {
@@ -11,11 +13,22 @@ export class ImportGenerator {
     }
 
     const builderImport = this.createBuilderImport(builderClass);
+    const contextImport = this.createBuilderContextImport();
     return `${builderImport};
-${ImportGenerator.BUILDER_CONTEXT_IMPORT}`;
+${contextImport}`;
   }
 
   private createBuilderImport(builderClass: string): string {
-    return `import ${builderClass} from "${ImportGenerator.IMPORT_PATH_PREFIX}${builderClass}"`;
+    if (this.isLocalDevelopment) {
+      return `import ${builderClass} from "@/${builderClass}"`;
+    }
+    return `import { ${builderClass} } from "dato-builder"`;
+  }
+
+  private createBuilderContextImport(): string {
+    if (this.isLocalDevelopment) {
+      return 'import type { BuilderContext } from "@/types/BuilderContext";';
+    }
+    return 'import type { BuilderContext } from "dato-builder";';
   }
 }

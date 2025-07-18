@@ -126,6 +126,133 @@ export abstract class FieldGenerator<
   }
 
   /**
+   * Process unique validator if present.
+   * Sets validators.unique = true if the field has a unique validator.
+   * Generic to maintain type safety with specific validator types.
+   */
+  // biome-ignore lint/suspicious/noExplicitAny: Generic validator type requires any for flexible validator structures
+  protected processUniqueValidator<T extends { unique?: any }>(
+    validators: T,
+  ): void {
+    if (this.field.validators?.unique) {
+      // biome-ignore lint/suspicious/noExplicitAny: Type casting required for dynamic validator assignment
+      (validators as any).unique = true;
+    }
+  }
+
+  /**
+   * Process format validator if present, converting string patterns to RegExp.
+   * Handles custom_pattern conversion from string to RegExp.
+   * Generic to maintain type safety with specific validator types.
+   */
+  // biome-ignore lint/suspicious/noExplicitAny: Generic validator type requires any for flexible validator structures
+  protected processFormatValidator<T extends { format?: any }>(
+    validators: T,
+  ): void {
+    const formatValidator = this.field.validators?.format as any;
+    if (!formatValidator) {
+      return;
+    }
+
+    const processedFormat: any = {};
+
+    // Copy predefined patterns as-is
+    if (formatValidator.predefined_pattern) {
+      processedFormat.predefined_pattern = formatValidator.predefined_pattern;
+    }
+
+    // Convert custom_pattern from string to RegExp
+    if (formatValidator.custom_pattern) {
+      try {
+        // If it's already a RegExp, keep it
+        if (formatValidator.custom_pattern instanceof RegExp) {
+          processedFormat.custom_pattern = formatValidator.custom_pattern;
+        } else if (
+          typeof formatValidator.custom_pattern === "string" &&
+          formatValidator.custom_pattern.trim()
+        ) {
+          // Convert string to RegExp
+          processedFormat.custom_pattern = new RegExp(
+            formatValidator.custom_pattern,
+          );
+        } else if (
+          typeof formatValidator.custom_pattern === "object" &&
+          Object.keys(formatValidator.custom_pattern).length === 0
+        ) {
+          // Skip empty objects {} that come from DatoCMS API when RegExp isn't properly stored
+          console.warn(
+            `Skipping empty custom_pattern object for field ${this.field.api_key}`,
+          );
+        } else {
+          // If it's something else, skip it completely
+          console.warn(
+            `Skipping invalid custom_pattern for field ${this.field.api_key}: not a string or RegExp, got:`,
+            typeof formatValidator.custom_pattern,
+          );
+        }
+      } catch (error) {
+        // If RegExp conversion fails, log error and skip
+        console.warn(
+          `Failed to convert custom_pattern to RegExp for field ${this.field.api_key}:`,
+          error,
+        );
+      }
+    }
+
+    // Copy description if present
+    if (formatValidator.description) {
+      processedFormat.description = formatValidator.description;
+    }
+
+    if (Object.keys(processedFormat).length > 0) {
+      // biome-ignore lint/suspicious/noExplicitAny: Type casting required for dynamic validator assignment
+      (validators as any).format = processedFormat;
+    }
+  }
+
+  /**
+   * Process length validator if present.
+   * Copies length validator data as-is since it's already in correct format.
+   */
+  // biome-ignore lint/suspicious/noExplicitAny: Generic validator type requires any for flexible validator structures
+  protected processLengthValidator<T extends { length?: any }>(
+    validators: T,
+  ): void {
+    if (this.field.validators?.length) {
+      // biome-ignore lint/suspicious/noExplicitAny: Type casting required for dynamic validator assignment
+      (validators as any).length = this.field.validators.length;
+    }
+  }
+
+  /**
+   * Process number_range validator if present.
+   * Copies number_range validator data as-is since it's already in correct format.
+   */
+  // biome-ignore lint/suspicious/noExplicitAny: Generic validator type requires any for flexible validator structures
+  protected processNumberRangeValidator<T extends { number_range?: any }>(
+    validators: T,
+  ): void {
+    if (this.field.validators?.number_range) {
+      // biome-ignore lint/suspicious/noExplicitAny: Type casting required for dynamic validator assignment
+      (validators as any).number_range = this.field.validators.number_range;
+    }
+  }
+
+  /**
+   * Process enum validator if present.
+   * Copies enum validator data as-is since it's already in correct format.
+   */
+  // biome-ignore lint/suspicious/noExplicitAny: Generic validator type requires any for flexible validator structures
+  protected processEnumValidator<T extends { enum?: any }>(
+    validators: T,
+  ): void {
+    if (this.field.validators?.enum) {
+      // biome-ignore lint/suspicious/noExplicitAny: Type casting required for dynamic validator assignment
+      (validators as any).enum = this.field.validators.enum;
+    }
+  }
+
+  /**
    * Check if body has any content (typically used to decide whether to include body property).
    * Generic to maintain type safety with specific body types.
    */
@@ -208,6 +335,9 @@ export abstract class FieldGenerator<
     if (obj === undefined) return "undefined";
     if (typeof obj === "string") return JSON.stringify(obj);
     if (typeof obj === "number" || typeof obj === "boolean") return String(obj);
+    if (obj instanceof RegExp) {
+      return obj.toString();
+    }
     if (obj instanceof Date) {
       // Check if this Date has an original string we should preserve
       // biome-ignore lint/suspicious/noExplicitAny: Date object may have custom _originalString property
@@ -226,6 +356,11 @@ export abstract class FieldGenerator<
       // Handle async call markers
       if (obj.__async_call) {
         return obj.__async_call;
+      }
+
+      // Skip empty objects that might be invalid RegExp patterns
+      if (Object.keys(obj).length === 0) {
+        return "{}";
       }
 
       const entries = Object.entries(obj)

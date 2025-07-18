@@ -215,7 +215,7 @@ describe("LinkFieldGenerator", () => {
       });
 
       const config = linkGenerator.generateBuildConfig();
-      expect(config.body?.validators?.unique).toEqual({});
+      expect(config.body?.validators?.unique).toBe(true);
     });
 
     it("includes hint when present", () => {

@@ -20,6 +20,7 @@ export interface SyncOptions {
   logger: ConsoleLogger;
   dryRun?: boolean;
   force?: boolean;
+  localDevelopment?: boolean;
 }
 
 export class DatoCmsSync {
@@ -28,13 +29,18 @@ export class DatoCmsSync {
   private readonly config: Required<DatoBuilderConfig>;
   private readonly cache: CacheManager;
   private readonly fileGenerationService: FileGenerationService;
+  private readonly isLocalDevelopment: boolean;
 
   constructor(options: SyncOptions) {
     this.config = options.config;
     this.logger = options.logger;
     this.cache = options.cache;
-    this.api = new DatoApi(buildClient({ apiToken: this.config.apiToken }), this.logger);
+    this.api = new DatoApi(
+      buildClient({ apiToken: this.config.apiToken }),
+      this.logger,
+    );
     this.fileGenerationService = new FileGenerationService();
+    this.isLocalDevelopment = options.localDevelopment ?? false;
   }
 
   /**
@@ -46,9 +52,9 @@ export class DatoCmsSync {
     try {
       const response = await this.api.call(
         () => this.api.client.itemTypes.list(),
-        3, 
-        500, 
-        'itemTypes.list()'
+        3,
+        500,
+        "itemTypes.list()",
       );
       this.logger.debug(`Fetched ${response.length} item types from DatoCMS`);
       return response;
@@ -69,9 +75,9 @@ export class DatoCmsSync {
     try {
       const fields = await this.api.call(
         () => this.api.client.fields.list(itemTypeId),
-        3, 
-        500, 
-        `fields.list(${itemTypeId})`
+        3,
+        500,
+        `fields.list(${itemTypeId})`,
       );
       this.logger.trace(
         `Fetched ${fields.length} fields for item type: ${itemTypeId}`,
@@ -248,6 +254,7 @@ export class DatoCmsSync {
           itemType,
           fields,
           type,
+          localDevelopment: this.isLocalDevelopment,
         });
 
         // Determine file path

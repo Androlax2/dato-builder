@@ -18,6 +18,7 @@ export interface FileGeneratorConfig {
   type: "block" | "model";
   itemTypeReferences: Map<string, ItemType>;
   formatting?: Options;
+  localDevelopment?: boolean;
 }
 
 /**
@@ -36,7 +37,7 @@ export class FileGenerator {
     private readonly config: FileGeneratorConfig,
     fieldGeneratorFactory: FieldGeneratorFactory,
   ) {
-    this.importGenerator = new ImportGenerator();
+    this.importGenerator = new ImportGenerator(this.config.localDevelopment);
     this.builderConfigGenerator = new BuilderConfigGenerator();
     this.fieldMethodGenerator = new FieldMethodGenerator(
       fieldGeneratorFactory,

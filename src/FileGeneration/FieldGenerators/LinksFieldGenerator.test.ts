@@ -258,7 +258,7 @@ describe("LinksFieldGenerator", () => {
 
       const config = linksGenerator.generateBuildConfig();
       // biome-ignore lint/suspicious/noExplicitAny: Type casting required for test assertions on dynamic validator structures
-      expect((config.body?.validators as any)?.unique).toEqual({});
+      expect((config.body?.validators as any)?.unique).toBe(true);
     });
 
     it("includes hint when present", () => {
@@ -304,7 +304,7 @@ describe("LinksFieldGenerator", () => {
       // biome-ignore lint/suspicious/noExplicitAny: Type casting required for test assertions on dynamic validator structures
       expect((config.body?.validators as any)?.required).toBe(true);
       // biome-ignore lint/suspicious/noExplicitAny: Type casting required for test assertions on dynamic validator structures
-      expect((config.body?.validators as any)?.unique).toEqual({});
+      expect((config.body?.validators as any)?.unique).toBe(true);
     });
   });
 

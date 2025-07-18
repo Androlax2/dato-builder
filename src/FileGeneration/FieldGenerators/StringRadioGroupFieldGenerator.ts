@@ -60,12 +60,9 @@ export class StringRadioGroupFieldGenerator extends FieldGenerator<"addStringRad
       >["validators"]
     >;
 
+    // Process each validator type individually to ensure proper conversion
     this.processRequiredValidator(validators);
-
-    // Copy all validators from field to body
-    if (this.field.validators) {
-      Object.assign(validators, this.field.validators);
-    }
+    this.processUniqueValidator(validators);
 
     if (Object.keys(validators).length > 0) {
       body.validators = validators;

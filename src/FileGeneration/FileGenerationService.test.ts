@@ -277,6 +277,37 @@ describe("FileGenerationService", () => {
         }),
       ).rejects.toThrow("Generation failed");
     });
+
+    it("should pass localDevelopment parameter to FileGenerator", async () => {
+      await service.generateFile({
+        itemType: mockItemType,
+        fields: mockFields,
+        type: "block",
+        localDevelopment: true,
+      });
+
+      expect(MockedFileGenerator).toHaveBeenCalledWith(
+        expect.objectContaining({
+          localDevelopment: true,
+        }),
+        expect.any(Object),
+      );
+    });
+
+    it("should default localDevelopment to undefined when not provided", async () => {
+      await service.generateFile({
+        itemType: mockItemType,
+        fields: mockFields,
+        type: "block",
+      });
+
+      expect(MockedFileGenerator).toHaveBeenCalledWith(
+        expect.objectContaining({
+          localDevelopment: undefined,
+        }),
+        expect.any(Object),
+      );
+    });
   });
 
   describe("integration scenarios", () => {

@@ -1,9 +1,12 @@
 {
+  "extends": "./tsconfig.json",
   "exclude": [
     "node_modules",
     "bin",
     "build",
     "coverage",
+    "tests",
+    "**/*.test.ts",
     "*.js",
     "*.mjs",
     "*.ts"
@@ -16,16 +19,15 @@
     "lib": ["es6"],
     "allowJs": true,
     "outDir": "build",
-    "rootDir": ".",
+    "rootDir": "src",
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"],
-      "@tests/*": ["tests/*"]
+      "@/*": ["src/*"]
     },
     "strict": true,
     "noImplicitAny": true,
     "esModuleInterop": true,
     "resolveJsonModule": true
   },
-  "include": ["src/**/*", "tests/**/*", "src/datocms/.generated/**/*"]
+  "include": ["src/**/*"]
 }

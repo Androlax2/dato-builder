@@ -74,18 +74,11 @@ export class LinksFieldGenerator extends FieldGenerator<"addLinks"> {
     // Add optional validators
     // biome-ignore lint/suspicious/noExplicitAny: Type casting required for validator processing
     this.processRequiredValidator(validators as any);
+    this.processUniqueValidator(validators as any);
 
     if (this.field.validators?.size) {
       // biome-ignore lint/suspicious/noExplicitAny: Type casting required for dynamic validator assignment
       (validators as any).size = this.field.validators.size;
-    }
-
-    if (
-      this.field.validators?.unique !== undefined &&
-      this.field.validators.unique !== null
-    ) {
-      // biome-ignore lint/suspicious/noExplicitAny: Type casting required for dynamic validator assignment
-      (validators as any).unique = this.field.validators.unique;
     }
 
     if (Object.keys(validators).length > 0) {

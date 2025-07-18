@@ -9,6 +9,7 @@ export type FileGenerationRequest = {
   itemType: ItemType;
   fields: Field[];
   type: "block" | "model";
+  localDevelopment?: boolean;
 };
 
 /**
@@ -43,6 +44,7 @@ export class FileGenerationService {
         fields: request.fields,
         type: request.type,
         itemTypeReferences: this.itemTypeReferences,
+        localDevelopment: request.localDevelopment,
       },
       this.fieldGeneratorFactory,
     );

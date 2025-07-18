@@ -71,14 +71,7 @@ export class LinkFieldGenerator extends FieldGenerator<"addLink"> {
 
     // Add optional validators
     this.processRequiredValidator(validators);
-
-    if (
-      this.field.validators?.unique !== undefined &&
-      this.field.validators.unique !== null
-    ) {
-      // biome-ignore lint/suspicious/noExplicitAny: Type casting required for dynamic validator assignment
-      (validators as any).unique = this.field.validators.unique;
-    }
+    this.processUniqueValidator(validators);
 
     if (Object.keys(validators).length > 0) {
       body.validators = validators;

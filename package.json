@@ -18,7 +18,7 @@
   },
   "scripts": {
     "dev": "npx nodemon",
-    "build": "rimraf ./build && tsc",
+    "build": "rimraf ./build && tsc -p tsconfig.build.json",
     "start": "npm run build && node build/index.js",
     "test": "jest --detectOpenHandles",
     "test:watch": "jest --watch",
@@ -28,7 +28,7 @@
     "format": "biome format",
     "format:write": "biome format --write",
     "format:check": "biome check --write",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
     "spellcheck": "cspell \"**/*.{js,ts,md,json,yml,yaml}\""
   },
   "devDependencies": {

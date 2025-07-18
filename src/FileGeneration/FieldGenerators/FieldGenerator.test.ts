@@ -293,6 +293,7 @@ describe("FieldGenerator", () => {
             body: {
               emoji_text: "Hello 👋 World 🌍",
               newline_text: "Line 1\nLine 2\nLine 3",
+              // cspell:disable-next-line
               unicode_text: "Unicode: àáâãäåæç",
               json_like: '{"nested": "value"}',
             },
@@ -306,6 +307,7 @@ describe("FieldGenerator", () => {
       expect(methodCall).toContain('Special \\"quotes\\" and \\\\backslashes');
       expect(methodCall).toContain("Hello 👋 World 🌍");
       expect(methodCall).toContain("Line 1\\nLine 2\\nLine 3");
+      // cspell:disable-next-line
       expect(methodCall).toContain("Unicode: àáâãäåæç");
     });
 
@@ -413,9 +415,9 @@ describe("FieldGenerator", () => {
       const generator = new MockGeneratorWithEmpty(config);
       const methodCall = generator.generateMethodCall();
 
-      expect(methodCall).toContain("empty_object: {  }");
+      expect(methodCall).toContain("empty_object: {}");
       expect(methodCall).toContain("empty_array: []");
-      expect(methodCall).toContain("empty_inside: {  }");
+      expect(methodCall).toContain("empty_inside: {}");
       expect(methodCall).toContain("array_inside: []");
     });
 
