@@ -17,19 +17,20 @@
     }
   },
   "scripts": {
-    "dev": "npx nodemon",
+    "dev": "tsc -p tsconfig.build.json --watch",
     "build": "rimraf ./build && tsc -p tsconfig.build.json",
+    "build:watch": "tsc -p tsconfig.build.json --watch",
     "start": "npm run build && node build/index.js",
-    "test": "jest --detectOpenHandles",
-    "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage",
-    "lint": "biome lint",
-    "lint:fix": "biome lint --fix",
-    "format": "biome format",
-    "format:write": "biome format --write",
-    "format:check": "biome check --write",
+    "test": "jest --detectOpenHandles --passWithNoTests",
+    "test:watch": "jest --watch --passWithNoTests",
+    "test:coverage": "jest --coverage --passWithNoTests",
+    "lint": "npx @biomejs/biome lint --write .",
+    "format": "npx @biomejs/biome format --write .",
+    "check:unsafe": "npx @biomejs/biome check --fix --unsafe",
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "spellcheck": "cspell \"**/*.{js,ts,md,json,yml,yaml}\""
+    "spellcheck": "cspell \"**/*.{js,ts,md,json,yml,yaml}\"",
+    "ci": "npm run typecheck && npm run lint && npm run test:coverage",
+    "clean": "rimraf build coverage .nyc_output"
   },
   "devDependencies": {
     "@biomejs/biome": "2.1.1",
@@ -47,11 +48,10 @@
     "cspell": "^9.0.0",
     "jest": "^30.0.3",
     "lefthook": "^1.11.11",
-    "nodemon": "^3.1.10",
     "rimraf": "^6.0.1",
     "ts-jest": "^29.3.2",
     "ts-node": "^10.9.2",
-    "typescript": "^5.9.0-beta"
+    "typescript": "^5.6.3"
   },
   "dependencies": {
     "@datocms/cma-client-node": "^4.0.1",
