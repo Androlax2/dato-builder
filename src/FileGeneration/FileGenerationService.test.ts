@@ -118,12 +118,12 @@ describe("FileGenerationService", () => {
         expect.any(Object),
       );
 
-      const passedConfig = MockedFileGenerator.mock.calls[0][0];
-      expect(passedConfig.itemTypeReferences.size).toBe(2);
-      expect(passedConfig.itemTypeReferences.get("test-item-type-id")).toEqual(
+      const passedConfig = MockedFileGenerator.mock.calls[0]?.[0];
+      expect(passedConfig?.itemTypeReferences.size).toBe(2);
+      expect(passedConfig?.itemTypeReferences.get("test-item-type-id")).toEqual(
         itemTypes[0],
       );
-      expect(passedConfig.itemTypeReferences.get("second-item-type")).toEqual(
+      expect(passedConfig?.itemTypeReferences.get("second-item-type")).toEqual(
         itemTypes[1],
       );
     });
@@ -146,12 +146,12 @@ describe("FileGenerationService", () => {
         type: "block",
       });
 
-      const passedConfig = MockedFileGenerator.mock.calls[0][0];
-      expect(passedConfig.itemTypeReferences.size).toBe(1);
-      expect(passedConfig.itemTypeReferences.get("new-item-type")).toEqual(
+      const passedConfig = MockedFileGenerator.mock.calls[0]?.[0];
+      expect(passedConfig?.itemTypeReferences.size).toBe(1);
+      expect(passedConfig?.itemTypeReferences.get("new-item-type")).toEqual(
         newItemType,
       );
-      expect(passedConfig.itemTypeReferences.has("test-item-type-id")).toBe(
+      expect(passedConfig?.itemTypeReferences.has("test-item-type-id")).toBe(
         false,
       );
     });
@@ -165,8 +165,8 @@ describe("FileGenerationService", () => {
         type: "block",
       });
 
-      const passedConfig = MockedFileGenerator.mock.calls[0][0];
-      expect(passedConfig.itemTypeReferences.size).toBe(0);
+      const passedConfig = MockedFileGenerator.mock.calls[0]?.[0];
+      expect(passedConfig?.itemTypeReferences.size).toBe(0);
     });
   });
 
@@ -231,6 +231,16 @@ describe("FileGenerationService", () => {
           label: "Second Field",
           api_key: "second_field",
           position: 2,
+          type: "field" as const,
+          field_type: "string" as const,
+          localized: false,
+          default_value: null,
+          hint: "",
+          validators: {},
+          appearance: { addons: [], editor: "single_line", parameters: {} },
+          deep_filtering_enabled: false,
+          item_type: { id: mockItemType.id, type: "item_type" as const },
+          fieldset: null,
         },
       ];
 

@@ -248,7 +248,7 @@ describe("LinkFieldGenerator", () => {
       });
 
       expect(() => linkGenerator.generateMethodCall()).toThrow(
-        'Item type with ID "nonexistent-id" not found in references for field missing_reference',
+        'Field missing_reference (link): Item type with ID "nonexistent-id" not found in references',
       );
     });
 
@@ -266,7 +266,7 @@ describe("LinkFieldGenerator", () => {
       });
 
       expect(() => linkGenerator.generateMethodCall()).toThrow(
-        "Cannot resolve item type references for field no_references. Item type references not available.",
+        "Field no_references (link): Cannot resolve item type references - references not available",
       );
     });
   });

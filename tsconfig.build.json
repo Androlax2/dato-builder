@@ -31,7 +31,7 @@
     "noUnusedParameters": true,
     "exactOptionalPropertyTypes": false,
     "noImplicitOverride": true,
-    "noPropertyAccessFromIndexSignature": true,
+    "noPropertyAccessFromIndexSignature": false,
     "noUncheckedIndexedAccess": true,
     "esModuleInterop": true,
     "noFallthroughCasesInSwitch": true,

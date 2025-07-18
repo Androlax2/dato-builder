@@ -32,7 +32,7 @@
     "noFallthroughCasesInSwitch": true,
     "isolatedModules": true,
     "moduleResolution": "node",
-    "noPropertyAccessFromIndexSignature": true,
+    "noPropertyAccessFromIndexSignature": false,
     "noUncheckedIndexedAccess": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,

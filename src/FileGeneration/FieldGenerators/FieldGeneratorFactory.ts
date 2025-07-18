@@ -10,6 +10,7 @@ import type {
   FieldGenerator,
   FieldGeneratorConfig,
 } from "@/FileGeneration/FieldGenerators/FieldGenerator";
+import { FieldGeneratorError } from "@/FileGeneration/FieldGenerators/FieldGenerator";
 import { FloatFieldGenerator } from "@/FileGeneration/FieldGenerators/FloatFieldGenerator";
 import { GalleryFieldGenerator } from "@/FileGeneration/FieldGenerators/GalleryFieldGenerator";
 import { IntegerFieldGenerator } from "@/FileGeneration/FieldGenerators/IntegerFieldGenerator";
@@ -40,6 +41,11 @@ type FieldGeneratorConstructor = new (
 ) => FieldGenerator<ItemTypeBuilderAddMethods>;
 
 export class FieldGeneratorFactory {
+  private readonly generatorCache = new Map<
+    string,
+    FieldGeneratorConstructor
+  >();
+
   /**
    * Main factory method that determines the correct generator based on field type and appearance
    */
@@ -48,34 +54,73 @@ export class FieldGeneratorFactory {
   ): FieldGenerator<ItemTypeBuilderAddMethods> {
     const field = config.field;
 
-    const GeneratorClass = this.getGeneratorClass(field);
-    return new GeneratorClass(config);
+    try {
+      const GeneratorClass = this.getGeneratorClass(field);
+      return new GeneratorClass(config);
+    } catch (error) {
+      throw new FieldGeneratorError(
+        `Failed to create generator: ${error instanceof Error ? error.message : "Unknown error"}`,
+        field.api_key,
+        field.field_type,
+        error instanceof Error ? error : undefined,
+      );
+    }
   }
 
   /**
-   * Complex mapping logic to determine the correct generator class
+   * Complex mapping logic to determine the correct generator class with caching
    */
   private getGeneratorClass(field: Field): FieldGeneratorConstructor {
+    const cacheKey = this.createCacheKey(field);
+
+    if (this.generatorCache.has(cacheKey)) {
+      return this.generatorCache.get(cacheKey)!;
+    }
+
+    let generatorClass: FieldGeneratorConstructor;
+
     // Handle text fields with special logic for appearance.editor
     if (field.field_type === "text") {
-      return this.getTextFieldGenerator(field);
+      generatorClass = this.getTextFieldGenerator(field);
     }
-
     // Handle boolean fields with special logic for appearance.editor
-    if (field.field_type === "boolean") {
-      return this.getBooleanFieldGenerator(field);
+    else if (field.field_type === "boolean") {
+      generatorClass = this.getBooleanFieldGenerator(field);
     }
-
     // Handle string fields with special logic for appearance.editor and validators
-    if (field.field_type === "string") {
-      return this.getStringFieldGenerator(field);
+    else if (field.field_type === "string") {
+      generatorClass = this.getStringFieldGenerator(field);
     }
-
     // Handle json fields with special logic for appearance.editor
-    if (field.field_type === "json") {
-      return this.getJsonFieldGenerator(field);
+    else if (field.field_type === "json") {
+      generatorClass = this.getJsonFieldGenerator(field);
+    } else {
+      generatorClass = this.getStaticFieldGenerator(field);
     }
 
+    this.generatorCache.set(cacheKey, generatorClass);
+    return generatorClass;
+  }
+
+  /**
+   * Create a cache key for generator selection
+   */
+  private createCacheKey(field: Field): string {
+    const editor = field.appearance?.editor || "default";
+    const validators = field.validators as any;
+
+    let validatorKey = "";
+    if (validators?.format?.predefined_pattern) {
+      validatorKey = `:${validators.format.predefined_pattern}`;
+    }
+
+    return `${field.field_type}:${editor}${validatorKey}`;
+  }
+
+  /**
+   * Handle static field type mappings
+   */
+  private getStaticFieldGenerator(field: Field): FieldGeneratorConstructor {
     const generatorMap: Record<
       Exclude<Field["field_type"], "text" | "boolean" | "string" | "json">,
       FieldGeneratorConstructor
@@ -98,10 +143,15 @@ export class FieldGeneratorFactory {
       video: ExternalVideoFieldGenerator,
     };
 
-    const generatorClass = generatorMap[field.field_type];
+    const generatorClass =
+      generatorMap[field.field_type as keyof typeof generatorMap];
 
     if (!generatorClass) {
-      throw new Error(`No generator found for field type: ${field.field_type}`);
+      throw new FieldGeneratorError(
+        `No generator found for field type: ${field.field_type}`,
+        field.api_key,
+        field.field_type,
+      );
     }
 
     return generatorClass;

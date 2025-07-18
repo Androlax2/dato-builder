@@ -171,7 +171,9 @@ describe("MarkdownFieldGenerator", () => {
       });
 
       const config = markdownGenerator.generateBuildConfig();
-      expect(config.body?.validators?.sanitized_html).toBe(true);
+      expect(config.body?.validators?.sanitized_html).toEqual({
+        sanitize_before_validation: true,
+      });
     });
 
     it("combines multiple validators", () => {
@@ -191,7 +193,7 @@ describe("MarkdownFieldGenerator", () => {
       expect(config.body?.validators).toEqual({
         required: true,
         length: { min: 5, max: 50 },
-        sanitized_html: true,
+        sanitized_html: { sanitize_before_validation: true },
       });
     });
   });

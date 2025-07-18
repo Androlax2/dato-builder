@@ -234,7 +234,9 @@ describe("WysiwygFieldGenerator", () => {
       });
 
       const config = wysiwygGenerator.generateBuildConfig();
-      expect(config.body?.validators?.sanitized_html).toBe(true);
+      expect(config.body?.validators?.sanitized_html).toEqual({
+        sanitize_before_validation: true,
+      });
     });
 
     it("combines multiple validators", () => {
@@ -254,7 +256,7 @@ describe("WysiwygFieldGenerator", () => {
       expect(config.body?.validators).toEqual({
         required: true,
         length: { min: 20, max: 1000 },
-        sanitized_html: true,
+        sanitized_html: { sanitize_before_validation: true },
       });
     });
   });

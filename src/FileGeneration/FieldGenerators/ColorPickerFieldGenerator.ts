@@ -10,67 +10,30 @@ export class ColorPickerFieldGenerator extends FieldGenerator<"addColorPicker"> 
   }
 
   generateBuildConfig(): MethodNameToConfig<"addColorPicker"> {
-    const config =
-      this.createBaseConfig() as MethodNameToConfig<"addColorPicker">;
-    const body = this.buildColorPickerFieldBody();
+    const config = this.generateTemplateConfig();
 
-    // Extract appearance parameters for the top-level config
-    this.addAppearanceParameters(config);
+    // Extract appearance parameters using new template method
+    const enable_alpha = this.extractAppearanceParameter<boolean>(
+      "enable_alpha",
+      "boolean",
+    );
+    const preset_colors = this.extractAppearanceParameter<string[]>(
+      "preset_colors",
+      "array",
+    );
 
-    if (this.hasBodyContent(body)) {
-      config.body = body;
+    if (enable_alpha !== undefined) {
+      config.enable_alpha = enable_alpha;
+    }
+
+    if (preset_colors !== undefined) {
+      config.preset_colors = preset_colors;
     }
 
     return config;
   }
 
-  private buildColorPickerFieldBody(): NonNullable<
-    MethodNameToConfig<"addColorPicker">["body"]
-  > {
-    const body = this.createBaseBody() as NonNullable<
-      MethodNameToConfig<"addColorPicker">["body"]
-    >;
-
-    this.addHintToBody(body);
-    this.addDefaultValueToBody(body);
-    this.addColorPickerValidators(body);
-
-    return body;
-  }
-
-  private addAppearanceParameters(
-    config: MethodNameToConfig<"addColorPicker">,
-  ): void {
-    const appearance = this.field.appearance;
-
-    if (appearance?.parameters) {
-      const { enable_alpha, preset_colors } = appearance.parameters;
-
-      if (typeof enable_alpha === "boolean") {
-        config.enable_alpha = enable_alpha;
-      }
-
-      if (Array.isArray(preset_colors)) {
-        config.preset_colors = preset_colors;
-      }
-    }
-  }
-
-  private addColorPickerValidators(
-    body: NonNullable<MethodNameToConfig<"addColorPicker">["body"]>,
-  ): void {
-    if (!this.hasValidators()) {
-      return;
-    }
-
-    const validators = {} as NonNullable<
-      NonNullable<MethodNameToConfig<"addColorPicker">["body"]>["validators"]
-    >;
-
-    this.processRequiredValidator(validators);
-
-    if (Object.keys(validators).length > 0) {
-      body.validators = validators;
-    }
+  protected override addFieldSpecificValidators(_validators: any): void {
+    // ColorPicker only uses standard validators, no custom ones
   }
 }

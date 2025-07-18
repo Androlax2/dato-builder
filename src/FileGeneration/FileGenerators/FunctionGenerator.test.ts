@@ -555,6 +555,19 @@ describe("FunctionGenerator", () => {
       const largeFieldsArray = Array.from({ length: 1000 }, (_, index) => ({
         ...mockFields[0],
         id: `field-${index}`,
+        type: "field" as const,
+        label: `Field ${index}`,
+        field_type: "string" as const,
+        localized: false,
+        default_value: null,
+        hint: "",
+        validators: {},
+        position: index + 1,
+        api_key: `field_${index}`,
+        appearance: { addons: [], editor: "single_line", parameters: {} },
+        deep_filtering_enabled: false,
+        item_type: { id: mockItemType.id, type: "item_type" as const },
+        fieldset: null,
       }));
 
       const result = generator.generateFunction(

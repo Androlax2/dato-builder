@@ -188,7 +188,9 @@ describe("TextareaFieldGenerator", () => {
       });
 
       const config = textareaGenerator.generateBuildConfig();
-      expect(config.body?.validators?.sanitized_html).toBe(true);
+      expect(config.body?.validators?.sanitized_html).toEqual({
+        sanitize_before_validation: true,
+      });
     });
 
     it("combines multiple validators", () => {
@@ -208,7 +210,7 @@ describe("TextareaFieldGenerator", () => {
       expect(config.body?.validators).toEqual({
         required: true,
         length: { min: 10, max: 300 },
-        sanitized_html: true,
+        sanitized_html: { sanitize_before_validation: true },
       });
     });
   });

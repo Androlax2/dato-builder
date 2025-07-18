@@ -647,7 +647,7 @@ describe("FieldGenerator", () => {
       });
 
       expect(() => generator.generateMethodCall()).toThrow(
-        'Item type with ID "nonexistent-id" not found in references for field test-date-api-key',
+        'Field test-date-api-key (date): Item type with ID "nonexistent-id" not found in references',
       );
     });
 
@@ -678,7 +678,7 @@ describe("FieldGenerator", () => {
       });
 
       expect(() => generator.generateMethodCall()).toThrow(
-        "Cannot resolve item type references for field test-date-api-key. Item type references not available.",
+        "Field test-date-api-key (date): Cannot resolve item type references - references not available",
       );
     });
   });

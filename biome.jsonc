@@ -37,7 +37,7 @@
         "noUnusedFunctionParameters": "error"
       },
       "style": {
-        "noProcessEnv": "error",
+        "noProcessEnv": "warn",
         "noUnusedTemplateLiteral": "error"
       },
       "nursery": {

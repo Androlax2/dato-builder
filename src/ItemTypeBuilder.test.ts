@@ -299,7 +299,7 @@ describe("ItemTypeBuilder", () => {
         }),
       );
 
-      expect(builder.fields[0].build().api_key).toBe("fields");
+      expect(builder.fields[0]?.build().api_key).toBe("fields");
     });
   });
 

@@ -167,7 +167,9 @@ describe("MultiLineTextFieldGenerator", () => {
       });
 
       const config = multiLineTextGenerator.generateBuildConfig();
-      expect(config.body?.validators?.sanitized_html).toBe(true);
+      expect(config.body?.validators?.sanitized_html).toEqual({
+        sanitize_before_validation: true,
+      });
     });
 
     it("combines multiple validators", () => {
@@ -189,7 +191,7 @@ describe("MultiLineTextFieldGenerator", () => {
         required: true,
         length: { min: 20, max: 500 },
         format: { predefined_pattern: "no_html" },
-        sanitized_html: true,
+        sanitized_html: { sanitize_before_validation: true },
       });
     });
 

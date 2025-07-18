@@ -120,6 +120,7 @@ async function setupCLI(): Promise<void> {
   const program = new Command()
     .name("dato-builder")
     .description("DatoCMS Builder CLI")
+    .version(process.env.npm_package_version || "0.0.0")
     .option("-n, --no-cache", "Disable cache usage")
     .option("-d, --debug", "Output information useful for debugging.", false)
     .option("-v, --verbose", "Display even finer-grained trace logs.", false)

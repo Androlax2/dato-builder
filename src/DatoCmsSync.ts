@@ -6,11 +6,29 @@ import type {
 } from "@datocms/cma-client/src/generated/SimpleSchemaTypes";
 import { buildClient } from "@datocms/cma-client-node";
 import { confirm } from "@inquirer/prompts";
+import { FieldGeneratorError } from "@/FileGeneration/FieldGenerators/FieldGenerator";
 import { FileGenerationService } from "@/FileGeneration/FileGenerationService";
 import DatoApi from "./Api/DatoApi";
 import type { CacheManager } from "./cache/CacheManager";
 import type { ConsoleLogger } from "./logger";
 import type { DatoBuilderConfig } from "./types/DatoBuilderConfig";
+
+/**
+ * Custom error for DatoCMS sync operations
+ */
+export class DatoSyncError extends Error {
+  constructor(
+    message: string,
+    public readonly operation: string,
+    public readonly itemTypeId?: string,
+    public readonly cause?: Error,
+  ) {
+    super(
+      `DatoCMS Sync [${operation}${itemTypeId ? ` - ${itemTypeId}` : ""}]: ${message}`,
+    );
+    this.name = "DatoSyncError";
+  }
+}
 
 // TODO: When everything is stable, make this be able to run in concurrent mode like the run command
 
@@ -59,10 +77,14 @@ export class DatoCmsSync {
       this.logger.debug(`Fetched ${response.length} item types from DatoCMS`);
       return response;
     } catch (error) {
-      this.logger.error(
-        `Failed to fetch item types: ${(error as Error).message}`,
+      const message = error instanceof Error ? error.message : "Unknown error";
+      this.logger.error(`Failed to fetch item types: ${message}`);
+      throw new DatoSyncError(
+        `Failed to fetch item types: ${message}`,
+        "fetchItemTypes",
+        undefined,
+        error instanceof Error ? error : undefined,
       );
-      throw error;
     }
   }
 
@@ -84,10 +106,16 @@ export class DatoCmsSync {
       );
       return fields;
     } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
       this.logger.error(
-        `Failed to fetch fields for item type ${itemTypeId}: ${(error as Error).message}`,
+        `Failed to fetch fields for item type ${itemTypeId}: ${message}`,
       );
-      throw error;
+      throw new DatoSyncError(
+        `Failed to fetch fields: ${message}`,
+        "fetchFields",
+        itemTypeId,
+        error instanceof Error ? error : undefined,
+      );
     }
   }
 
@@ -250,12 +278,25 @@ export class DatoCmsSync {
         }
 
         // Generate file content
-        const fileContent = await this.fileGenerationService.generateFile({
-          itemType,
-          fields,
-          type,
-          localDevelopment: this.isLocalDevelopment,
-        });
+        let fileContent: string;
+        try {
+          fileContent = await this.fileGenerationService.generateFile({
+            itemType,
+            fields,
+            type,
+            localDevelopment: this.isLocalDevelopment,
+          });
+        } catch (error) {
+          if (error instanceof FieldGeneratorError) {
+            throw new DatoSyncError(
+              `Field generation failed: ${error.message}`,
+              "generateFile",
+              itemType.id,
+              error,
+            );
+          }
+          throw error;
+        }
 
         // Determine file path
         const filePath = this.getFilePath(itemType, type);
@@ -264,7 +305,18 @@ export class DatoCmsSync {
         await fs.mkdir(path.dirname(filePath), { recursive: true });
 
         // Write file
-        await fs.writeFile(filePath, fileContent, "utf8");
+        try {
+          await fs.writeFile(filePath, fileContent, "utf8");
+        } catch (error) {
+          const message =
+            error instanceof Error ? error.message : "Unknown error";
+          throw new DatoSyncError(
+            `Failed to write file ${filePath}: ${message}`,
+            "writeFile",
+            itemType.id,
+            error instanceof Error ? error : undefined,
+          );
+        }
 
         // Update cache
         await this.updateCache(itemType, fields);
@@ -272,14 +324,24 @@ export class DatoCmsSync {
         this.logger.success(`Generated ${type}: ${filePath}`);
         results.push({ type, name: itemType.name, action: "synced", filePath });
       } catch (error) {
+        const message =
+          error instanceof Error ? error.message : "Unknown error";
         this.logger.error(
-          `Failed to process ${type} ${itemType.name}: ${(error as Error).message}`,
+          `Failed to process ${type} ${itemType.name}: ${message}`,
         );
+
+        // Log additional context for DatoSyncError
+        if (error instanceof DatoSyncError) {
+          this.logger.debug(
+            `Operation: ${error.operation}, ItemType: ${error.itemTypeId}`,
+          );
+        }
+
         results.push({
           type,
           name: itemType.name,
           action: "failed",
-          error: (error as Error).message,
+          error: message,
         });
       }
     }

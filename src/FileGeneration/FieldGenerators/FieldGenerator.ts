@@ -13,6 +13,21 @@ export interface FieldGeneratorConfig {
 }
 
 /**
+ * Custom error for field generator operations
+ */
+export class FieldGeneratorError extends Error {
+  constructor(
+    message: string,
+    public readonly fieldApiKey: string,
+    public readonly fieldType: string,
+    public readonly cause?: Error,
+  ) {
+    super(`Field ${fieldApiKey} (${fieldType}): ${message}`);
+    this.name = "FieldGeneratorError";
+  }
+}
+
+/**
  * Base class for generating ItemTypeBuilder method calls.
  *
  * Each subclass handles a specific field type and generates the appropriate
@@ -46,6 +61,83 @@ export abstract class FieldGenerator<
   abstract generateBuildConfig(): MethodNameToConfig<TMethodName>;
 
   /**
+   * Template method for building field body. Subclasses can override for custom logic.
+   * This provides a default implementation that works for most field types.
+   */
+  protected buildFieldBody(): NonNullable<
+    MethodNameToConfig<TMethodName>["body"]
+  > {
+    const body = this.createBaseBody() as NonNullable<
+      MethodNameToConfig<TMethodName>["body"]
+    >;
+
+    this.addHintToBody(body);
+    this.addDefaultValueToBody(body);
+    this.addValidatorsToBody(body);
+
+    return body;
+  }
+
+  /**
+   * Template method for adding validators to body. Subclasses can override for specific validators.
+   */
+  protected addValidatorsToBody(
+    body: NonNullable<MethodNameToConfig<TMethodName>["body"]>,
+  ): void {
+    if (!this.hasValidators()) {
+      return;
+    }
+
+    const validators = {} as any;
+
+    this.processRequiredValidator(validators);
+    this.processUniqueValidator(validators);
+    this.processFormatValidator(validators);
+    this.processLengthValidator(validators);
+    this.processNumberRangeValidator(validators);
+    this.processEnumValidator(validators);
+
+    // Allow subclasses to add specific validators
+    this.addFieldSpecificValidators(validators);
+
+    if (Object.keys(validators).length > 0) {
+      this.addOptionalProperty(body, "validators", validators);
+    }
+  }
+
+  /**
+   * Hook for subclasses to add field-specific validators.
+   * Default implementation does nothing.
+   */
+  protected addFieldSpecificValidators(_validators: any): void {
+    // Default: no field-specific validators
+  }
+
+  /**
+   * Template method for generating configuration. Provides default implementation.
+   */
+  protected generateTemplateConfig(): MethodNameToConfig<TMethodName> {
+    const config = this.createBaseConfig() as MethodNameToConfig<TMethodName>;
+    const body = this.buildFieldBody();
+
+    if (this.hasBodyContent(body)) {
+      this.addOptionalProperty(config, "body", body);
+    }
+
+    return this.customizeConfig(config);
+  }
+
+  /**
+   * Hook for subclasses to customize the final configuration.
+   * Default implementation returns config as-is.
+   */
+  protected customizeConfig(
+    config: MethodNameToConfig<TMethodName>,
+  ): MethodNameToConfig<TMethodName> {
+    return config;
+  }
+
+  /**
    * Generate the complete method call string for the ItemTypeBuilder.
    * @returns String like ".addDate({label: 'My Date', body: {...}})"
    */
@@ -68,10 +160,8 @@ export abstract class FieldGenerator<
   /**
    * Add hint to body if present in the field.
    */
-  // biome-ignore lint/suspicious/noExplicitAny: Generic body type requires any for dynamic property assignment
-  protected addHintToBody<T extends Record<string, any>>(body: T): void {
+  protected addHintToBody<T extends Record<string, unknown>>(body: T): void {
     if (this.field.hint) {
-      // biome-ignore lint/suspicious/noExplicitAny: Type casting required for dynamic property assignment
       (body as any).hint = this.field.hint;
     }
   }
@@ -79,15 +169,13 @@ export abstract class FieldGenerator<
   /**
    * Add default value to body if present in the field.
    */
-  // biome-ignore lint/suspicious/noExplicitAny: Generic body type requires any for dynamic property assignment
-  protected addDefaultValueToBody<T extends Record<string, any>>(
+  protected addDefaultValueToBody<T extends Record<string, unknown>>(
     body: T,
   ): void {
     if (
       this.field.default_value !== null &&
       this.field.default_value !== undefined
     ) {
-      // biome-ignore lint/suspicious/noExplicitAny: Type casting required for dynamic property assignment
       (body as any).default_value = this.field.default_value;
     }
   }
@@ -115,13 +203,11 @@ export abstract class FieldGenerator<
    * Sets validators.required = true if the field has a required validator.
    * Generic to maintain type safety with specific validator types.
    */
-  // biome-ignore lint/suspicious/noExplicitAny: Generic validator type requires any for flexible validator structures
-  protected processRequiredValidator<T extends { required?: any }>(
+  protected processRequiredValidator<T extends { required?: unknown }>(
     validators: T,
   ): void {
-    if (this.field.validators?.required) {
-      // biome-ignore lint/suspicious/noExplicitAny: Type casting required for dynamic validator assignment
-      (validators as any).required = true;
+    if (this.field.validators?.["required"]) {
+      this.addOptionalProperty(validators, "required", true);
     }
   }
 
@@ -130,13 +216,11 @@ export abstract class FieldGenerator<
    * Sets validators.unique = true if the field has a unique validator.
    * Generic to maintain type safety with specific validator types.
    */
-  // biome-ignore lint/suspicious/noExplicitAny: Generic validator type requires any for flexible validator structures
-  protected processUniqueValidator<T extends { unique?: any }>(
+  protected processUniqueValidator<T extends { unique?: unknown }>(
     validators: T,
   ): void {
-    if (this.field.validators?.unique) {
-      // biome-ignore lint/suspicious/noExplicitAny: Type casting required for dynamic validator assignment
-      (validators as any).unique = true;
+    if (this.field.validators?.["unique"]) {
+      this.addOptionalProperty(validators, "unique", true);
     }
   }
 
@@ -145,11 +229,10 @@ export abstract class FieldGenerator<
    * Handles custom_pattern conversion from string to RegExp.
    * Generic to maintain type safety with specific validator types.
    */
-  // biome-ignore lint/suspicious/noExplicitAny: Generic validator type requires any for flexible validator structures
-  protected processFormatValidator<T extends { format?: any }>(
+  protected processFormatValidator<T extends { format?: unknown }>(
     validators: T,
   ): void {
-    const formatValidator = this.field.validators?.format as any;
+    const formatValidator = this.field.validators?.["format"] as any;
     if (!formatValidator) {
       return;
     }
@@ -205,8 +288,7 @@ export abstract class FieldGenerator<
     }
 
     if (Object.keys(processedFormat).length > 0) {
-      // biome-ignore lint/suspicious/noExplicitAny: Type casting required for dynamic validator assignment
-      (validators as any).format = processedFormat;
+      this.addOptionalProperty(validators, "format", processedFormat);
     }
   }
 
@@ -214,13 +296,15 @@ export abstract class FieldGenerator<
    * Process length validator if present.
    * Copies length validator data as-is since it's already in correct format.
    */
-  // biome-ignore lint/suspicious/noExplicitAny: Generic validator type requires any for flexible validator structures
-  protected processLengthValidator<T extends { length?: any }>(
+  protected processLengthValidator<T extends { length?: unknown }>(
     validators: T,
   ): void {
-    if (this.field.validators?.length) {
-      // biome-ignore lint/suspicious/noExplicitAny: Type casting required for dynamic validator assignment
-      (validators as any).length = this.field.validators.length;
+    if (this.field.validators?.["length"]) {
+      this.addOptionalProperty(
+        validators,
+        "length",
+        this.field.validators["length"],
+      );
     }
   }
 
@@ -228,13 +312,15 @@ export abstract class FieldGenerator<
    * Process number_range validator if present.
    * Copies number_range validator data as-is since it's already in correct format.
    */
-  // biome-ignore lint/suspicious/noExplicitAny: Generic validator type requires any for flexible validator structures
-  protected processNumberRangeValidator<T extends { number_range?: any }>(
+  protected processNumberRangeValidator<T extends { number_range?: unknown }>(
     validators: T,
   ): void {
-    if (this.field.validators?.number_range) {
-      // biome-ignore lint/suspicious/noExplicitAny: Type casting required for dynamic validator assignment
-      (validators as any).number_range = this.field.validators.number_range;
+    if (this.field.validators?.["number_range"]) {
+      this.addOptionalProperty(
+        validators,
+        "number_range",
+        this.field.validators["number_range"],
+      );
     }
   }
 
@@ -242,13 +328,15 @@ export abstract class FieldGenerator<
    * Process enum validator if present.
    * Copies enum validator data as-is since it's already in correct format.
    */
-  // biome-ignore lint/suspicious/noExplicitAny: Generic validator type requires any for flexible validator structures
-  protected processEnumValidator<T extends { enum?: any }>(
+  protected processEnumValidator<T extends { enum?: unknown }>(
     validators: T,
   ): void {
-    if (this.field.validators?.enum) {
-      // biome-ignore lint/suspicious/noExplicitAny: Type casting required for dynamic validator assignment
-      (validators as any).enum = this.field.validators.enum;
+    if (this.field.validators?.["enum"]) {
+      this.addOptionalProperty(
+        validators,
+        "enum",
+        this.field.validators["enum"],
+      );
     }
   }
 
@@ -256,9 +344,114 @@ export abstract class FieldGenerator<
    * Check if body has any content (typically used to decide whether to include body property).
    * Generic to maintain type safety with specific body types.
    */
-  // biome-ignore lint/suspicious/noExplicitAny: Generic body type requires any for flexible body structures
-  protected hasBodyContent<T extends Record<string, any>>(body: T): boolean {
+  protected hasBodyContent<T extends Record<string, unknown>>(
+    body: T,
+  ): boolean {
     return Object.keys(body).length > 0;
+  }
+
+  /**
+   * Type-safe helper to add optional properties to objects
+   */
+  protected addOptionalProperty<T extends object, K extends string>(
+    obj: T,
+    key: K,
+    value: unknown,
+  ): void {
+    if (value !== null && value !== undefined) {
+      (obj as any)[key] = value;
+    }
+  }
+
+  /**
+   * Validate field configuration before processing
+   */
+  protected validateField(): void {
+    if (!this.field.api_key) {
+      throw new FieldGeneratorError(
+        "Field must have an api_key",
+        this.field.api_key || "unknown",
+        this.field.field_type,
+      );
+    }
+
+    if (!this.field.label) {
+      throw new FieldGeneratorError(
+        "Field must have a label",
+        this.field.api_key,
+        this.field.field_type,
+      );
+    }
+  }
+
+  /**
+   * Extract appearance parameters with type safety
+   */
+  protected extractAppearanceParameter<T>(
+    parameterName: string,
+    expectedType: "string" | "boolean" | "number" | "array" | "object",
+    defaultValue?: T,
+  ): T | undefined {
+    const parameters = this.field.appearance?.parameters as any;
+    if (!parameters || !(parameterName in parameters)) {
+      return defaultValue;
+    }
+
+    const value = parameters[parameterName];
+
+    // Type validation
+    switch (expectedType) {
+      case "string":
+        return (
+          typeof value === "string" && value.trim() ? value : defaultValue
+        ) as T | undefined;
+      case "boolean":
+        return (typeof value === "boolean" ? value : defaultValue) as
+          | T
+          | undefined;
+      case "number":
+        return (typeof value === "number" ? value : defaultValue) as
+          | T
+          | undefined;
+      case "array":
+        return (Array.isArray(value) ? value : defaultValue) as T | undefined;
+      case "object":
+        return (
+          value && typeof value === "object" && !Array.isArray(value)
+            ? value
+            : defaultValue
+        ) as T | undefined;
+      default:
+        return (value ?? defaultValue) as T | undefined;
+    }
+  }
+
+  /**
+   * Extract multiple appearance parameters efficiently
+   */
+  protected extractAppearanceParameters<T extends Record<string, any>>(
+    parameterMap: Record<
+      keyof T,
+      {
+        type: "string" | "boolean" | "number" | "array" | "object";
+        default?: any;
+      }
+    >,
+  ): Partial<T> {
+    const result: Partial<T> = {};
+
+    for (const [key, config] of Object.entries(parameterMap)) {
+      const value = this.extractAppearanceParameter(
+        key,
+        config.type,
+        config.default,
+      );
+      if (value !== undefined) {
+        result[key as keyof T] = value;
+      }
+    }
+
+    return result;
   }
 
   /**
@@ -283,9 +476,8 @@ export abstract class FieldGenerator<
    * Handles both date_range and date_time_range validators.
    * Generic to maintain type safety - requires the range key to exist in validator type.
    */
-  // biome-ignore lint/suspicious/noExplicitAny: Generic validator type requires any for flexible validator structures
   protected processRangeValidator<
-    T extends Record<string, any>,
+    T extends Record<string, unknown>,
     K extends keyof T,
   >(
     validators: T,
@@ -380,8 +572,10 @@ export abstract class FieldGenerator<
   ): Array<{ __async_call: string }> {
     if (!this.itemTypeReferences) {
       // Throw error if no references available
-      throw new Error(
-        `Cannot resolve item type references for field ${this.field.api_key}. Item type references not available.`,
+      throw new FieldGeneratorError(
+        "Cannot resolve item type references - references not available",
+        this.field.api_key,
+        this.field.field_type,
       );
     }
 
@@ -389,8 +583,10 @@ export abstract class FieldGenerator<
       const itemType = this.itemTypeReferences!.get(id);
       if (!itemType) {
         // Throw error if item type not found
-        throw new Error(
-          `Item type with ID "${id}" not found in references for field ${this.field.api_key}`,
+        throw new FieldGeneratorError(
+          `Item type with ID "${id}" not found in references`,
+          this.field.api_key,
+          this.field.field_type,
         );
       }
 
