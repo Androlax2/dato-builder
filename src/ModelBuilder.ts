@@ -11,7 +11,7 @@ type ModelBuilderOptions = {
 };
 
 export default class ModelBuilder extends ItemTypeBuilder {
-  public type: ItemTypeBuilderType = "model";
+  public override type: ItemTypeBuilderType = "model";
 
   constructor({ name, body, config }: ModelBuilderOptions) {
     super({

@@ -43,7 +43,7 @@ export class CodeFormatter {
 
     try {
       const [result] = await this.eslint.lintText(formatted);
-      return result.output ?? formatted;
+      return result?.output ?? formatted;
     } catch (_e) {
       return formatted;
     }
