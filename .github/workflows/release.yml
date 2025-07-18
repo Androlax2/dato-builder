@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - main
+      - beta
 
 permissions:
   contents: read # for checkout
@@ -35,6 +36,9 @@ jobs:
 
       - name: Build
         run: npm run build
+
+      - name: Tests
+        run: npm run test
 
       - name: Release
         env:
