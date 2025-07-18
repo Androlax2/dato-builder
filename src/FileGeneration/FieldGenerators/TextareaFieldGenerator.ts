@@ -33,43 +33,18 @@ export class TextareaFieldGenerator extends FieldGenerator<"addTextarea"> {
     const validators: {
       required?: boolean;
       length?: { min?: number; max?: number };
-      format?: { predefined_pattern?: string; custom_pattern?: string };
-      sanitized_html?: boolean;
+      format?: { predefined_pattern?: string; custom_pattern?: RegExp };
+      sanitized_html?: { sanitize_before_validation: boolean };
     } = {};
 
     this.processRequiredValidator(validators);
-
-    if (this.field.validators?.length) {
-      const length = this.field.validators.length as any;
-      const lengthValidator: { min?: number; max?: number } = {};
-
-      if (length.min !== undefined) lengthValidator.min = length.min;
-      if (length.max !== undefined) lengthValidator.max = length.max;
-
-      if (Object.keys(lengthValidator).length > 0) {
-        validators.length = lengthValidator;
-      }
-    }
-
-    if (this.field.validators?.format) {
-      const format = this.field.validators.format as any;
-      const formatValidator: {
-        predefined_pattern?: string;
-        custom_pattern?: string;
-      } = {};
-
-      if (format.predefined_pattern)
-        formatValidator.predefined_pattern = format.predefined_pattern;
-      if (format.custom_pattern)
-        formatValidator.custom_pattern = format.custom_pattern;
-
-      if (Object.keys(formatValidator).length > 0) {
-        validators.format = formatValidator;
-      }
-    }
+    this.processLengthValidator(validators);
+    this.processFormatValidator(validators);
 
     if (this.field.validators?.sanitized_html) {
-      validators.sanitized_html = true;
+      validators.sanitized_html = {
+        sanitize_before_validation: true,
+      };
     }
 
     return validators;

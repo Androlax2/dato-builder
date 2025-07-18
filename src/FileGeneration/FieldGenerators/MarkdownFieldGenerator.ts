@@ -44,7 +44,7 @@ export class MarkdownFieldGenerator extends FieldGenerator<"addMarkdown"> {
       required?: boolean;
       length?: { min?: number; max?: number };
       format?: { predefined_pattern?: string; custom_pattern?: RegExp };
-      sanitized_html?: boolean;
+      sanitized_html?: { sanitize_before_validation: boolean };
     } = {};
 
     // Use the proper validator processing methods
@@ -53,7 +53,9 @@ export class MarkdownFieldGenerator extends FieldGenerator<"addMarkdown"> {
     this.processFormatValidator(validators);
 
     if (this.field.validators?.sanitized_html) {
-      validators.sanitized_html = true;
+      validators.sanitized_html = {
+        sanitize_before_validation: true,
+      };
     }
 
     return validators;

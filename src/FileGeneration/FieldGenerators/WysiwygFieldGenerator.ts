@@ -54,7 +54,7 @@ export class WysiwygFieldGenerator extends FieldGenerator<"addWysiwyg"> {
       required?: boolean;
       length?: { min?: number; max?: number };
       format?: { predefined_pattern?: string; custom_pattern?: string };
-      sanitized_html?: boolean;
+      sanitized_html?: { sanitize_before_validation: boolean };
     } = {};
 
     this.processRequiredValidator(validators);
@@ -89,7 +89,9 @@ export class WysiwygFieldGenerator extends FieldGenerator<"addWysiwyg"> {
     }
 
     if (this.field.validators?.sanitized_html) {
-      validators.sanitized_html = true;
+      validators.sanitized_html = {
+        sanitize_before_validation: true,
+      };
     }
 
     return validators;

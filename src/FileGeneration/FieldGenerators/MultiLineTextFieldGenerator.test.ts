@@ -153,7 +153,7 @@ describe("MultiLineTextFieldGenerator", () => {
 
       const config = multiLineTextGenerator.generateBuildConfig();
       expect(config.body?.validators?.format).toEqual({
-        custom_pattern: "^[A-Za-z0-9\\s]+$",
+        custom_pattern: /^[A-Za-z0-9\s]+$/,
       });
     });
 
