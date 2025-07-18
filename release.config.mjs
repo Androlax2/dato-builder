@@ -2,12 +2,12 @@
  * @type {import('semantic-release').GlobalConfig}
  */
 export default {
-    branches: [
-    "main", 
+  branches: [
+    "main",
     {
       name: "beta",
-      prerelease: true
-    }
+      prerelease: true,
+    },
   ],
   plugins: [
     "@semantic-release/commit-analyzer",
@@ -22,7 +22,7 @@ export default {
       "@semantic-release/npm",
       {
         npmPublish: true,
-      }
+      },
     ],
     [
       "@semantic-release/git",
@@ -30,6 +30,6 @@ export default {
         assets: ["CHANGELOG.md", "package.json"],
       },
     ],
-    "@semantic-release/github"
+    "@semantic-release/github",
   ],
 };
