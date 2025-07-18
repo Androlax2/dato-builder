@@ -48,41 +48,35 @@ export class LinksFieldGenerator extends FieldGenerator<"addLinks"> {
       return;
     }
 
-    const validators = {} as NonNullable<
-      NonNullable<MethodNameToConfig<"addLinks">["body"]>["validators"]
-    >;
+    const validators = {} as Record<string, unknown>;
 
     // Add required items_item_type validator
     if (this.field.validators?.items_item_type) {
       const itemsItemType = {
-        // biome-ignore lint/suspicious/noExplicitAny: DatoCMS validator types require any for complex nested structures
-        ...(this.field.validators.items_item_type as any),
-      };
+        ...this.field.validators.items_item_type,
+      } as Record<string, unknown>;
 
       // Convert item_types from IDs to getModel/getBlock calls
-      if (itemsItemType.item_types) {
+      if (Array.isArray(itemsItemType.item_types)) {
         const getCalls = this.convertItemTypeIdsToGetCalls(
-          itemsItemType.item_types,
+          itemsItemType.item_types as string[],
         );
         itemsItemType.item_types = getCalls;
       }
 
-      // biome-ignore lint/suspicious/noExplicitAny: Type casting required for dynamic validator assignment
-      (validators as any).items_item_type = itemsItemType;
+      this.addOptionalProperty(validators, "items_item_type", itemsItemType);
     }
 
     // Add optional validators
-    // biome-ignore lint/suspicious/noExplicitAny: Type casting required for validator processing
-    this.processRequiredValidator(validators as any);
-    this.processUniqueValidator(validators as any);
+    this.processRequiredValidator(validators);
+    this.processUniqueValidator(validators);
 
     if (this.field.validators?.size) {
-      // biome-ignore lint/suspicious/noExplicitAny: Type casting required for dynamic validator assignment
-      (validators as any).size = this.field.validators.size;
+      this.addOptionalProperty(validators, "size", this.field.validators.size);
     }
 
     if (Object.keys(validators).length > 0) {
-      body.validators = validators;
+      this.addOptionalProperty(body, "validators", validators);
     }
   }
 

@@ -88,7 +88,7 @@ export abstract class FieldGenerator<
       return;
     }
 
-    const validators = {} as any;
+    const validators = {} as Record<string, unknown>;
 
     this.processRequiredValidator(validators);
     this.processUniqueValidator(validators);
@@ -109,7 +109,9 @@ export abstract class FieldGenerator<
    * Hook for subclasses to add field-specific validators.
    * Default implementation does nothing.
    */
-  protected addFieldSpecificValidators(_validators: any): void {
+  protected addFieldSpecificValidators(
+    _validators: Record<string, unknown>,
+  ): void {
     // Default: no field-specific validators
   }
 

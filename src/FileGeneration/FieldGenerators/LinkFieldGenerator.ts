@@ -54,19 +54,19 @@ export class LinkFieldGenerator extends FieldGenerator<"addLink"> {
 
     // Add required item_item_type validator
     if (this.field.validators?.item_item_type) {
-      // biome-ignore lint/suspicious/noExplicitAny: DatoCMS validator types require any for complex nested structures
-      const itemItemType = { ...(this.field.validators.item_item_type as any) };
+      const itemItemType = {
+        ...this.field.validators.item_item_type,
+      } as Record<string, unknown>;
 
       // Convert item_types from IDs to getModel/getBlock calls
-      if (itemItemType.item_types) {
+      if (Array.isArray(itemItemType.item_types)) {
         const getCalls = this.convertItemTypeIdsToGetCalls(
-          itemItemType.item_types,
+          itemItemType.item_types as string[],
         );
         itemItemType.item_types = getCalls;
       }
 
-      // biome-ignore lint/suspicious/noExplicitAny: Type casting required for dynamic validator assignment
-      (validators as any).item_item_type = itemItemType;
+      this.addOptionalProperty(validators, "item_item_type", itemItemType);
     }
 
     // Add optional validators

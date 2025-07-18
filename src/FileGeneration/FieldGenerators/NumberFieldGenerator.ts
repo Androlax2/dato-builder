@@ -16,7 +16,7 @@ export abstract class NumberFieldGenerator<
     const body = this.buildFieldBody();
 
     if (this.hasBodyContent(body)) {
-      (config as any).body = body;
+      this.addOptionalProperty(config, "body", body);
     }
 
     return config;
@@ -36,7 +36,9 @@ export abstract class NumberFieldGenerator<
     return body;
   }
 
-  protected override addFieldSpecificValidators(validators: any): void {
+  protected override addFieldSpecificValidators(
+    validators: Record<string, unknown>,
+  ): void {
     // Handle number-specific validators
     if (this.field.validators?.["number_range"]) {
       this.addOptionalProperty(

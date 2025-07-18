@@ -13,7 +13,9 @@ export class RichTextFieldGenerator extends FieldGenerator<"addModularContent"> 
   generateBuildConfig(): MethodNameToConfig<"addModularContent"> {
     const config =
       this.createBaseConfig() as MethodNameToConfig<"addModularContent">;
-    const body = this.createBaseBody() as any;
+    const body = this.createBaseBody() as NonNullable<
+      MethodNameToConfig<"addModularContent">["body"]
+    >;
 
     // Extract appearance parameters
     const appearance = this.field.appearance;
@@ -25,31 +27,33 @@ export class RichTextFieldGenerator extends FieldGenerator<"addModularContent"> 
     }
 
     // Add validators (required for rich_text fields)
-    const validators = {} as any;
+    const validators = {} as Record<string, unknown>;
 
     // Process rich_text_blocks validator (required)
     if (this.field.validators?.rich_text_blocks) {
       const richTextBlocks = {
         ...this.field.validators.rich_text_blocks,
-      } as any;
+      } as Record<string, unknown>;
 
       // Convert item_types from IDs to getModel/getBlock calls
-      if (richTextBlocks.item_types) {
+      if (Array.isArray(richTextBlocks.item_types)) {
         const getCalls = this.convertItemTypeIdsToGetCalls(
-          richTextBlocks.item_types,
+          richTextBlocks.item_types as string[],
         );
         richTextBlocks.item_types = getCalls;
       }
 
-      validators.rich_text_blocks = richTextBlocks;
+      this.addOptionalProperty(validators, "rich_text_blocks", richTextBlocks);
     }
 
     // Process size validator
     if (this.field.validators?.size) {
-      validators.size = this.field.validators.size;
+      this.addOptionalProperty(validators, "size", this.field.validators.size);
     }
 
-    body.validators = validators;
+    if (Object.keys(validators).length > 0) {
+      this.addOptionalProperty(body, "validators", validators);
+    }
 
     // Add hint and default value
     this.addHintToBody(body);

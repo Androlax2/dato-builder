@@ -15,7 +15,7 @@ export class MarkdownFieldGenerator extends FieldGenerator<"addMarkdown"> {
 
     const validators = this.createTextValidators();
     if (Object.keys(validators).length > 0) {
-      (body as any).validators = validators;
+      this.addOptionalProperty(body, "validators", validators);
     }
 
     const toolbar = this.extractToolbarFromParameters() as Array<

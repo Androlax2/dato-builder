@@ -37,10 +37,15 @@ export class StringRadioGroupFieldGenerator extends FieldGenerator<"addStringRad
   }
 
   private extractRadios(): MethodNameToConfig<"addStringRadioGroup">["radios"] {
-    const parameters = this.field.appearance?.parameters as any;
-    const radios = parameters?.radios || [];
+    const parameters = this.extractAppearanceParameters<{
+      radios: Array<{ label?: string; value?: string; hint?: string }>;
+    }>({
+      radios: { type: "array", default: [] },
+    });
 
-    return radios.map((radio: any) => ({
+    const radios = parameters.radios || [];
+
+    return radios.map((radio) => ({
       label: radio.label || "",
       value: radio.value || "",
       ...(radio.hint && { hint: radio.hint }),

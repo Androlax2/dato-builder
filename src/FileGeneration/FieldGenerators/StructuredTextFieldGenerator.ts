@@ -13,7 +13,9 @@ export class StructuredTextFieldGenerator extends FieldGenerator<"addStructuredT
   generateBuildConfig(): MethodNameToConfig<"addStructuredText"> {
     const config =
       this.createBaseConfig() as MethodNameToConfig<"addStructuredText">;
-    const body = this.createBaseBody() as any;
+    const body = this.createBaseBody() as NonNullable<
+      MethodNameToConfig<"addStructuredText">["body"]
+    >;
 
     // Extract appearance parameters
     const appearance = this.field.appearance;
@@ -21,15 +23,15 @@ export class StructuredTextFieldGenerator extends FieldGenerator<"addStructuredT
 
     // Add appearance-based configuration
     if (parameters.nodes && Array.isArray(parameters.nodes)) {
-      config.nodes = parameters.nodes as any;
+      config.nodes = parameters.nodes;
     }
 
     if (parameters.marks && Array.isArray(parameters.marks)) {
-      config.marks = parameters.marks as any;
+      config.marks = parameters.marks;
     }
 
     if (parameters.heading_levels && Array.isArray(parameters.heading_levels)) {
-      config.heading_levels = parameters.heading_levels as any;
+      config.heading_levels = parameters.heading_levels;
     }
 
     if (typeof parameters.blocks_start_collapsed === "boolean") {
@@ -60,46 +62,57 @@ export class StructuredTextFieldGenerator extends FieldGenerator<"addStructuredT
       // Process structured_text_inline_blocks validator
       if (this.field.validators?.structured_text_inline_blocks) {
         // Inline blocks validator doesn't convert item_types - it passes them as-is
-        validators.structured_text_inline_blocks = this.field.validators
-          .structured_text_inline_blocks as any;
+        this.addOptionalProperty(
+          validators,
+          "structured_text_inline_blocks",
+          this.field.validators.structured_text_inline_blocks,
+        );
       }
 
       // Process structured_text_blocks validator
       if (this.field.validators?.structured_text_blocks) {
         const structuredTextBlocks = {
           ...this.field.validators.structured_text_blocks,
-        } as any;
+        } as Record<string, unknown>;
 
         // Convert item_types from IDs to getModel/getBlock calls
-        if (structuredTextBlocks.item_types) {
+        if (Array.isArray(structuredTextBlocks.item_types)) {
           const getCalls = this.convertItemTypeIdsToGetCalls(
-            structuredTextBlocks.item_types,
+            structuredTextBlocks.item_types as string[],
           );
           structuredTextBlocks.item_types = getCalls;
         }
 
-        validators.structured_text_blocks = structuredTextBlocks;
+        this.addOptionalProperty(
+          validators,
+          "structured_text_blocks",
+          structuredTextBlocks,
+        );
       }
 
       // Process structured_text_links validator
       if (this.field.validators?.structured_text_links) {
         const structuredTextLinks = {
           ...this.field.validators.structured_text_links,
-        } as any;
+        } as Record<string, unknown>;
 
         // Convert item_types from IDs to getModel/getBlock calls
-        if (structuredTextLinks.item_types) {
+        if (Array.isArray(structuredTextLinks.item_types)) {
           const getCalls = this.convertItemTypeIdsToGetCalls(
-            structuredTextLinks.item_types,
+            structuredTextLinks.item_types as string[],
           );
           structuredTextLinks.item_types = getCalls;
         }
 
-        validators.structured_text_links = structuredTextLinks;
+        this.addOptionalProperty(
+          validators,
+          "structured_text_links",
+          structuredTextLinks,
+        );
       }
 
       if (Object.keys(validators).length > 0) {
-        body.validators = validators;
+        this.addOptionalProperty(body, "validators", validators);
       }
     }
 
