@@ -18,7 +18,7 @@ pre-commit:
   commands:
     check:
       glob: "*.{js,ts,cjs,mjs,d.cts,d.mts,json,jsonc}"
-      run: npx @biomejs/biome check --write --no-errors-on-unmatched --files-ignore-unknown=true --colors=off {staged_files}
+      run: npx @biomejs/biome check --write --no-errors-on-unmatched --diagnostic-level=error --files-ignore-unknown=true --colors=off {staged_files}
       stage_fixed: true
 
     cspell:
@@ -33,7 +33,7 @@ pre-push:
 
     check:
       glob: "*.{js,ts,cjs,mjs,d.cts,d.mts,json,jsonc}"
-      run: npx @biomejs/biome check --no-errors-on-unmatched --files-ignore-unknown=true --colors=off {push_files}
+      run: npx @biomejs/biome check --no-errors-on-unmatched --diagnostic-level=error --files-ignore-unknown=true --colors=off {push_files}
 
     test:
       # Run tests only for affected files
