@@ -1,3 +1,10 @@
+# [3.8.0](https://github.com/Androlax2/dato-builder/compare/v3.7.0...v3.8.0) (2025-07-18)
+
+
+### Features
+
+* add beta branch support to release workflow ([69da33d](https://github.com/Androlax2/dato-builder/commit/69da33d0bb8af7ef2836bad3fc9b6a84f1ea2a99))
+
 # [3.7.0](https://github.com/Androlax2/dato-builder/compare/v3.6.2...v3.7.0) (2025-07-10)
 
 

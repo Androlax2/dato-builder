@@ -1,9 +1,12 @@
 {
+  "extends": "./tsconfig.json",
   "exclude": [
     "node_modules",
     "bin",
     "build",
     "coverage",
+    "tests",
+    "**/*.test.ts",
     "*.js",
     "*.mjs",
     "*.ts"
@@ -16,11 +19,10 @@
     "lib": ["es2020"],
     "allowJs": true,
     "outDir": "build",
-    "rootDir": ".",
+    "rootDir": "src",
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"],
-      "@tests/*": ["tests/*"]
+      "@/*": ["src/*"]
     },
     "strict": true,
     "noImplicitAny": true,
@@ -29,18 +31,20 @@
     "noUnusedParameters": true,
     "exactOptionalPropertyTypes": false,
     "noImplicitOverride": true,
-    "noFallthroughCasesInSwitch": true,
-    "isolatedModules": true,
-    "moduleResolution": "node",
     "noPropertyAccessFromIndexSignature": false,
     "noUncheckedIndexedAccess": true,
     "esModuleInterop": true,
+    "noFallthroughCasesInSwitch": true,
+    "isolatedModules": true,
+    "moduleResolution": "node",
     "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "incremental": true,
-    "tsBuildInfoFile": "./build/.tsbuildinfo"
+    "tsBuildInfoFile": "./build/.tsbuildinfo",
+    "removeComments": true,
+    "sourceMap": false
   },
-  "include": ["src/**/*", "tests/**/*"]
+  "include": ["src/**/*"]
 }

@@ -55,12 +55,13 @@ export function parseApiError(err: unknown): ParsedError | null {
   const entities = getErrorEntities(err);
   if (!entities?.length) return null;
 
-  const {
-    code: outerCode,
-    doc_url: docUrl,
-    details,
-    transient,
-  } = entities[0].attributes;
+  const firstEntity = entities[0];
+  if (!firstEntity) return null;
+
+  const attributes = firstEntity.attributes;
+  if (!attributes) return null;
+
+  const { code: outerCode, doc_url: docUrl, details, transient } = attributes;
 
   // If `details` itself has a `code` field, treat that as innerCode
   const innerCode =
