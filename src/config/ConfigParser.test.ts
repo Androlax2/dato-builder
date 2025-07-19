@@ -426,9 +426,6 @@ describe("ConfigParser", () => {
         apiToken: "valid-token",
       };
 
-      // Clear any existing module mocks
-      jest.resetModules();
-
       // Mock fs.existsSync to return true for the config file
       mockFs.existsSync.mockImplementation((filePath) => {
         return filePath === "/mock/cwd/dato-builder.config.js";
@@ -440,12 +437,10 @@ describe("ConfigParser", () => {
         .mockResolvedValue("/mock/cwd/dato-builder.config.js");
       (mockFs as any).promises = { realpath: realPathMock };
 
-      // Mock the config file import
-      jest.doMock(
-        "/mock/cwd/dato-builder.config.js",
-        () => ({ default: mockConfig }),
-        { virtual: true },
-      );
+      // Mock the config file import using the same pattern as working tests
+      jest.doMock("/mock/cwd/dato-builder.config.js", () => mockConfig, {
+        virtual: true,
+      });
 
       const result = await configParser.loadConfig();
 
