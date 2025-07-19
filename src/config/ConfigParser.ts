@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
-import { type ConsoleLogger, LogLevel } from "@/logger";
-import type { DatoBuilderConfig } from "@/types/DatoBuilderConfig";
+import { type ConsoleLogger, LogLevel } from "../logger";
+import type { DatoBuilderConfig } from "../types/DatoBuilderConfig";
 
 export class ConfigParser {
   private readonly logger: ConsoleLogger;
