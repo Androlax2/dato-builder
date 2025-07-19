@@ -7,12 +7,14 @@ type CacheData = {
 };
 
 export class CacheManager {
-  private readonly items: Map<string, CacheData>;
+  // biome-ignore lint/nursery/useReadonlyClassProperties: It is not a read-only property.
+  private items: Map<string, CacheData>;
 
   private readonly cachePath: string;
   private readonly skipReads: boolean;
 
-  private readonly writeQueue: Array<{
+  // biome-ignore lint/nursery/useReadonlyClassProperties: It is not a read-only property.
+  private writeQueue: Array<{
     data: CacheData;
     resolve: Function;
     reject: Function;
