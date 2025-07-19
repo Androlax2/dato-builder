@@ -18,7 +18,7 @@ import { createMockConfig } from "@tests/utils/mockConfig";
 import { createMockLogger } from "@tests/utils/mockLogger";
 import { createMockPlop } from "@tests/utils/mockPlop";
 import { createMockPlopGenerator } from "@tests/utils/mockPlopGenerator";
-import type { NodePlopAPI } from "plop";
+import type { NodePlopAPI } from "node-plop";
 import type { ConsoleLogger } from "../logger";
 import type { DatoBuilderConfig } from "../types/DatoBuilderConfig";
 import { PlopGenerator } from "./PlopGenerator";

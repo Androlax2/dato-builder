@@ -1,5 +1,5 @@
 import { jest } from "@jest/globals";
-import type { PlopGenerator } from "plop";
+import type { PlopGenerator } from "node-plop";
 
 export function createMockPlopGenerator(): jest.Mocked<PlopGenerator> {
   return {

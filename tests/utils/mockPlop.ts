@@ -1,5 +1,5 @@
 import { jest } from "@jest/globals";
-import type { NodePlopAPI } from "plop";
+import type { NodePlopAPI } from "node-plop";
 
 export function createMockPlop(): jest.Mocked<NodePlopAPI> {
   return {
