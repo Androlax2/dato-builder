@@ -157,6 +157,29 @@ async function setupCLI(): Promise<void> {
       }
     });
 
+  // Generate command
+  program
+    .command("generate")
+    .description("Generate Blocks and Models")
+    .action(async (_options, command) => {
+      try {
+        const globalOptions = command.optsWithGlobals();
+
+        const cli = await initializeCLI({
+          debug: globalOptions.debug,
+          verbose: globalOptions.verbose,
+          quiet: globalOptions.quiet,
+          cache: globalOptions.cache,
+        });
+
+        await cli.generate();
+      } catch (error) {
+        const logger = new ConsoleLogger(LogLevel.ERROR);
+        logger.error(`Generation failed: ${(error as Error).message}`);
+        process.exit(1);
+      }
+    });
+
   // Clear cache command
   program
     .command("clear-cache")

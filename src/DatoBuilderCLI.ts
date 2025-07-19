@@ -45,6 +45,61 @@ export class DatoBuilderCLI {
   }
 
   /**
+   * Generate Blocks and Models
+   */
+  public async generate() {
+    // Use Function constructor to avoid TypeScript transpilation of dynamic import
+    const importNodePlop = new Function('return import("node-plop")');
+    const { default: nodePlop } = await importNodePlop();
+    const plop = await nodePlop();
+
+    const testGenerator = plop.setGenerator("test", {
+      description: "Test generator",
+      prompts: [
+        {
+          type: "input",
+          name: "name",
+          message: "Enter a name for the test:",
+          validate: (value: string) => {
+            if (!value) return "Name is required";
+            return true;
+          },
+        },
+      ],
+      actions: [
+        {
+          type: "add",
+          path: "src/generated/{{name}}.ts",
+          templateFile: "src/plop-templates/test.hbs",
+        },
+      ],
+    });
+
+    testGenerator
+      .runPrompts()
+      .then((answers: any) => {
+        return testGenerator
+          .runActions(answers)
+          .then((ok: any) => {
+            if (ok.failures.length > 0) {
+              this.logger.errorJson(
+                "Failed to generate test files:",
+                ok.failures,
+              );
+            } else {
+              this.logger.success("Test files generated successfully!");
+            }
+          })
+          .catch((error: any) => {
+            this.logger.error(`Error generating test: ${error.message}`);
+          });
+      })
+      .catch((error: any) => {
+        this.logger.error(`Error generating test: ${error.message}`);
+      });
+  }
+
+  /**
    * Clear all caches
    */
   public async clearCache(): Promise<void> {
