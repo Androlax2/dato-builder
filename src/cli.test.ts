@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
+import { createMockDatoBuilderCLI } from "@tests/utils/mockDatoBuilderCLI";
 import { setupCLI } from "./cli";
 import { initializeCLI } from "./cli/CLIInitializer";
 import { CommandBuilder, type GlobalOptions } from "./cli/CommandBuilder";
@@ -34,12 +35,7 @@ describe("CLI", () => {
     MockCommandBuilder.mockImplementation(() => mockCommandBuilder);
 
     // Mock DatoBuilderCLI
-    mockCLI = {
-      build: jest.fn().mockImplementation(async () => {}),
-      generate: jest.fn().mockImplementation(async () => {}),
-      clearCache: jest.fn().mockImplementation(async () => {}),
-    } as unknown as jest.Mocked<DatoBuilderCLI>;
-
+    mockCLI = createMockDatoBuilderCLI();
     mockInitializeCLI.mockResolvedValue(mockCLI);
   });
 
