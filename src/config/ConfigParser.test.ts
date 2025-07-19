@@ -29,6 +29,12 @@ describe("ConfigParser", () => {
     // Mock process.cwd()
     jest.spyOn(process, "cwd").mockReturnValue("/mock/cwd");
 
+    // Setup default fs.promises.realpath mock for existing tests
+    const defaultRealPath = jest
+      .fn<(path: string) => Promise<string>>()
+      .mockImplementation((path) => Promise.resolve(path));
+    (mockFs as any).promises = { realpath: defaultRealPath };
+
     configParser = new ConfigParser(createMockLogger());
   });
 
@@ -420,6 +426,9 @@ describe("ConfigParser", () => {
         apiToken: "valid-token",
       };
 
+      // Clear any existing module mocks
+      jest.resetModules();
+
       // Mock fs.existsSync to return true for the config file
       mockFs.existsSync.mockImplementation((filePath) => {
         return filePath === "/mock/cwd/dato-builder.config.js";
@@ -434,9 +443,7 @@ describe("ConfigParser", () => {
       // Mock the config file import
       jest.doMock(
         "/mock/cwd/dato-builder.config.js",
-        () => ({
-          default: mockConfig,
-        }),
+        () => ({ default: mockConfig }),
         { virtual: true },
       );
 
