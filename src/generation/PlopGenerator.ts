@@ -31,17 +31,26 @@ export class PlopGenerator {
    * Setup plop instance with all generators
    */
   private async setupPlop(): Promise<NodePlopAPI> {
-    // Use Function constructor to avoid TypeScript transpilation of dynamic import
-    const importNodePlop = new Function(
-      'return import("node-plop")',
-    ) as () => Promise<{
-      default: (
-        plopfilePath?: string,
-        plopCfg?: PlopCfg,
-      ) => Promise<NodePlopAPI>;
-    }>;
-    const { default: nodePlop } = await importNodePlop();
-    const plop = await nodePlop();
+    let plop: NodePlopAPI;
+    const isTest = process.env.NODE_ENV === "test";
+
+    if (isTest) {
+      // avoid dynamic import during tests
+      const nodePlop = require("node-plop");
+      plop = await nodePlop.default();
+    } else {
+      // Use Function constructor to avoid TypeScript transpilation of dynamic import
+      const importNodePlop = new Function(
+        'return import("node-plop")',
+      ) as () => Promise<{
+        default: (
+          plopfilePath?: string,
+          plopCfg?: PlopCfg,
+        ) => Promise<NodePlopAPI>;
+      }>;
+      const { default: nodePlop } = await importNodePlop();
+      plop = await nodePlop();
+    }
 
     const __dirname = dirname(__filename);
     const plopTemplatesPath = join(__dirname, "..", "plop-templates");

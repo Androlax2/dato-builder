@@ -20,3 +20,4 @@ plopfile
 lefthook
 env
 nodemon
+invalidname
