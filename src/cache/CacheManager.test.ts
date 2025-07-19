@@ -418,6 +418,348 @@ describe("CacheManager", () => {
     });
   });
 
+  describe("processWriteQueue race conditions", () => {
+    beforeEach(() => {
+      // Reset mock implementations
+      jest.clearAllMocks();
+    });
+
+    it("should prevent concurrent processWriteQueue executions", async () => {
+      const cache = new CacheManager(cachePath);
+      mockFs.readFile.mockResolvedValue(JSON.stringify([]));
+      await cache.initialize();
+
+      // Mock writeFile to track call count and add delay
+      let writeCallCount = 0;
+      mockFs.writeFile.mockImplementation(() => {
+        writeCallCount++;
+        return new Promise((resolve) => setTimeout(resolve, 100));
+      });
+
+      // Start multiple writes concurrently
+      const promises = [
+        await cache.set("key1", { hash: "hash1", id: "id1" }),
+        await cache.set("key2", { hash: "hash2", id: "id2" }),
+        await cache.set("key3", { hash: "hash3", id: "id3" }),
+      ];
+
+      await Promise.all(promises);
+
+      // Should only call writeFile once due to queue batching
+      expect(writeCallCount).toBe(1);
+      expect(cache.size()).toBe(3);
+    });
+
+    it("should process all queued items when new items added during write", async () => {
+      const cache = new CacheManager(cachePath);
+      mockFs.readFile.mockResolvedValue(JSON.stringify([]));
+      await cache.initialize();
+
+      let resolveFirstWrite: () => void;
+      const firstWritePromise = new Promise<void>((resolve) => {
+        resolveFirstWrite = resolve;
+      });
+
+      let writeCallCount = 0;
+      mockFs.writeFile.mockImplementation(() => {
+        writeCallCount++;
+        if (writeCallCount === 1) {
+          return firstWritePromise;
+        }
+        return Promise.resolve();
+      });
+
+      // Start first write - this will set isWriting = true
+      const firstWrite = cache.set("key1", { hash: "hash1", id: "id1" });
+
+      // Wait a bit to ensure the first write has started and isWriting is true
+      await new Promise((resolve) => setTimeout(resolve, 10));
+
+      // Add more items while isWriting is true
+      // These should be queued and processed after the first write completes
+      const secondWrite = cache.set("key2", { hash: "hash2", id: "id2" });
+      const thirdWrite = cache.set("key3", { hash: "hash3", id: "id3" });
+
+      // Complete the first write
+      resolveFirstWrite!();
+
+      // Wait for all operations to complete
+      await Promise.all([firstWrite, secondWrite, thirdWrite]);
+
+      // All items should be in memory
+      expect(cache.size()).toBe(3);
+      expect(cache.get("key1")).toBeDefined();
+      expect(cache.get("key2")).toBeDefined();
+      expect(cache.get("key3")).toBeDefined();
+
+      // All items should be written to file - either batched or separately
+      expect(writeCallCount).toBeGreaterThanOrEqual(1);
+
+      expect(mockFs.writeFile.mock.calls.length).toBeGreaterThan(0);
+
+      // Check if all items are in the final write or multiple writes
+      const allWrittenItems: any[] = [];
+      for (const call of mockFs.writeFile.mock.calls) {
+        const writeData = JSON.parse(call[1] as string);
+        // Merge all written items (handling potential multiple writes)
+        for (const item of writeData) {
+          if (!allWrittenItems.find((existing) => existing[0] === item[0])) {
+            allWrittenItems.push(item);
+          }
+        }
+      }
+
+      expect(allWrittenItems).toHaveLength(3);
+    });
+
+    it("should properly resolve all promises when write succeeds", async () => {
+      const cache = new CacheManager(cachePath);
+      mockFs.readFile.mockResolvedValue(JSON.stringify([]));
+      await cache.initialize();
+
+      const promises = [
+        await cache.set("key1", { hash: "hash1", id: "id1" }),
+        await cache.set("key2", { hash: "hash2", id: "id2" }),
+        await cache.set("key3", { hash: "hash3", id: "id3" }),
+      ];
+
+      // All promises should resolve without throwing
+      await expect(Promise.all(promises)).resolves.toEqual([
+        undefined,
+        undefined,
+        undefined,
+      ]);
+    });
+
+    it("should properly reject all promises when write fails", async () => {
+      const cache = new CacheManager(cachePath);
+      mockFs.readFile.mockResolvedValue(JSON.stringify([]));
+      await cache.initialize();
+
+      const writeError = new Error("Write failed");
+      mockFs.writeFile.mockRejectedValue(writeError);
+
+      const promises = [
+        await cache.set("key1", { hash: "hash1", id: "id1" }),
+        await cache.set("key2", { hash: "hash2", id: "id2" }),
+        await cache.set("key3", { hash: "hash3", id: "id3" }),
+      ];
+
+      // All promises should reject with the same error
+      await expect(Promise.all(promises)).rejects.toThrow("Write failed");
+    });
+
+    it("should ensure all queued items are eventually written to disk", async () => {
+      const cache = new CacheManager(cachePath);
+      mockFs.readFile.mockResolvedValue(JSON.stringify([]));
+      await cache.initialize();
+
+      let resolveFirstWrite: (() => void) | undefined;
+      let writeCallCount = 0;
+
+      mockFs.writeFile.mockImplementation(() => {
+        writeCallCount++;
+        if (writeCallCount === 1) {
+          // First write takes time - we control when it completes
+          return new Promise<void>((resolve) => {
+            resolveFirstWrite = resolve;
+          });
+        }
+        // Subsequent writes complete immediately
+        return Promise.resolve();
+      });
+
+      // Start first operation - this will start writing and set isWriting = true
+      const firstPromise = cache.set("key1", { hash: "hash1", id: "id1" });
+
+      // Small delay to ensure first write has started
+      await new Promise((resolve) => setTimeout(resolve, 5));
+
+      // Add more items while the first write is in progress
+      // These should be queued and processed after the first write
+      const secondPromise = cache.set("key2", { hash: "hash2", id: "id2" });
+      const thirdPromise = cache.set("key3", { hash: "hash3", id: "id3" });
+
+      // Complete the first write to trigger queue processing
+      if (resolveFirstWrite) {
+        resolveFirstWrite();
+      }
+
+      // Wait for all operations to complete
+      await Promise.all([firstPromise, secondPromise, thirdPromise]);
+
+      // All items should be in memory
+      expect(cache.size()).toBe(3);
+
+      // Ensure recursive queue processing works properly - all items should be written
+      expect(writeCallCount).toBeGreaterThanOrEqual(1);
+
+      const allWriteCalls = mockFs.writeFile.mock.calls;
+      const allPersistedItems: any[] = [];
+
+      // Collect all items from all write operations
+      for (const call of allWriteCalls) {
+        const writeData = JSON.parse(call[1] as string);
+        for (const item of writeData) {
+          if (!allPersistedItems.find((existing) => existing[0] === item[0])) {
+            allPersistedItems.push(item);
+          }
+        }
+      }
+
+      expect(allPersistedItems).toHaveLength(3);
+
+      // Verify all expected items are present
+      const persistedKeys = allPersistedItems.map(
+        (item: [string, any]) => item[0],
+      );
+      expect(persistedKeys).toContain("key1");
+      expect(persistedKeys).toContain("key2"); // This will fail due to race condition
+      expect(persistedKeys).toContain("key3"); // This will fail due to race condition
+    });
+
+    it("should handle concurrent operations without losing data", async () => {
+      const cache = new CacheManager(cachePath);
+      mockFs.readFile.mockResolvedValue(JSON.stringify([]));
+      await cache.initialize();
+
+      let writeInProgress = false;
+      let resolveFirstWrite: (() => void) | undefined;
+
+      mockFs.writeFile.mockImplementation(() => {
+        if (!writeInProgress) {
+          writeInProgress = true;
+          return new Promise<void>((resolve) => {
+            resolveFirstWrite = resolve;
+          });
+        }
+        return Promise.resolve();
+      });
+
+      // Start the first operation
+      const firstPromise = cache.set("key1", { hash: "hash1", id: "id1" });
+
+      // Wait for write to start
+      await new Promise((resolve) => setTimeout(resolve, 10));
+
+      // Add items while write is in progress - these will be queued
+      const secondPromise = cache.set("key2", { hash: "hash2", id: "id2" });
+      const thirdPromise = cache.set("key3", { hash: "hash3", id: "id3" });
+
+      // Complete the first write to allow queue processing
+      if (resolveFirstWrite) {
+        resolveFirstWrite();
+      }
+
+      // Wait for all operations to complete
+      await Promise.all([firstPromise, secondPromise, thirdPromise]);
+
+      // Wait for any remaining async operations
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      // All items should be in memory
+      expect(cache.size()).toBe(3);
+
+      // Verify all items are accessible
+      expect(cache.get("key1")).toEqual({ hash: "hash1", id: "id1" });
+      expect(cache.get("key2")).toEqual({ hash: "hash2", id: "id2" });
+      expect(cache.get("key3")).toEqual({ hash: "hash3", id: "id3" });
+
+      // Verify data was written to disk (regression test for race condition)
+      expect(mockFs.writeFile).toHaveBeenCalled();
+    });
+
+    it("should maintain queue state consistency during errors", async () => {
+      const cache = new CacheManager(cachePath);
+      mockFs.readFile.mockResolvedValue(JSON.stringify([]));
+      await cache.initialize();
+
+      // First write succeeds
+      mockFs.writeFile.mockResolvedValueOnce(undefined);
+      await cache.set("key1", { hash: "hash1", id: "id1" });
+
+      // Second batch fails
+      const writeError = new Error("Write failed");
+      mockFs.writeFile.mockRejectedValueOnce(writeError);
+
+      const failingPromises = [
+        await cache.set("key2", { hash: "hash2", id: "id2" }),
+        await cache.set("key3", { hash: "hash3", id: "id3" }),
+      ];
+
+      await expect(Promise.all(failingPromises)).rejects.toThrow(
+        "Write failed",
+      );
+
+      // Third write should work again (queue should be cleared)
+      mockFs.writeFile.mockResolvedValueOnce(undefined);
+      await cache.set("key4", { hash: "hash4", id: "id4" });
+
+      expect(cache.size()).toBe(4); // All items should be in memory
+    });
+
+    it("should handle isWriting flag correctly", async () => {
+      const cache = new CacheManager(cachePath);
+      mockFs.readFile.mockResolvedValue(JSON.stringify([]));
+      await cache.initialize();
+
+      let resolveFirstWrite: () => void;
+      const firstWritePromise = new Promise<void>((resolve) => {
+        resolveFirstWrite = resolve;
+      });
+
+      let writeCallCount = 0;
+      mockFs.writeFile.mockImplementation(() => {
+        writeCallCount++;
+        if (writeCallCount === 1) {
+          return firstWritePromise;
+        }
+        return Promise.resolve();
+      });
+
+      // Start multiple operations
+      const firstOp = cache.set("key1", { hash: "hash1", id: "id1" });
+
+      // Allow first write to start
+      await new Promise((resolve) => setTimeout(resolve, 10));
+
+      const secondOp = cache.set("key2", { hash: "hash2", id: "id2" });
+
+      // First write should have started
+      expect(writeCallCount).toBe(1);
+
+      resolveFirstWrite!();
+      await Promise.all([firstOp, secondOp]);
+
+      // Should have the correct number of writes (batching may occur)
+      expect(writeCallCount).toBeGreaterThanOrEqual(1);
+      expect(cache.size()).toBe(2);
+    });
+
+    it("should handle empty queue scenario correctly", async () => {
+      const cache = new CacheManager(cachePath);
+      mockFs.readFile.mockResolvedValue(JSON.stringify([]));
+      await cache.initialize();
+
+      // Call processWriteQueue directly when queue is empty (shouldn't crash)
+      // This simulates the private method being called - we can't call it directly,
+      // but we can verify the behavior by ensuring no writes happen when no items are queued
+
+      // Initially no operations
+      expect(mockFs.writeFile).not.toHaveBeenCalled();
+
+      // Add and complete an operation
+      await cache.set("key1", { hash: "hash1", id: "id1" });
+
+      // Verify write happened
+      expect(mockFs.writeFile).toHaveBeenCalledTimes(1);
+
+      // No additional writes should happen after queue is empty
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      expect(mockFs.writeFile).toHaveBeenCalledTimes(1);
+    });
+  });
+
   describe("error handling", () => {
     it("should handle write errors in queue", async () => {
       const cache = new CacheManager(cachePath);
