@@ -29,10 +29,7 @@
     "format:write": "biome format --write",
     "format:check": "biome check --write",
     "typecheck": "tsc --noEmit",
-    "spellcheck": "cspell \"**/*.{js,ts,md,json,yml,yaml}\"",
-    "generate": "plop",
-    "generate:block": "plop block",
-    "generate:model": "plop model"
+    "spellcheck": "cspell \"**/*.{js,ts,md,json,yml,yaml}\""
   },
   "devDependencies": {
     "@biomejs/biome": "2.1.1",
