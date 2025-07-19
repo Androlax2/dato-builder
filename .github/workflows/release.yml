@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - main
+      - beta
 
 permissions:
   contents: read # for checkout
@@ -35,6 +36,18 @@ jobs:
 
       - name: Build
         run: npm run build
+
+      - name: Check Biome style
+        run: npx @biomejs/biome ci .
+
+      - name: TypeScript Check
+        run: npx tsc --noEmit --skipLibCheck
+
+      - name: Spellcheck
+        run: npm run spellcheck
+
+      - name: Test
+        run: npm run test
 
       - name: Release
         env:
