@@ -1,6 +1,12 @@
 # Dato Builder
 
-Quickly create Models, Blocks in DatoCMS from your source code.
+**TypeScript-powered DatoCMS schema builder with fluent API for rapid content model development**
+
+[![npm version](https://img.shields.io/npm/v/dato-builder.svg)](https://www.npmjs.com/package/dato-builder)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![TypeScript](https://img.shields.io/badge/TypeScript-Ready-blue.svg)](https://www.typescriptlang.org/)
+
+Quickly create Models, Blocks, and content structures in DatoCMS from your TypeScript source code with concurrent builds, interactive generation, and comprehensive validation.
 
 ## Table of Contents
 
@@ -9,8 +15,11 @@ Quickly create Models, Blocks in DatoCMS from your source code.
 - [CLI Commands](#cli-commands)
 - [Usage](#usage)
   - [1. Define a Block](#1-define-a-block)
-    - [2. Define a Model](#2-define-a-model)
-    - [3. Build Everything](#3-build-everything)
+  - [2. Generate Files Quickly](#2-generate-files-quickly)
+  - [3. Define a Model](#3-define-a-model)
+  - [4. Build Everything](#4-build-everything)
+- [Development & Testing](#development--testing)
+- [Migration Guide](#migration-guide)
 - [Comprehensive Field \& Validator Reference](#comprehensive-field--validator-reference)
   - [Text Fields](#text-fields)
     - [`SingleLineString`](#singlelinestring)
@@ -84,7 +93,6 @@ Create a `dato-builder.config.js` in your project root:
 module.exports = {
   apiToken: process.env.DATO_CMA_TOKEN, // your DatoCMS CMA token
   overwriteExistingFields: false, // create new fields only; existing fields remain untouched
-  debug: false, // enable verbose logging
   modelApiKeySuffix: undefined, // suffix for model API keys (e.g. "page" becomes "page_model")
   blockApiKeySuffix: "block", // suffix for block API keys (e.g. "hero" becomes "hero_block")
 };
@@ -97,11 +105,80 @@ module.exports = {
 
 ## CLI Commands
 
-- **`npx dato-builder run <file|dir>`**  
-  Build one or more scripts (blocks, models, or whole folders).
+### Build Commands
+
+- **`npx dato-builder build`**  
+  Build all DatoCMS types and blocks with enhanced options:
+  - `--skip-deletion` - Skip deletion detection and removal of orphaned items
+  - `--skip-deletion-confirmation` - Skip confirmation prompts for deletions
+  - `--concurrent` - Enable concurrent builds (default concurrency: 3)
+  - `--concurrency <number>` - Set specific concurrency level (implies --concurrent)
+  - `--auto-concurrency` - Automatically determine concurrency based on CPU cores
+
+### Generation Commands
+
+- **`npx dato-builder generate`**  
+  Interactive generator to create new blocks or models with guided prompts.
+
+- **`npx dato-builder generate:block`**  
+  Generate a new DatoCMS block with interactive prompts for name and configuration.
+
+- **`npx dato-builder generate:model`**  
+  Generate a new DatoCMS model with options for singleton, sortable, and tree structure.
+
+### Utility Commands
 
 - **`npx dato-builder clear-cache`**  
-  Wipe the local cache that tracks what’s already been synced.
+  Clear all caches to force fresh builds.
+
+### Global Options
+
+All commands support these global options:
+- `-d, --debug` - Output detailed debugging information
+- `-v, --verbose` - Display fine-grained trace logs
+- `-q, --quiet` - Only display errors
+- `-n, --no-cache` - Disable cache usage
+
+### 📋 Quick Reference
+
+| Command          | Purpose                   | Key Options                             |
+|------------------|---------------------------|-----------------------------------------|
+| `build`          | Build all blocks/models   | `--auto-concurrency`, `--skip-deletion` |
+| `generate`       | Interactive file creation | *None*                                  |
+| `generate:block` | Create new block          | *None*                                  |
+| `generate:model` | Create new model          | *None*                                  |
+| `clear-cache`    | Reset all caches          | *None*                                  |
+
+### 🔧 Troubleshooting
+
+**Common Issues & Solutions:**
+
+**Build Errors**
+```bash
+# Problem: Build fails with permission errors
+# Solution: Check DatoCMS API token permissions
+npx dato-builder build --debug
+
+# Problem: Slow builds
+# Solution: Enable concurrent processing
+npx dato-builder build --auto-concurrency
+```
+
+**Cache Issues**
+```bash
+# Problem: Stale data or unexpected results
+# Solution: Clear cache and rebuild
+npx dato-builder clear-cache
+npx dato-builder build --no-cache
+```
+
+**Generation Errors**
+```bash
+# Problem: Generator validation fails
+# Solution: Ensure proper naming (PascalCase)
+# ✅ Good: MyNewBlock, BlogPost
+# ❌ Bad: my-block, blog_post
+```
 
 ---
 
@@ -111,70 +188,76 @@ module.exports = {
 
 ```typescript
 // datocms/blocks/TestBlock.ts
-import { BlockBuilder } from "dato-builder";
+import { BlockBuilder, type BuilderContext } from "dato-builder";
 
-export default async function buildTestBlock(): Promise<string> {
-  const block = new BlockBuilder("Test Block")
+export default async function buildTestBlock({ config }: BuilderContext) {
+  return new BlockBuilder("Test Block")
     .addHeading({ label: "Title" })
     .addTextarea({ label: "Description" })
     .addImage({
       label: "Image",
       body: { validators: { required: true } },
     });
-
-  return block.upsert();
 }
-
-void buildTestBlock();
 ```
 
 _Run it:_
 
 ```bash
-npx dato-builder run datocms/blocks/TestBlock.ts
+npx dato-builder build
 ```
 
-### 2. Define a Model
+### 2. Generate Files Quickly
+
+Create new blocks and models interactively:
+
+```bash
+# Interactive generator
+npx dato-builder generate
+
+# Or generate specific types directly
+npx dato-builder generate:block
+npx dato-builder generate:model
+```
+
+### 3. Define a Model
 
 ```typescript
 // datocms/models/TestModel.ts
-import { ModelBuilder } from "dato-builder";
-import buildTestBlock from "../blocks/TestBlock";
+import { ModelBuilder, type BuilderContext } from "dato-builder";
 
-export default async function buildTestModel(): Promise<string> {
-  const testBlockId = await buildTestBlock();
-
-  const model = new ModelBuilder("Test Model")
+export default async function buildTestModel({ config, getBlock }: BuilderContext) {
+  return new ModelBuilder("Test Model")
     .addHeading({ label: "Title" })
     .addTextarea({ label: "Description" })
     .addModularContent({
       label: "Content",
       body: {
-        validators: { rich_text_blocks: { item_types: [testBlockId] } },
+        validators: { rich_text_blocks: { item_types: [await getBlock("TestBlock")] } },
       },
     });
-
-  return model.upsert();
 }
-
-void buildTestModel();
 ```
 
 _Run it:_
 
 ```bash
-npx dato-builder run datocms/models/TestModel.ts
+npx dato-builder build
 ```
 
-### 3. Build Everything
+> 🔗 **Advanced Usage**: See [Field Reference](#comprehensive-field--validator-reference) for all available field types and validators.
+
+### 4. Build Everything
 
 ```bash
-npx dato-builder run datocms/
+# Build with performance optimizations
+npx dato-builder build --auto-concurrency
+
+# Build without deletion detection
+npx dato-builder build --skip-deletion
 ```
 
 ---
-
-_Note: You can add more builder scripts (blocks or models) and then point `run` at the parent folder to sync them all in one go._
 
 # Comprehensive Field & Validator Reference
 
@@ -1199,3 +1282,7 @@ builder.addStructuredText({
 | Seo                                        | [required_seo_fields](#required_seo_fields), [file_size](#file_size), [image_dimensions](#image_dimensions), [image_aspect_ratio](#image_aspect_ratio), [title_length](#title_length), [description_length](#description_length) |
 
 ---
+
+## 📄 License
+
+MIT License - see [LICENSE](LICENSE) file for details.
