@@ -1,3 +1,4 @@
+import type { NodePlopAPI, PlopCfg } from "plop";
 import type { CacheManager } from "./cache/CacheManager";
 import { RunCommand } from "./commands/run/RunCommand";
 import type { ConsoleLogger } from "./logger";
@@ -49,7 +50,14 @@ export class DatoBuilderCLI {
    */
   public async generate() {
     // Use Function constructor to avoid TypeScript transpilation of dynamic import
-    const importNodePlop = new Function('return import("node-plop")');
+    const importNodePlop = new Function(
+      'return import("node-plop")',
+    ) as () => Promise<{
+      default: (
+        plopfilePath?: string,
+        plopCfg?: PlopCfg,
+      ) => Promise<NodePlopAPI>;
+    }>;
     const { default: nodePlop } = await importNodePlop();
     const plop = await nodePlop();
 
@@ -77,7 +85,7 @@ export class DatoBuilderCLI {
 
     testGenerator
       .runPrompts()
-      .then((answers: any) => {
+      .then((answers) => {
         return testGenerator
           .runActions(answers)
           .then((ok: any) => {
