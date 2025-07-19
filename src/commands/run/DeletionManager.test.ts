@@ -255,7 +255,7 @@ describe("DeletionManager", () => {
         total: 1,
       };
 
-      const safe: DeletionCandidate[] = [summary.blocks[0]];
+      const safe: DeletionCandidate[] = [summary.blocks[0]!];
       const unsafe: Array<DeletionCandidate & { usedBy: string[] }> = [];
 
       const inquirer = require("inquirer");
@@ -273,7 +273,7 @@ describe("DeletionManager", () => {
       );
 
       expect(results).toHaveLength(1);
-      expect(results[0].success).toBe(true);
+      expect(results[0]?.success).toBe(true);
     });
 
     it("should handle case when no safe deletions", async () => {
@@ -313,7 +313,7 @@ describe("DeletionManager", () => {
         total: 1,
       };
 
-      const safe: DeletionCandidate[] = [summary.blocks[0]];
+      const safe: DeletionCandidate[] = [summary.blocks[0]!];
       const unsafe: Array<DeletionCandidate & { usedBy: string[] }> = [];
 
       const inquirer = require("inquirer");

@@ -21,7 +21,7 @@ type BlockBuilderOptions = {
 };
 
 export default class BlockBuilder extends ItemTypeBuilder {
-  public type: ItemTypeBuilderType = "block";
+  public override type: ItemTypeBuilderType = "block";
 
   constructor({ name, options, config }: BlockBuilderOptions) {
     super({
