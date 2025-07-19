@@ -86,22 +86,149 @@ npm install --save-dev dato-builder
 
 ## Configuration
 
+### Quick Setup
+
 Create a `dato-builder.config.js` in your project root:
 
 ```javascript
 /** @type {import("dato-builder").DatoBuilderConfig} */
 module.exports = {
-  apiToken: process.env.DATO_CMA_TOKEN, // your DatoCMS CMA token
-  overwriteExistingFields: false, // create new fields only; existing fields remain untouched
-  modelApiKeySuffix: undefined, // suffix for model API keys (e.g. "page" becomes "page_model")
-  blockApiKeySuffix: "block", // suffix for block API keys (e.g. "hero" becomes "hero_block")
+  apiToken: process.env.DATO_CMA_TOKEN,
+  overwriteExistingFields: false,
+  blockApiKeySuffix: "block",
 };
 ```
 
-> **overwriteExistingFields:**
->
-> - `false` (default): only new fields are created; updates/deletions are skipped.
-> - `true`: existing fields matching your code’s API keys are updated, and any extra fields are removed.
+### Complete Configuration Reference
+
+#### Required Configuration
+
+| Option     | Type     | Description                                                                                                             |
+|------------|----------|-------------------------------------------------------------------------------------------------------------------------|
+| `apiToken` | `string` | **Required.** Your DatoCMS Content Management API token. Find this in your DatoCMS project settings under "API tokens". |
+
+#### Optional Configuration
+
+| Option                    | Type             | Default              | Description                                                                          |
+|---------------------------|------------------|----------------------|--------------------------------------------------------------------------------------|
+| `overwriteExistingFields` | `boolean`        | `false`              | Controls field update behavior (see [Field Update Behavior](#field-update-behavior)) |
+| `modelApiKeySuffix`       | `string \| null` | `"model"`            | Suffix for model API keys (e.g., "page" → "page_model")                              |
+| `blockApiKeySuffix`       | `string \| null` | `"block"`            | Suffix for block API keys (e.g., "hero" → "hero_block")                              |
+| `modelsPath`              | `string`         | `"./datocms/models"` | Path where CLI searches for model definitions                                        |
+| `blocksPath`              | `string`         | `"./datocms/blocks"` | Path where CLI searches for block definitions                                        |
+| `logLevel`                | `LogLevel`       | `LogLevel.INFO`      | Minimum logging level (see [Logging Configuration](#logging-configuration))          |
+
+### Field Update Behavior
+
+The `overwriteExistingFields` option controls how dato-builder handles existing fields in DatoCMS:
+
+#### `false` (Default - Safe Mode)
+```javascript
+module.exports = {
+  overwriteExistingFields: false, // Safe: preserve manual changes
+};
+```
+- ✅ **New fields**: Created as defined in code
+- ✅ **Removed fields**: Deleted from DatoCMS
+- 🔒 **Existing fields**: Left untouched (preserves manual dashboard changes)
+- **Use case**: Development workflows where content editors make manual adjustments
+
+#### `true` (Sync Mode)
+```javascript
+module.exports = {
+  overwriteExistingFields: true, // Sync: code is source of truth
+};
+```
+- ✅ **New fields**: Created as defined in code
+- ✅ **Removed fields**: Deleted from DatoCMS
+- ⚠️ **Existing fields**: Updated to match code (overwrites manual changes)
+- **Use case**: Production deployments where code definitions are authoritative
+
+### Configuration File Formats
+
+#### JavaScript Configuration
+```javascript
+/** @type {import("dato-builder").DatoBuilderConfig} */
+module.exports = {
+  apiToken: process.env.DATO_CMA_TOKEN,
+  overwriteExistingFields: false,
+  // ... other options
+};
+```
+
+#### TypeScript Configuration
+```typescript
+// dato-builder.config.ts
+import type { DatoBuilderConfig } from "dato-builder";
+
+const config: DatoBuilderConfig = {
+  apiToken: process.env.DATO_CMA_TOKEN!,
+  overwriteExistingFields: false,
+  // ... other options
+};
+
+export default config;
+```
+
+### Logging Configuration
+
+Configure logging verbosity with the `logLevel` option:
+
+```javascript
+import { LogLevel } from "dato-builder";
+
+module.exports = {
+  logLevel: LogLevel.DEBUG, // or use numeric values
+};
+```
+
+#### Available Log Levels
+
+| Level            | Value | Description         | When to Use        |
+|------------------|-------|---------------------|--------------------|
+| `LogLevel.NONE`  | `-1`  | No logging          | Production (quiet) |
+| `LogLevel.ERROR` | `0`   | Errors only         | Production         |
+| `LogLevel.WARN`  | `1`   | Warnings and errors | Production         |
+| `LogLevel.INFO`  | `2`   | General information | **Default**        |
+| `LogLevel.DEBUG` | `3`   | Detailed debugging  | Development        |
+| `LogLevel.TRACE` | `4`   | Maximum verbosity   | Troubleshooting    |
+
+### Troubleshooting Configuration
+
+#### Common Issues
+
+**Missing API Token**
+```bash
+# Error: Validation error: Missing apiToken
+# Solution: Set environment variable
+export DATO_CMA_TOKEN=your_token_here
+```
+
+**Invalid Paths**
+```bash
+# Error: No dato-builder config file found
+# Solution: Ensure config file exists in project root
+touch dato-builder.config.js
+```
+
+**Permission Errors**
+```bash
+# Error: API token lacks sufficient permissions
+# Solution: Use Content Management API token with write permissions
+```
+
+#### Configuration Debugging
+```javascript
+module.exports = {
+  logLevel: 3, // Enable DEBUG logging
+  // ... other config
+};
+```
+
+```bash
+# Run with debug output
+npx dato-builder build --debug
+```
 
 ## CLI Commands
 
