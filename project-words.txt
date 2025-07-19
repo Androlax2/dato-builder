@@ -17,3 +17,6 @@ npmignore
 esbuild
 anthropics
 plopfile
+lefthook
+env
+nodemon
