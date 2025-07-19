@@ -29,7 +29,10 @@
     "format:write": "biome format --write",
     "format:check": "biome check --write",
     "typecheck": "tsc --noEmit",
-    "spellcheck": "cspell \"**/*.{js,ts,md,json,yml,yaml}\""
+    "spellcheck": "cspell \"**/*.{js,ts,md,json,yml,yaml}\"",
+    "generate": "plop",
+    "generate:block": "plop block",
+    "generate:model": "plop model"
   },
   "devDependencies": {
     "@biomejs/biome": "2.1.1",
@@ -56,6 +59,7 @@
   "dependencies": {
     "@datocms/cma-client-node": "^4.0.1",
     "commander": "^14.0.0",
+    "plop": "^4.0.1",
     "glob": "^11.0.3",
     "inquirer": "^12.7.0",
     "pluralize": "^8.0.0",

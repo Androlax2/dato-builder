@@ -1,0 +1,10 @@
+import { ModelBuilder, type BuilderContext } from "dato-builder";
+
+export default function build{{name}}({ config }: BuilderContext) {
+  return new BlockBuilder({
+    name: "{{name}}",
+    config,
+  })
+    // Add your fields here
+    // Example: .addText({ label: "Title" });
+}

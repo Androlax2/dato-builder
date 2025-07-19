@@ -16,3 +16,4 @@ childrens
 npmignore
 esbuild
 anthropics
+plopfile
