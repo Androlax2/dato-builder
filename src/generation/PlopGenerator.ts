@@ -1,5 +1,5 @@
 import { dirname, join } from "node:path";
-import type { NodePlopAPI, PlopCfg } from "plop";
+import type { NodePlopAPI } from "node-plop";
 import type { ConsoleLogger } from "../logger";
 import type { DatoBuilderConfig } from "../types/DatoBuilderConfig";
 
@@ -31,26 +31,10 @@ export class PlopGenerator {
    * Setup plop instance with all generators
    */
   private async setupPlop(): Promise<NodePlopAPI> {
-    let plop: NodePlopAPI;
-    const isTest = process.env.NODE_ENV === "test";
-
-    if (isTest) {
-      // avoid dynamic import during tests
-      const nodePlop = require("node-plop");
-      plop = await nodePlop.default();
-    } else {
-      // Use Function constructor to avoid TypeScript transpilation of dynamic import
-      const importNodePlop = new Function(
-        'return import("node-plop")',
-      ) as () => Promise<{
-        default: (
-          plopfilePath?: string,
-          plopCfg?: PlopCfg,
-        ) => Promise<NodePlopAPI>;
-      }>;
-      const { default: nodePlop } = await importNodePlop();
-      plop = await nodePlop();
-    }
+    // Use Function constructor to create dynamic import that works in compiled CommonJS
+    const dynamicImport = new Function("specifier", "return import(specifier)");
+    const { default: nodePlop } = await dynamicImport("node-plop");
+    const plop = await nodePlop();
 
     const __dirname = dirname(__filename);
     const plopTemplatesPath = join(__dirname, "..", "plop-templates");
