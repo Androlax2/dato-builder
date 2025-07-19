@@ -183,6 +183,52 @@ async function setupCLI(): Promise<void> {
       }
     });
 
+  // Generate block command
+  program
+    .command("generate:block")
+    .description("Generate a new DatoCMS block")
+    .action(async (_options, command) => {
+      try {
+        const globalOptions = command.optsWithGlobals();
+
+        const cli = await initializeCLI({
+          debug: globalOptions.debug,
+          verbose: globalOptions.verbose,
+          quiet: globalOptions.quiet,
+          cache: globalOptions.cache,
+        });
+
+        await cli.generate("block");
+      } catch (error) {
+        const logger = new ConsoleLogger(LogLevel.ERROR);
+        logger.error(`Block generation failed: ${(error as Error).message}`);
+        process.exit(1);
+      }
+    });
+
+  // Generate model command
+  program
+    .command("generate:model")
+    .description("Generate a new DatoCMS model")
+    .action(async (_options, command) => {
+      try {
+        const globalOptions = command.optsWithGlobals();
+
+        const cli = await initializeCLI({
+          debug: globalOptions.debug,
+          verbose: globalOptions.verbose,
+          quiet: globalOptions.quiet,
+          cache: globalOptions.cache,
+        });
+
+        await cli.generate("model");
+      } catch (error) {
+        const logger = new ConsoleLogger(LogLevel.ERROR);
+        logger.error(`Model generation failed: ${(error as Error).message}`);
+        process.exit(1);
+      }
+    });
+
   // Clear cache command
   program
     .command("clear-cache")
