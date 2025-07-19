@@ -19,6 +19,12 @@ export default {
       },
     ],
     [
+      "@semantic-release/exec",
+      {
+        prepareCmd: "npm run build:version",
+      },
+    ],
+    [
       "@semantic-release/npm",
       {
         npmPublish: true,

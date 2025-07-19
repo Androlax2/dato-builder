@@ -8,6 +8,9 @@ import { ConfigParser } from "./config/ConfigParser";
 import { DatoBuilderCLI } from "./DatoBuilderCLI";
 import { ConsoleLogger, LogLevel } from "./logger";
 
+// Version will be replaced during build
+const VERSION = "__PACKAGE_VERSION__";
+
 // Type definitions for options
 type GlobalOptions = {
   debug: boolean;
@@ -29,7 +32,7 @@ async function setupCLI(): Promise<void> {
   const program = new Command()
     .name("dato-builder")
     .description("DatoCMS Builder CLI")
-    .version(process.env.npm_package_version || "0.0.0")
+    .version(VERSION)
     .option("-n, --no-cache", "Disable cache usage")
     .option("-d, --debug", "Output information useful for debugging.", false)
     .option("-v, --verbose", "Display even finer-grained trace logs.", false)
