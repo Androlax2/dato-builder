@@ -12,6 +12,7 @@ export function createMockCache(): jest.Mocked<CacheManager> {
     values: jest.fn(),
     entries: jest.fn(),
     size: jest.fn().mockReturnValue(0),
+    initialize: jest.fn(),
   } as unknown as jest.Mocked<CacheManager>;
 
   return mock;
