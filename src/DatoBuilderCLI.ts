@@ -63,16 +63,23 @@ export class DatoBuilderCLI {
     const plop = await nodePlop();
 
     const __dirname = dirname(__filename);
+    const plopTemplatesPath = join(__dirname, "plop-templates");
 
-    const testGenerator = plop.setGenerator("test", {
-      description: "Test generator",
+    // Block generator
+    plop.setGenerator("block", {
+      description: "Generate a new DatoCMS block",
       prompts: [
         {
           type: "input",
           name: "name",
-          message: "Enter a name for the test:",
+          message: "Block name (PascalCase):",
           validate: (value: string) => {
-            if (!value) return "Name is required";
+            if (!value) return "Block name is required";
+
+            if (!/^[A-Z][a-zA-Z0-9]*$/.test(value)) {
+              return "Block name must be in PascalCase (e.g., MyNewBlock)";
+            }
+
             return true;
           },
         },
@@ -80,34 +87,57 @@ export class DatoBuilderCLI {
       actions: [
         {
           type: "add",
-          path: `${this.config.modelsPath}/{{name}}.ts`,
-          templateFile: join(__dirname, "plop-templates", "test.hbs"),
+          path: `${this.config.blocksPath}/{{name}}.ts`,
+          templateFile: `${plopTemplatesPath}/block.hbs`,
         },
       ],
     });
 
-    testGenerator
-      .runPrompts()
-      .then((answers) => {
-        return testGenerator
-          .runActions(answers)
-          .then((ok: any) => {
-            if (ok.failures.length > 0) {
-              this.logger.errorJson(
-                "Failed to generate test files:",
-                ok.failures,
-              );
-            } else {
-              this.logger.success("Test files generated successfully!");
+    // Model generator
+    plop.setGenerator("model", {
+      description: "Generate a new DatoCMS model",
+      prompts: [
+        {
+          type: "input",
+          name: "name",
+          message: "Model name (PascalCase):",
+          validate: (value: string) => {
+            if (!value) return "Model name is required";
+
+            if (!/^[A-Z][a-zA-Z0-9]*$/.test(value)) {
+              return "Model name must be in PascalCase (e.g., BlogPost)";
             }
-          })
-          .catch((error: any) => {
-            this.logger.error(`Error generating test: ${error.message}`);
-          });
-      })
-      .catch((error: any) => {
-        this.logger.error(`Error generating test: ${error.message}`);
-      });
+
+            return true;
+          },
+        },
+        {
+          type: "confirm",
+          name: "singleton",
+          message: "Is this a singleton model?",
+          default: false,
+        },
+        {
+          type: "confirm",
+          name: "sortable",
+          message: "Should records be sortable?",
+          default: false,
+        },
+        {
+          type: "confirm",
+          name: "tree",
+          message: "Should records be organized in a tree structure?",
+          default: false,
+        },
+      ],
+      actions: [
+        {
+          type: "add",
+          path: `${this.config.modelsPath}/{{name}}.ts`,
+          templateFile: `${plopTemplatesPath}/model.hbs`,
+        },
+      ],
+    });
   }
 
   /**
