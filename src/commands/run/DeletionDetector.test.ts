@@ -150,10 +150,10 @@ describe("DeletionDetector", () => {
       );
 
       expect(safe).toHaveLength(1);
-      expect(safe[0].name).toBe("model1");
+      expect(safe[0]?.name).toBe("model1");
       expect(unsafe).toHaveLength(1);
-      expect(unsafe[0].name).toBe("block1");
-      expect(unsafe[0].usedBy).toEqual(["fileA"]);
+      expect(unsafe[0]?.name).toBe("block1");
+      expect(unsafe[0]?.usedBy).toEqual(["fileA"]);
     });
   });
 });

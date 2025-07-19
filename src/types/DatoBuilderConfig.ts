@@ -51,6 +51,23 @@ export interface DatoBuilderConfig {
    * @default "./datocms/blocks"
    */
   blocksPath?: string;
+
+  /**
+   * File-system path (relative to the project root) where synced blocks
+   * should be generated when running sync command.
+   *
+   * @default "./src/datocms/.generated/blocks"
+   */
+  syncBlocksPath?: string;
+
+  /**
+   * File-system path (relative to the project root) where synced models
+   * should be generated when running sync command.
+   *
+   * @default "./src/datocms/.generated/models"
+   */
+  syncModelsPath?: string;
+
   /**
    * Minimum level of messages to log.
    * Higher levels suppress more verbose output.

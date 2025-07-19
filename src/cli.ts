@@ -4,6 +4,7 @@ import { Command } from "@commander-js/extra-typings";
 import { CacheManager } from "./cache/CacheManager";
 import { RunCommand } from "./commands/run/RunCommand";
 import { ConfigParser } from "./config/ConfigParser";
+import { DatoCmsSync } from "./DatoCmsSync";
 import { ConsoleLogger, LogLevel } from "./logger";
 import type { DatoBuilderConfig } from "./types/DatoBuilderConfig";
 
@@ -17,6 +18,11 @@ interface BuildCommandOptions {
   enableDeletion?: boolean;
   skipDeletionConfirmation?: boolean;
   concurrency?: number;
+}
+
+interface SyncCommandOptions {
+  dryRun?: boolean;
+  force?: boolean;
 }
 
 export class DatoBuilderCLI {
@@ -57,6 +63,35 @@ export class DatoBuilderCLI {
     this.logger.success("All caches cleared!");
     this.logger.trace("Cache clear operation completed");
   }
+
+  /**
+   * Sync from DatoCMS to local files
+   */
+  public async sync(options: SyncCommandOptions = {}): Promise<void> {
+    this.logger.trace("Starting sync from DatoCMS");
+
+    const syncService = new DatoCmsSync({
+      config: this.config,
+      cache: this.cache,
+      logger: this.logger,
+    });
+
+    // Ask for confirmation unless force is enabled
+    if (!options.force && !options.dryRun) {
+      const confirmed = await syncService.confirmSync();
+      if (!confirmed) {
+        this.logger.info("Sync cancelled by user");
+        return;
+      }
+    }
+
+    await syncService.sync({
+      dryRun: options.dryRun,
+      force: options.force,
+    });
+
+    this.logger.trace("Sync operation completed");
+  }
 }
 
 // Type definitions for options
@@ -75,11 +110,17 @@ type BuildOptions = {
   autoConcurrency?: boolean;
 };
 
+type SyncOptions = {
+  dryRun: boolean;
+  force: boolean;
+};
+
 // Setup Commander CLI
 async function setupCLI(): Promise<void> {
   const program = new Command()
     .name("dato-builder")
     .description("DatoCMS Builder CLI")
+    .version(process.env.npm_package_version || "0.0.0")
     .option("-n, --no-cache", "Disable cache usage")
     .option("-d, --debug", "Output information useful for debugging.", false)
     .option("-v, --verbose", "Display even finer-grained trace logs.", false)
@@ -222,6 +263,37 @@ async function setupCLI(): Promise<void> {
       } catch (error) {
         const logger = new ConsoleLogger(LogLevel.ERROR);
         logger.error(`Cache clear failed: ${(error as Error).message}`);
+        process.exit(1);
+      }
+    });
+
+  // Sync command
+  program
+    .command("sync")
+    .description("Sync blocks and models from DatoCMS to local files")
+    .option(
+      "--dry-run",
+      "Show what would be synced without making any changes",
+      false,
+    )
+    .option("--force", "Force sync all items, ignoring cache", false)
+    .action(async (options: SyncOptions, command) => {
+      try {
+        const globalOptions = command.optsWithGlobals();
+        const cli = await initializeCLI({
+          debug: globalOptions.debug,
+          verbose: globalOptions.verbose,
+          quiet: globalOptions.quiet,
+          cache: globalOptions.cache,
+        });
+
+        await cli.sync({
+          dryRun: options.dryRun,
+          force: options.force,
+        });
+      } catch (error) {
+        const logger = new ConsoleLogger(LogLevel.ERROR);
+        logger.error(`Sync failed: ${(error as Error).message}`);
         process.exit(1);
       }
     });

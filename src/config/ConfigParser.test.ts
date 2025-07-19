@@ -62,6 +62,8 @@ describe("ConfigParser", () => {
         blockApiKeySuffix: "block",
         blocksPath: "/mock/cwd/datocms/blocks",
         modelsPath: "/mock/cwd/datocms/models",
+        syncBlocksPath: "/mock/cwd/datocms/.generated/blocks",
+        syncModelsPath: "/mock/cwd/datocms/.generated/models",
         logLevel: 2,
       });
 
@@ -97,6 +99,8 @@ describe("ConfigParser", () => {
         blockApiKeySuffix: "block",
         blocksPath: "/mock/cwd/datocms/blocks",
         modelsPath: "/mock/cwd/datocms/models",
+        syncBlocksPath: "/mock/cwd/datocms/.generated/blocks",
+        syncModelsPath: "/mock/cwd/datocms/.generated/models",
         logLevel: 3,
       });
 
@@ -286,6 +290,8 @@ describe("ConfigParser", () => {
         blockApiKeySuffix: "block", // default
         blocksPath: "/custom/blocks/path", // user override
         modelsPath: "/mock/cwd/datocms/models", // default
+        syncBlocksPath: "/mock/cwd/datocms/.generated/blocks", // default
+        syncModelsPath: "/mock/cwd/datocms/.generated/models", // default
         logLevel: 2, // default
       });
 
@@ -301,6 +307,8 @@ describe("ConfigParser", () => {
         blockApiKeySuffix: "custom-block",
         blocksPath: "/custom/blocks",
         modelsPath: "/custom/models",
+        syncBlocksPath: "/custom/sync/blocks",
+        syncModelsPath: "/custom/sync/models",
         logLevel: 0,
       };
 

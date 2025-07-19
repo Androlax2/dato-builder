@@ -102,7 +102,7 @@ export default abstract class ItemTypeBuilder {
 
     this.type = type;
     this.name = body.name;
-    this.api = new DatoApi(buildClient({ apiToken: config.apiToken }));
+    this.api = new DatoApi(buildClient({ apiToken: config.apiToken }), this.logger);
 
     this.config = config;
 
@@ -788,8 +788,11 @@ export default abstract class ItemTypeBuilder {
     contextLogger.debug(`Starting field sync for itemType: ${itemTypeId}`);
 
     this.logger.trace("Fetching existing fields from API");
-    const existing = await this.api.call(() =>
-      this.api.client.fields.list(itemTypeId),
+    const existing = await this.api.call(
+      () => this.api.client.fields.list(itemTypeId),
+      3, 
+      500, 
+      `fields.list(${itemTypeId})`
     );
     const desired = this.fields.map((f) => f.build());
 
@@ -837,8 +840,12 @@ export default abstract class ItemTypeBuilder {
           () => {
             fieldLogger.debugJson("Creating field with definition: ", fieldDef);
 
-            return this.api.call(() =>
-              this.api.client.fields.create(itemTypeId, fieldDef),
+            return this.api.call(
+              () => this.api.client.fields.create(itemTypeId, fieldDef),
+              3, 
+              500, 
+              `fields.create(${itemTypeId}, ${fieldDef.label})`,
+              fieldDef
             );
           },
           "field",
@@ -885,8 +892,12 @@ export default abstract class ItemTypeBuilder {
 
             fieldLogger.debugJson("Updating field with definition: ", fieldDef);
 
-            return this.api.call(() =>
-              this.api.client.fields.update(existingField.id, fieldDef),
+            return this.api.call(
+              () => this.api.client.fields.update(existingField.id, fieldDef),
+              3, 
+              500, 
+              `fields.update(${existingField.id}, ${fieldDef.label})`,
+              fieldDef
             );
           },
           "field",
@@ -936,8 +947,11 @@ export default abstract class ItemTypeBuilder {
           () => {
             fieldLogger.debug(`Deleting field with id: ${existingField.id}`);
 
-            return this.api.call(() =>
-              this.api.client.fields.destroy(existingField.id),
+            return this.api.call(
+              () => this.api.client.fields.destroy(existingField.id),
+              3, 
+              500, 
+              `fields.destroy(${existingField.id})`
             );
           },
           "field",
@@ -972,8 +986,12 @@ export default abstract class ItemTypeBuilder {
 
     try {
       this.logger.traceJson("Calling API to create item type", {});
-      const item = await this.api.call(() =>
-        this.api.client.itemTypes.create(this.body),
+      const item = await this.api.call(
+        () => this.api.client.itemTypes.create(this.body),
+        3, 
+        500, 
+        `itemTypes.create(${this.body.name})`,
+        this.body
       );
 
       this.logger.traceJson("Item type created successfully", {
@@ -1023,13 +1041,19 @@ export default abstract class ItemTypeBuilder {
     let existing: any;
     if (existingId) {
       this.logger.trace("Using provided existing item type ID");
-      existing = await this.api.call(() =>
-        this.api.client.itemTypes.find(existingId),
+      existing = await this.api.call(
+        () => this.api.client.itemTypes.find(existingId),
+        3, 
+        500, 
+        `itemTypes.find(${existingId})`
       );
     } else {
       this.logger.trace("Finding existing item type by name");
-      const existingItems = await this.api.call(() =>
-        this.api.client.itemTypes.list(),
+      const existingItems = await this.api.call(
+        () => this.api.client.itemTypes.list(),
+        3, 
+        500, 
+        'itemTypes.list()'
       );
       existing = existingItems.find((item) => item.name === this.body.name);
 
@@ -1055,8 +1079,12 @@ export default abstract class ItemTypeBuilder {
       updateBody,
     });
 
-    const item = await this.api.call(() =>
-      this.api.client.itemTypes.update(existing.id, updateBody),
+    const item = await this.api.call(
+      () => this.api.client.itemTypes.update(existing.id, updateBody),
+      3, 
+      500, 
+      `itemTypes.update(${existing.id}, ${updateBody.name})`,
+      updateBody
     );
 
     this.logger.traceJson("Item type updated successfully", {
@@ -1090,8 +1118,11 @@ export default abstract class ItemTypeBuilder {
 
     try {
       this.logger.trace("Checking if item type exists by name");
-      const existingItems = await this.api.call(() =>
-        this.api.client.itemTypes.list(),
+      const existingItems = await this.api.call(
+        () => this.api.client.itemTypes.list(),
+        3, 
+        500, 
+        'itemTypes.list()'
       );
       const existingItem = existingItems.find(
         (item) => item.name === this.body.name,

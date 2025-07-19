@@ -15,3 +15,5 @@ informations
 childrens
 npmignore
 esbuild
+fieldsets
+lefthook

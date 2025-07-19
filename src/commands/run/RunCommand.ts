@@ -91,7 +91,7 @@ export class RunCommand {
     this.buildExecutor = new BuildExecutor(this.itemBuilder, logger);
     this.deletionDetector = new DeletionDetector(cache, logger);
 
-    const datoApi = new DatoApi(buildClient({ apiToken: config.apiToken }));
+    const datoApi = new DatoApi(buildClient({ apiToken: config.apiToken }), logger);
     this.deletionManager = new DeletionManager(datoApi, cache, logger);
 
     this.logger.trace("RunCommand initialized successfully");
@@ -438,10 +438,9 @@ export class RunCommand {
             });
             return result.id;
           } catch (error) {
-            this.logger.error(
-              `Failed to build dependency ${type} "${name}": ${
-                (error as Error).message
-              }`,
+            this.logger.errorJson(
+              `Failed to build dependency ${type} "${name}"`,
+              error instanceof Error ? error : new Error(String(error)),
             );
             throw error;
           }

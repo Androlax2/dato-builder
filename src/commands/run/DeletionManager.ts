@@ -122,8 +122,11 @@ export class DeletionManager {
       try {
         this.logger.info(`Deleting ${candidate.type}: ${candidate.name}`);
 
-        await this.api.call(() =>
-          this.api.client.itemTypes.destroy(candidate.id),
+        await this.api.call(
+          () => this.api.client.itemTypes.destroy(candidate.id),
+          3, 
+          500, 
+          `itemTypes.destroy(${candidate.id}, ${candidate.name})`
         );
 
         await this.cache.delete(candidate.key);
