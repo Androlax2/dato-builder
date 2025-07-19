@@ -7,12 +7,12 @@ type CacheData = {
 };
 
 export class CacheManager {
-  private items: Map<string, CacheData>;
+  private readonly items: Map<string, CacheData>;
 
   private readonly cachePath: string;
   private readonly skipReads: boolean;
 
-  private writeQueue: Array<{
+  private readonly writeQueue: Array<{
     data: CacheData;
     resolve: Function;
     reject: Function;

@@ -245,7 +245,7 @@ export default abstract class ItemTypeBuilder {
     const field = this.fields.find((f) => f.build().api_key === apiKey);
     this.logger.traceJson("Field lookup result", {
       apiKey,
-      found: !!field,
+      found: Boolean(field),
       fieldType: field?.constructor.name,
     });
     return field;
@@ -280,7 +280,7 @@ export default abstract class ItemTypeBuilder {
     this.logger.traceJson("Adding single line string field", {
       label,
       position: body?.position,
-      hasOptions: !!options,
+      hasOptions: Boolean(options),
       uniqueValidator:
         this.type === "block" ? undefined : body?.validators?.unique,
     });
@@ -305,7 +305,7 @@ export default abstract class ItemTypeBuilder {
     this.logger.traceJson("Adding markdown field", {
       label,
       position: body?.position,
-      hasToolbar: !!toolbar,
+      hasToolbar: Boolean(toolbar),
     });
     return this.addField(
       new Markdown({
@@ -323,7 +323,7 @@ export default abstract class ItemTypeBuilder {
     this.logger.traceJson("Adding wysiwyg field", {
       label,
       position: body?.position,
-      hasToolbar: !!toolbar,
+      hasToolbar: Boolean(toolbar),
     });
     return this.addField(
       new Wysiwyg({
@@ -341,7 +341,7 @@ export default abstract class ItemTypeBuilder {
     this.logger.traceJson("Adding textarea field", {
       label,
       position: body?.position,
-      hasPlaceholder: !!placeholder,
+      hasPlaceholder: Boolean(placeholder),
     });
     return this.addField(
       new Textarea({
@@ -359,7 +359,7 @@ export default abstract class ItemTypeBuilder {
     this.logger.traceJson("Adding heading field", {
       label,
       position: body?.position,
-      hasOptions: !!options,
+      hasOptions: Boolean(options),
     });
     return this.addSingleLineString({
       label,
@@ -375,7 +375,7 @@ export default abstract class ItemTypeBuilder {
     this.logger.traceJson("Adding text field", {
       label,
       position: body?.position,
-      hasOptions: !!options,
+      hasOptions: Boolean(options),
     });
     return this.addSingleLineString({
       label,
