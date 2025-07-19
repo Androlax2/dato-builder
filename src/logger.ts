@@ -317,6 +317,46 @@ export class ConsoleLogger {
     return elapsed;
   }
 
+  clearTimers() {
+    if (this.timers.size === 0) {
+      return;
+    }
+
+    this.timers.clear();
+    this.debug("All timers cleared from memory");
+  }
+
+  clearTimer(label: string) {
+    if (this.timers.has(label)) {
+      this.timers.delete(label);
+      this.debug(`Timer "${label}" cleared from memory`);
+    } else {
+      this.warn(`Timer "${label}" does not exist`);
+    }
+  }
+
+  getActiveTimers(): string[] {
+    return Array.from(this.timers.keys());
+  }
+
+  cleanupOldTimers(maxAgeMs: number) {
+    const now = Date.now();
+    let cleanedCount = 0;
+
+    for (const [label, startTime] of this.timers.entries()) {
+      if (now - startTime > maxAgeMs) {
+        this.timers.delete(label);
+        cleanedCount++;
+      }
+    }
+
+    if (cleanedCount > 0) {
+      this.debug(
+        `Cleaned up ${cleanedCount} old timer(s) older than ${maxAgeMs}ms`,
+      );
+    }
+  }
+
   progress(current: number, total: number, item?: string) {
     if (!this.shouldLog(LogLevel.INFO)) return;
 
