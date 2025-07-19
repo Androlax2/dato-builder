@@ -20,6 +20,7 @@ export class CacheManager {
     reject: Function;
   }> = [];
   private isWriting: boolean = false;
+  private processingNeeded: boolean = false;
 
   constructor(cachePath: string, options: { skipReads?: boolean } = {}) {
     this.cachePath = cachePath;
@@ -193,7 +194,15 @@ export class CacheManager {
    * Process the write queue
    */
   private async processWriteQueue(): Promise<void> {
-    if (this.isWriting || this.writeQueue.length === 0) {
+    // If already writing, mark that processing is needed and return
+    if (this.isWriting) {
+      this.processingNeeded = true;
+      return;
+    }
+
+    // If queue is empty, clear processing flag and return
+    if (this.writeQueue.length === 0) {
+      this.processingNeeded = false;
       return;
     }
 
@@ -218,8 +227,9 @@ export class CacheManager {
     } finally {
       this.isWriting = false;
 
-      // Process any items that were queued while writing
-      if (this.writeQueue.length > 0) {
+      // Continue processing until queue is empty and no processing is needed
+      while (this.writeQueue.length > 0 || this.processingNeeded) {
+        this.processingNeeded = false;
         await this.processWriteQueue();
       }
     }
