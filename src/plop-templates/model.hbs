@@ -3,12 +3,19 @@ import { ModelBuilder, type BuilderContext } from "dato-builder";
 export default function build{{name}}({ config }: BuilderContext) {
   return new ModelBuilder({
     name: "{{name}}",
-    config,
+    config,{{#if singleton}}
     body: {
-      {{#if singleton}}singleton: true,{{/if}}
-      {{#if sortable}}sortable: true,{{/if}}
-      {{#if tree}}tree: true,{{/if}}
-    },
+      singleton: true,{{#if sortable}}
+      sortable: true,{{/if}}{{#if tree}}
+      tree: true,{{/if}}
+    },{{else}}{{#if sortable}}
+    body: {
+      sortable: true,{{#if tree}}
+      tree: true,{{/if}}
+    },{{else}}{{#if tree}}
+    body: {
+      tree: true,
+    },{{/if}}{{/if}}{{/if}}
   })
     // Add your fields here
     // Example: .addText({ label: "Title" });

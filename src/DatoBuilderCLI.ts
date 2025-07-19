@@ -138,6 +138,44 @@ export class DatoBuilderCLI {
         },
       ],
     });
+
+    // Start the interactive generator selection
+    const { default: inquirer } = await import("inquirer");
+
+    const generators = plop.getGeneratorList();
+    const choices = generators.map((g) => ({
+      name: `${g.name} - ${g.description}`,
+      value: g.name,
+    }));
+
+    const { generator } = await inquirer.prompt([
+      {
+        type: "list",
+        name: "generator",
+        message: "What do you want to generate?",
+        choices,
+      },
+    ]);
+
+    const selectedGenerator = plop.getGenerator(generator);
+    const answers = await selectedGenerator.runPrompts();
+    const result = await selectedGenerator.runActions(answers);
+
+    if (result.failures.length > 0) {
+      this.logger.error("Generation failed:");
+
+      for (const failure of result.failures) {
+        this.logger.error(`  ${failure.error}`);
+      }
+
+      throw new Error("Generation failed");
+    }
+
+    this.logger.success(`Successfully generated ${generator}!`);
+
+    for (const change of result.changes) {
+      this.logger.info(`  ${change.type}: ${change.path}`);
+    }
   }
 
   /**
