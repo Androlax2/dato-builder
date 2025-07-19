@@ -1,3 +1,4 @@
+import { dirname, join } from "node:path";
 import type { NodePlopAPI, PlopCfg } from "plop";
 import type { CacheManager } from "./cache/CacheManager";
 import { RunCommand } from "./commands/run/RunCommand";
@@ -48,7 +49,7 @@ export class DatoBuilderCLI {
   /**
    * Generate Blocks and Models
    */
-  public async generate() {
+  public async generate(): Promise<void> {
     // Use Function constructor to avoid TypeScript transpilation of dynamic import
     const importNodePlop = new Function(
       'return import("node-plop")',
@@ -60,6 +61,8 @@ export class DatoBuilderCLI {
     }>;
     const { default: nodePlop } = await importNodePlop();
     const plop = await nodePlop();
+
+    const __dirname = dirname(__filename);
 
     const testGenerator = plop.setGenerator("test", {
       description: "Test generator",
@@ -77,8 +80,8 @@ export class DatoBuilderCLI {
       actions: [
         {
           type: "add",
-          path: "src/generated/{{name}}.ts",
-          templateFile: "src/plop-templates/test.hbs",
+          path: `${this.config.modelsPath}/{{name}}.ts`,
+          templateFile: join(__dirname, "plop-templates", "test.hbs"),
         },
       ],
     });
