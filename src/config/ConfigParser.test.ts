@@ -392,4 +392,104 @@ describe("ConfigParser", () => {
       jest.dontMock("/mock/cwd/dato-builder.config.js");
     });
   });
+
+  describe("path validation security", () => {
+    it("should reject config files that resolve outside project directory", async () => {
+      // Mock fs.existsSync to return true for the config file
+      mockFs.existsSync.mockImplementation((filePath) => {
+        return filePath === "/mock/cwd/dato-builder.config.js";
+      });
+
+      // Mock fs.promises.realpath to simulate a symlink pointing outside the project
+      const realPathMock = jest
+        .fn<(path: string) => Promise<string>>()
+        .mockResolvedValue("/etc/passwd");
+      (mockFs as any).promises = { realpath: realPathMock };
+
+      await expect(configParser.loadConfig()).rejects.toThrow(
+        "Configuration file path resolves outside project directory",
+      );
+
+      expect(realPathMock).toHaveBeenCalledWith(
+        "/mock/cwd/dato-builder.config.js",
+      );
+    });
+
+    it("should allow config files that resolve within project directory", async () => {
+      const mockConfig: DatoBuilderConfig = {
+        apiToken: "valid-token",
+      };
+
+      // Mock fs.existsSync to return true for the config file
+      mockFs.existsSync.mockImplementation((filePath) => {
+        return filePath === "/mock/cwd/dato-builder.config.js";
+      });
+
+      // Mock fs.promises.realpath to return a path within the project directory
+      const realPathMock = jest
+        .fn<(path: string) => Promise<string>>()
+        .mockResolvedValue("/mock/cwd/dato-builder.config.js");
+      (mockFs as any).promises = { realpath: realPathMock };
+
+      // Mock the config file import
+      jest.doMock(
+        "/mock/cwd/dato-builder.config.js",
+        () => ({
+          default: mockConfig,
+        }),
+        { virtual: true },
+      );
+
+      const result = await configParser.loadConfig();
+
+      expect(result.apiToken).toBe("valid-token");
+      expect(realPathMock).toHaveBeenCalledWith(
+        "/mock/cwd/dato-builder.config.js",
+      );
+
+      jest.dontMock("/mock/cwd/dato-builder.config.js");
+    });
+
+    it("should reject paths with directory traversal patterns", async () => {
+      // Mock fs.existsSync to return true for the config file
+      mockFs.existsSync.mockImplementation((filePath) => {
+        return filePath === "/mock/cwd/dato-builder.config.js";
+      });
+
+      // Mock fs.promises.realpath to resolve to outside project directory
+      const realPathMock = jest
+        .fn<(path: string) => Promise<string>>()
+        .mockResolvedValue("/etc/passwd");
+      (mockFs as any).promises = { realpath: realPathMock };
+
+      await expect(configParser.loadConfig()).rejects.toThrow(
+        "Configuration file path resolves outside project directory",
+      );
+
+      expect(realPathMock).toHaveBeenCalledWith(
+        "/mock/cwd/dato-builder.config.js",
+      );
+    });
+
+    it("should validate both .js and .ts config file paths", async () => {
+      // Mock fs.existsSync to return false for .js but true for .ts
+      mockFs.existsSync.mockImplementation((filePath) => {
+        return filePath === "/mock/cwd/dato-builder.config.ts";
+      });
+
+      // Mock fs.promises.realpath to return path outside project for .ts file
+      const realPathMock = jest
+        .fn<(path: string) => Promise<string>>()
+        .mockResolvedValue("/tmp/malicious.ts");
+      (mockFs as any).promises = { realpath: realPathMock };
+
+      await expect(configParser.loadConfig()).rejects.toThrow(
+        "Configuration file path resolves outside project directory",
+      );
+
+      expect(realPathMock).toHaveBeenCalledWith(
+        "/mock/cwd/dato-builder.config.ts",
+      );
+    });
+  });
 });
