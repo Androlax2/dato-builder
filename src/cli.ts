@@ -3,9 +3,9 @@
 import os from "node:os";
 import path from "node:path";
 import { Command } from "@commander-js/extra-typings";
-import { DatoBuilderCLI } from "@/DatoBuilderCLI";
 import { CacheManager } from "./cache/CacheManager";
 import { ConfigParser } from "./config/ConfigParser";
+import { DatoBuilderCLI } from "./DatoBuilderCLI";
 import { ConsoleLogger, LogLevel } from "./logger";
 
 // Type definitions for options

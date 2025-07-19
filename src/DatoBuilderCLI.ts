@@ -1,7 +1,7 @@
-import type { CacheManager } from "@/cache/CacheManager";
-import { RunCommand } from "@/commands/run/RunCommand";
-import type { ConsoleLogger } from "@/logger";
-import type { DatoBuilderConfig } from "@/types/DatoBuilderConfig";
+import type { CacheManager } from "./cache/CacheManager";
+import { RunCommand } from "./commands/run/RunCommand";
+import type { ConsoleLogger } from "./logger";
+import type { DatoBuilderConfig } from "./types/DatoBuilderConfig";
 
 interface BaseCommandOptions {
   config: Required<DatoBuilderConfig>;
