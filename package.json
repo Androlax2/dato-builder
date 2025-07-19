@@ -30,8 +30,7 @@
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "spellcheck": "cspell \"**/*.{js,ts,md,json,yml,yaml}\"",
     "ci": "npm run typecheck && npm run lint && npm run test:coverage",
-    "clean": "rimraf build coverage .nyc_output",
-    "plop": "cross-env NODE_OPTIONS='--import tsx' plop --plopfile=src/plopfile.ts"
+    "clean": "rimraf build coverage .nyc_output"
   },
   "devDependencies": {
     "@biomejs/biome": "2.1.2",
@@ -46,7 +45,6 @@
     "@types/inquirer": "^9.0.8",
     "@types/node": "^24.0.8",
     "@types/pluralize": "^0.0.33",
-    "cross-env": "^7.0.3",
     "cspell": "^9.0.0",
     "jest": "^30.0.3",
     "lefthook": "^1.11.11",
