@@ -35,13 +35,8 @@ export class PlopGenerator {
     const { default: nodePlop } = await import("node-plop");
     const plop = await nodePlop();
 
-    // Use __dirname equivalent for ES modules
-    const currentFileUrl =
-      typeof import.meta !== "undefined" && import.meta.url
-        ? import.meta.url
-        : `file://${__filename}`;
     const plopTemplatesPath = join(
-      dirname(fileURLToPath(currentFileUrl)),
+      dirname(fileURLToPath(import.meta.url)),
       "..",
       "plop-templates",
     );
