@@ -1,37 +1,59 @@
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 import { createMockDatoBuilderCLI } from "../tests/utils/mockDatoBuilderCLI";
-import { CLI } from "./cli";
-import { initializeCLI } from "./cli/CLIInitializer";
-import { CommandBuilder, type GlobalOptions } from "./cli/CommandBuilder";
+import type { GlobalOptions } from "./cli/CommandBuilder";
 import type { DatoBuilderCLI } from "./DatoBuilderCLI";
 
-// Mock dependencies
-jest.mock("./cli/CommandBuilder");
-jest.mock("./cli/CLIInitializer");
-jest.mock("./DatoBuilderCLI");
+// Create mock functions before mocking modules
+const MockCommandBuilder = jest.fn();
+const mockInitializeCLI =
+  jest.fn<(options: GlobalOptions) => Promise<DatoBuilderCLI>>();
 
-const MockCommandBuilder = CommandBuilder as jest.MockedClass<
-  typeof CommandBuilder
->;
-const mockInitializeCLI = initializeCLI as jest.MockedFunction<
-  typeof initializeCLI
->;
+// Mock dependencies using unstable_mockModule for ESM compatibility
+jest.unstable_mockModule("./cli/CommandBuilder", () => ({
+  CommandBuilder: MockCommandBuilder,
+}));
+
+jest.unstable_mockModule("./cli/CLIInitializer", () => ({
+  initializeCLI: mockInitializeCLI,
+}));
+
+// Import after mocking
+const { CLI } = await import("./cli");
+const { initializeCLI } = await import("./cli/CLIInitializer");
 
 describe("CLI", () => {
-  let mockCommandBuilder: jest.Mocked<CommandBuilder>;
+  let mockCommandBuilder: {
+    addBuildCommand: jest.MockedFunction<(fn: typeof initializeCLI) => unknown>;
+    addGenerateCommands: jest.MockedFunction<
+      (fn: typeof initializeCLI) => unknown
+    >;
+    addClearCacheCommand: jest.MockedFunction<
+      (fn: typeof initializeCLI) => unknown
+    >;
+    parse: jest.MockedFunction<(argv: string[]) => Promise<void>>;
+  };
   let mockCLI: jest.Mocked<DatoBuilderCLI>;
 
   beforeEach(() => {
     jest.clearAllMocks();
 
-    // Mock CommandBuilder
+    // Mock CommandBuilder instance
     mockCommandBuilder = {
-      addBuildCommand: jest.fn().mockReturnThis(),
-      addGenerateCommands: jest.fn().mockReturnThis(),
-      addClearCacheCommand: jest.fn().mockReturnThis(),
-      parse: jest.fn().mockImplementation(async () => {}),
-    } as unknown as jest.Mocked<CommandBuilder>;
+      addBuildCommand: jest
+        .fn<(fn: typeof initializeCLI) => unknown>()
+        .mockReturnThis(),
+      addGenerateCommands: jest
+        .fn<(fn: typeof initializeCLI) => unknown>()
+        .mockReturnThis(),
+      addClearCacheCommand: jest
+        .fn<(fn: typeof initializeCLI) => unknown>()
+        .mockReturnThis(),
+      parse: jest
+        .fn<(argv: string[]) => Promise<void>>()
+        .mockImplementation(async () => {}),
+    };
 
+    // Set up CommandBuilder constructor mock
     MockCommandBuilder.mockImplementation(() => mockCommandBuilder);
 
     // Mock DatoBuilderCLI
@@ -41,13 +63,13 @@ describe("CLI", () => {
 
   describe("setupCLI", () => {
     it("should initialize CommandBuilder with correct version", async () => {
-      new CLI().execute();
+      await new CLI().execute();
 
       expect(MockCommandBuilder).toHaveBeenCalledWith("__PACKAGE_VERSION__");
     });
 
     it("should configure all commands", async () => {
-      new CLI().execute();
+      await new CLI().execute();
 
       expect(mockCommandBuilder.addBuildCommand).toHaveBeenCalledWith(
         initializeCLI,
@@ -64,7 +86,7 @@ describe("CLI", () => {
       const originalProcessArgv = process.argv;
       process.argv = ["node", "cli.js", "build"];
 
-      new CLI().execute();
+      await new CLI().execute();
 
       expect(mockCommandBuilder.parse).toHaveBeenCalledWith(process.argv);
 
@@ -75,7 +97,15 @@ describe("CLI", () => {
       const setupError = new Error("CLI setup failed");
       mockCommandBuilder.parse.mockRejectedValue(setupError);
 
-      await expect(new CLI().execute()).rejects.toThrow("CLI setup failed");
+      // Mock process.exit to prevent actual exit
+      const mockExit = jest
+        .spyOn(process, "exit")
+        .mockImplementation(((_code?: number) => {}) as never);
+
+      await new CLI().execute();
+
+      expect(mockExit).toHaveBeenCalledWith(1);
+      mockExit.mockRestore();
     });
   });
 
@@ -172,7 +202,7 @@ describe("CLI", () => {
       const originalArgv = process.argv;
       process.argv = testArgv;
 
-      new CLI().execute();
+      await new CLI().execute();
 
       expect(mockCommandBuilder.parse).toHaveBeenCalledWith(testArgv);
 
@@ -195,7 +225,7 @@ describe("CLI", () => {
         const originalArgv = process.argv;
         process.argv = argv;
 
-        new CLI().execute();
+        await new CLI().execute();
 
         expect(mockCommandBuilder.parse).toHaveBeenCalledWith(argv);
 
@@ -206,7 +236,7 @@ describe("CLI", () => {
 
   describe("Initialization Function Integration", () => {
     it("should pass initializeCLI to all command builders", async () => {
-      new CLI().execute();
+      await new CLI().execute();
 
       expect(mockCommandBuilder.addBuildCommand).toHaveBeenCalledWith(
         initializeCLI,
@@ -225,7 +255,7 @@ describe("CLI", () => {
       // Simulate a complete workflow from CLI setup to command execution
 
       // 1. Setup CLI
-      new CLI().execute();
+      await new CLI().execute();
 
       // 2. Verify CLI was configured
       expect(MockCommandBuilder).toHaveBeenCalledWith("__PACKAGE_VERSION__");
@@ -269,14 +299,30 @@ describe("CLI", () => {
         throw propagationError;
       });
 
-      await expect(new CLI().execute()).rejects.toThrow("Propagation test");
+      // Mock process.exit to prevent actual exit
+      const mockExit = jest
+        .spyOn(process, "exit")
+        .mockImplementation(((_code?: number) => {}) as never);
+
+      await new CLI().execute();
+
+      expect(mockExit).toHaveBeenCalledWith(1);
+      mockExit.mockRestore();
     });
 
     it("should propagate parse errors correctly", async () => {
       const parseError = new Error("Parse error");
       mockCommandBuilder.parse.mockRejectedValue(parseError);
 
-      await expect(new CLI().execute()).rejects.toThrow("Parse error");
+      // Mock process.exit to prevent actual exit
+      const mockExit = jest
+        .spyOn(process, "exit")
+        .mockImplementation(((_code?: number) => {}) as never);
+
+      await new CLI().execute();
+
+      expect(mockExit).toHaveBeenCalledWith(1);
+      mockExit.mockRestore();
     });
   });
 });
