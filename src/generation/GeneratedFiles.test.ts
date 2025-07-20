@@ -23,22 +23,21 @@ import type { ConsoleLogger } from "../logger";
 import type { DatoBuilderConfig } from "../types/DatoBuilderConfig";
 import { PlopGenerator } from "./PlopGenerator";
 
-// Mock node-plop
+// Mock node-plop and inquirer using ESM approach
 const mockPlop = createMockPlop();
 const mockGenerator = createMockPlopGenerator();
+
+const mockInquirer = {
+  prompt: jest.fn(),
+};
 
 jest.mock("node-plop", () => ({
   __esModule: true,
   default: jest.fn<() => Promise<NodePlopAPI>>().mockResolvedValue(mockPlop),
 }));
 
-// Mock inquirer
-const mockInquirer = {
-  prompt: jest.fn(),
-};
-
-jest.mock("inquirer", () => ({
-  __esModule: true,
+// Mock inquirer using unstable_mockModule for ESM compatibility
+jest.unstable_mockModule("inquirer", () => ({
   default: mockInquirer,
 }));
 
@@ -70,6 +69,13 @@ describe("Generated Files Quality", () => {
     mkdirSync(mockConfig.modelsPath, { recursive: true });
 
     plopGenerator = new PlopGenerator(mockConfig, mockLogger);
+
+    // Mock the private setupPlop method to avoid ESM issues
+    jest
+      .spyOn(plopGenerator as any, "setupPlop")
+      .mockImplementation(async () => {
+        return mockPlop;
+      });
 
     // Setup plop mocks
     mockPlop.getGenerator.mockReturnValue(mockGenerator);
