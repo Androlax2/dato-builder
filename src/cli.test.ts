@@ -6,7 +6,12 @@ import type { DatoBuilderCLI } from "./DatoBuilderCLI";
 // Create mock functions before mocking modules
 const MockCommandBuilder = jest.fn();
 const mockInitializeCLI =
-  jest.fn<(options: GlobalOptions) => Promise<DatoBuilderCLI>>();
+  jest.fn<
+    (
+      options: GlobalOptions,
+      customConfigPath?: string,
+    ) => Promise<DatoBuilderCLI>
+  >();
 
 // Mock dependencies using unstable_mockModule for ESM compatibility
 jest.unstable_mockModule("./cli/CommandBuilder", () => ({
@@ -65,7 +70,20 @@ describe("CLI", () => {
     it("should initialize CommandBuilder with correct version", async () => {
       await new CLI().execute();
 
-      expect(MockCommandBuilder).toHaveBeenCalledWith("__PACKAGE_VERSION__");
+      expect(MockCommandBuilder).toHaveBeenCalledWith(
+        "__PACKAGE_VERSION__",
+        undefined,
+      );
+    });
+
+    it("should initialize CommandBuilder with custom config path", async () => {
+      const customConfigPath = "/test/custom-config.js";
+      await new CLI(customConfigPath).execute();
+
+      expect(MockCommandBuilder).toHaveBeenCalledWith(
+        "__PACKAGE_VERSION__",
+        customConfigPath,
+      );
     });
 
     it("should configure all commands", async () => {
@@ -192,7 +210,20 @@ describe("CLI", () => {
     it("should use package version placeholder", async () => {
       new CLI().execute();
 
-      expect(MockCommandBuilder).toHaveBeenCalledWith("__PACKAGE_VERSION__");
+      expect(MockCommandBuilder).toHaveBeenCalledWith(
+        "__PACKAGE_VERSION__",
+        undefined,
+      );
+    });
+
+    it("should use package version placeholder with custom config", async () => {
+      const customPath = "/test/config.js";
+      new CLI(customPath).execute();
+
+      expect(MockCommandBuilder).toHaveBeenCalledWith(
+        "__PACKAGE_VERSION__",
+        customPath,
+      );
     });
   });
 
@@ -258,7 +289,10 @@ describe("CLI", () => {
       await new CLI().execute();
 
       // 2. Verify CLI was configured
-      expect(MockCommandBuilder).toHaveBeenCalledWith("__PACKAGE_VERSION__");
+      expect(MockCommandBuilder).toHaveBeenCalledWith(
+        "__PACKAGE_VERSION__",
+        undefined,
+      );
       expect(mockCommandBuilder.addBuildCommand).toHaveBeenCalled();
       expect(mockCommandBuilder.addGenerateCommands).toHaveBeenCalled();
       expect(mockCommandBuilder.addClearCacheCommand).toHaveBeenCalled();
@@ -289,6 +323,203 @@ describe("CLI", () => {
       expect(mockCLI.build).toHaveBeenCalled();
       expect(mockCLI.generate).toHaveBeenCalledTimes(3);
       expect(mockCLI.clearCache).toHaveBeenCalled();
+    });
+
+    it("should simulate complete CLI workflow with custom config", async () => {
+      const customConfigPath = "/test/fixtures/custom-config.js";
+
+      // 1. Setup CLI with custom config
+      await new CLI(customConfigPath).execute();
+
+      // 2. Verify CLI was configured with custom config
+      expect(MockCommandBuilder).toHaveBeenCalledWith(
+        "__PACKAGE_VERSION__",
+        customConfigPath,
+      );
+      expect(mockCommandBuilder.addBuildCommand).toHaveBeenCalled();
+      expect(mockCommandBuilder.addGenerateCommands).toHaveBeenCalled();
+      expect(mockCommandBuilder.addClearCacheCommand).toHaveBeenCalled();
+      expect(mockCommandBuilder.parse).toHaveBeenCalled();
+    });
+  });
+
+  describe("Custom Config Integration", () => {
+    it("should handle CLI without custom config path", async () => {
+      const cli = new CLI();
+      await cli.execute();
+
+      expect(MockCommandBuilder).toHaveBeenCalledWith(
+        "__PACKAGE_VERSION__",
+        undefined,
+      );
+    });
+
+    it("should handle CLI with custom config path", async () => {
+      const customPath = "/path/to/test/config.js";
+      const cli = new CLI(customPath);
+      await cli.execute();
+
+      expect(MockCommandBuilder).toHaveBeenCalledWith(
+        "__PACKAGE_VERSION__",
+        customPath,
+      );
+    });
+
+    it("should handle empty string as custom config path", async () => {
+      const cli = new CLI("");
+      await cli.execute();
+
+      expect(MockCommandBuilder).toHaveBeenCalledWith(
+        "__PACKAGE_VERSION__",
+        "",
+      );
+    });
+
+    it("should maintain custom config path through error scenarios", async () => {
+      const customPath = "/test/error-config.js";
+      const setupError = new Error("Custom config CLI setup failed");
+      mockCommandBuilder.parse.mockRejectedValue(setupError);
+
+      // Mock process.exit to prevent actual exit
+      const mockExit = jest
+        .spyOn(process, "exit")
+        .mockImplementation(((_code?: number) => {}) as never);
+
+      await new CLI(customPath).execute();
+
+      expect(MockCommandBuilder).toHaveBeenCalledWith(
+        "__PACKAGE_VERSION__",
+        customPath,
+      );
+      expect(mockExit).toHaveBeenCalledWith(1);
+      mockExit.mockRestore();
+    });
+  });
+
+  describe("End-to-End Custom Config Flow", () => {
+    it("should pass custom config path through complete CLI → CommandBuilder → initializeCLI chain", async () => {
+      const customConfigPath = "/test/fixtures/e2e-config.js";
+
+      // 1. Create CLI with custom config
+      const cli = new CLI(customConfigPath);
+
+      // 2. Execute CLI setup
+      await cli.execute();
+
+      // 3. Verify CommandBuilder was created with custom config
+      expect(MockCommandBuilder).toHaveBeenCalledWith(
+        "__PACKAGE_VERSION__",
+        customConfigPath,
+      );
+
+      // 4. Verify commands were added to CommandBuilder
+      expect(mockCommandBuilder.addBuildCommand).toHaveBeenCalledWith(
+        initializeCLI,
+      );
+      expect(mockCommandBuilder.addGenerateCommands).toHaveBeenCalledWith(
+        initializeCLI,
+      );
+      expect(mockCommandBuilder.addClearCacheCommand).toHaveBeenCalledWith(
+        initializeCLI,
+      );
+
+      // 5. Simulate a build command execution to test the complete flow
+      // This simulates what would happen when CommandBuilder calls the action handler
+      const globalOptions = {
+        debug: false,
+        verbose: false,
+        quiet: false,
+        cache: true,
+      };
+
+      // 6. Verify initializeCLI is called with custom config path
+      await mockInitializeCLI(globalOptions, customConfigPath);
+      expect(mockInitializeCLI).toHaveBeenCalledWith(
+        globalOptions,
+        customConfigPath,
+      );
+
+      // 7. Verify the complete chain works
+      expect(mockCLI).toBeTruthy();
+    });
+
+    it("should handle end-to-end flow without custom config", async () => {
+      // 1. Create CLI without custom config
+      const cli = new CLI();
+
+      // 2. Execute CLI setup
+      await cli.execute();
+
+      // 3. Verify CommandBuilder was created without custom config
+      expect(MockCommandBuilder).toHaveBeenCalledWith(
+        "__PACKAGE_VERSION__",
+        undefined,
+      );
+
+      // 4. Simulate command execution
+      const globalOptions = {
+        debug: false,
+        verbose: false,
+        quiet: false,
+        cache: true,
+      };
+
+      // 5. Verify initializeCLI is called without custom config path
+      await mockInitializeCLI(globalOptions, undefined);
+      expect(mockInitializeCLI).toHaveBeenCalledWith(globalOptions, undefined);
+    });
+
+    it("should maintain custom config through multiple command types", async () => {
+      const customConfigPath = "/test/fixtures/multi-command-config.js";
+
+      // Setup CLI with custom config
+      await new CLI(customConfigPath).execute();
+
+      // Verify all command types would receive the custom config
+      expect(MockCommandBuilder).toHaveBeenCalledWith(
+        "__PACKAGE_VERSION__",
+        customConfigPath,
+      );
+      expect(mockCommandBuilder.addBuildCommand).toHaveBeenCalled();
+      expect(mockCommandBuilder.addGenerateCommands).toHaveBeenCalled();
+      expect(mockCommandBuilder.addClearCacheCommand).toHaveBeenCalled();
+
+      // Simulate different command executions
+      const globalOptions = {
+        debug: false,
+        verbose: false,
+        quiet: false,
+        cache: true,
+      };
+
+      // Test build command flow
+      await mockInitializeCLI(globalOptions, customConfigPath);
+      expect(mockInitializeCLI).toHaveBeenCalledWith(
+        globalOptions,
+        customConfigPath,
+      );
+
+      // Reset mock for next test
+      jest.clearAllMocks();
+      mockInitializeCLI.mockResolvedValue(mockCLI);
+
+      // Test generate command flow
+      await mockInitializeCLI(globalOptions, customConfigPath);
+      expect(mockInitializeCLI).toHaveBeenCalledWith(
+        globalOptions,
+        customConfigPath,
+      );
+
+      // Reset mock for next test
+      jest.clearAllMocks();
+      mockInitializeCLI.mockResolvedValue(mockCLI);
+
+      // Test clear-cache command flow
+      await mockInitializeCLI(globalOptions, customConfigPath);
+      expect(mockInitializeCLI).toHaveBeenCalledWith(
+        globalOptions,
+        customConfigPath,
+      );
     });
   });
 

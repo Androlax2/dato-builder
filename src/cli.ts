@@ -6,6 +6,12 @@ import { ConsoleLogger, LogLevel } from "./logger.js";
 const VERSION = "__PACKAGE_VERSION__";
 
 export class CLI {
+  private readonly customConfigPath?: string;
+
+  constructor(customConfigPath?: string) {
+    this.customConfigPath = customConfigPath;
+  }
+
   /** Entry point; wrap all failures here */
   public async execute(): Promise<void> {
     try {
@@ -25,7 +31,7 @@ export class CLI {
 
   /** Sets up Commander, adds commands, parses argv */
   private async run(): Promise<void> {
-    const builder = new CommandBuilder(VERSION);
+    const builder = new CommandBuilder(VERSION, this.customConfigPath);
 
     builder
       .addBuildCommand(initializeCLI)
