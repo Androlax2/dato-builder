@@ -8,7 +8,7 @@
   "main": "build/index.js",
   "types": "build/index.d.ts",
   "bin": {
-    "dato-builder": "bin/cli.js"
+    "dato-builder": "bin/cli-wrapper.js"
   },
   "exports": {
     ".": {
@@ -51,7 +51,6 @@
     "rimraf": "^6.0.1",
     "ts-jest": "^29.3.2",
     "ts-node": "^10.9.2",
-    "tsx": "^4.20.3",
     "typescript": "^5.8.3"
   },
   "dependencies": {
@@ -60,6 +59,7 @@
     "glob": "^11.0.3",
     "inflection": "^3.0.2",
     "inquirer": "^12.7.0",
-    "node-plop": "^0.32.0"
+    "node-plop": "^0.32.0",
+    "tsx": "^4.20.3"
   }
 }
