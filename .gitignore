@@ -10,3 +10,5 @@ src/.itemTypeBuilderCache.json
 CLAUDE.md
 TASKS.md
 temp-test-generated/
+.env
+!.env.example
