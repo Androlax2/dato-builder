@@ -7,6 +7,7 @@ coverage/
 src/datocms/
 src/.itemTypeBuilderCache.json
 .dato-builder-cache
+.datocms-test-cache
 CLAUDE.md
 TASKS.md
 temp-test-generated/

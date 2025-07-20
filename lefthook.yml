@@ -36,5 +36,5 @@ pre-push:
       run: npx @biomejs/biome check --no-errors-on-unmatched --diagnostic-level=error --files-ignore-unknown=true --colors=off {push_files}
 
     test:
-      # Run tests only for affected files
-      run: git diff --name-only origin/main...HEAD | grep -E '\.(js|ts)$' | xargs -r node --experimental-vm-modules node_modules/jest/bin/jest.js --findRelatedTests --passWithNoTests
+      # Run unit tests only for affected files
+      run: git diff --name-only origin/main...HEAD | grep -E '\.(js|ts)$' | xargs -r node --experimental-vm-modules node_modules/jest/bin/jest.js --selectProjects unit --findRelatedTests --passWithNoTests

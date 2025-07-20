@@ -33,5 +33,10 @@ jobs:
       - name: Spellcheck
         run: npm run spellcheck
 
-      - name: Test
-        run: npm run test
+      - name: Run Unit Tests
+        run: npm run test:unit
+
+      - name: Run Integration Tests
+        env:
+          DATOCMS_API_TOKEN: ${{ secrets.DATOCMS_API_TOKEN }}
+        run: npm run test:integration
