@@ -1,4 +1,3 @@
-import path from "node:path";
 import {
   afterEach,
   beforeEach,
@@ -7,34 +6,52 @@ import {
   it,
   jest,
 } from "@jest/globals";
-import { glob } from "glob";
 import { createMockLogger } from "../../../tests/utils/mockLogger";
-import { FileDiscoverer } from "./FileDiscoverer";
 
-// Mock the glob module
-jest.mock("glob", () => ({
-  glob: jest.fn(),
+// Create mocks before any imports
+const mockGlob = jest.fn() as jest.MockedFunction<
+  (pattern: string) => Promise<string[]>
+>;
+const mockBasename = jest.fn() as jest.MockedFunction<
+  (path: string, ext?: string) => string
+>;
+const mockExtname = jest.fn() as jest.MockedFunction<(path: string) => string>;
+const mockResolve = jest.fn() as jest.MockedFunction<
+  (...pathSegments: string[]) => string
+>;
+
+// Mock the modules
+jest.unstable_mockModule("glob", () => ({
+  glob: mockGlob,
 }));
 
-// Mock the path module
-jest.mock("node:path", () => ({
-  basename: jest.fn(),
-  extname: jest.fn(),
-  resolve: jest.fn(),
+jest.unstable_mockModule("node:path", () => ({
+  default: {
+    basename: mockBasename,
+    extname: mockExtname,
+    resolve: mockResolve,
+  },
+  basename: mockBasename,
+  extname: mockExtname,
+  resolve: mockResolve,
 }));
+
+// Import after mocking
+const { FileDiscoverer } = await import("./FileDiscoverer");
 
 describe("FileDiscoverer", () => {
-  let fileDiscoverer: FileDiscoverer;
-  let mockGlob: jest.MockedFunction<typeof glob>;
-  let mockPath: jest.Mocked<typeof path>;
+  let fileDiscoverer: InstanceType<typeof FileDiscoverer>;
 
   const blocksPath = "/test/blocks";
   const modelsPath = "/test/models";
 
   beforeEach(() => {
-    // Setup mocks
-    mockGlob = glob as jest.MockedFunction<typeof glob>;
-    mockPath = path as jest.Mocked<typeof path>;
+    // Reset all mocks
+    jest.clearAllMocks();
+    mockGlob.mockReset();
+    mockBasename.mockReset();
+    mockExtname.mockReset();
+    mockResolve.mockReset();
 
     // Create FileDiscoverer instance
     fileDiscoverer = new FileDiscoverer(
@@ -60,23 +77,17 @@ describe("FileDiscoverer", () => {
         .mockResolvedValueOnce(modelFiles);
 
       // Mock path operations
-      mockPath.basename
+      mockBasename
         .mockReturnValueOnce("block1")
         .mockReturnValueOnce("block2")
         .mockReturnValueOnce("model1")
         .mockReturnValueOnce("model2");
 
-      mockPath.extname
+      mockExtname
         .mockReturnValueOnce(".ts")
         .mockReturnValueOnce(".js")
         .mockReturnValueOnce(".ts")
         .mockReturnValueOnce(".js");
-
-      mockPath.resolve
-        .mockReturnValueOnce("/resolved/blocks/block1.ts")
-        .mockReturnValueOnce("/resolved/blocks/block2.js")
-        .mockReturnValueOnce("/resolved/models/model1.ts")
-        .mockReturnValueOnce("/resolved/models/model2.js");
 
       const result = await fileDiscoverer.discoverFiles();
 
@@ -97,7 +108,7 @@ describe("FileDiscoverer", () => {
       expect(blockInfo).toEqual({
         name: "block1",
         type: "block",
-        filePath: "/resolved/blocks/block1.ts",
+        filePath: "/test/blocks/block1.ts",
         dependencies: new Set(),
       });
 
@@ -105,7 +116,7 @@ describe("FileDiscoverer", () => {
       expect(modelInfo).toEqual({
         name: "model1",
         type: "model",
-        filePath: "/resolved/models/model1.ts",
+        filePath: "/test/models/model1.ts",
         dependencies: new Set(),
       });
     });
@@ -118,9 +129,8 @@ describe("FileDiscoverer", () => {
         .mockResolvedValueOnce(blockFiles)
         .mockResolvedValueOnce(modelFiles);
 
-      mockPath.basename.mockReturnValueOnce("model1");
-      mockPath.extname.mockReturnValueOnce(".ts");
-      mockPath.resolve.mockReturnValueOnce("/resolved/models/model1.ts");
+      mockBasename.mockReturnValueOnce("model1");
+      mockExtname.mockReturnValueOnce(".ts");
 
       const result = await fileDiscoverer.discoverFiles();
 
@@ -136,9 +146,8 @@ describe("FileDiscoverer", () => {
         .mockResolvedValueOnce(blockFiles)
         .mockResolvedValueOnce(modelFiles);
 
-      mockPath.basename.mockReturnValueOnce("block1");
-      mockPath.extname.mockReturnValueOnce(".ts");
-      mockPath.resolve.mockReturnValueOnce("/resolved/blocks/block1.ts");
+      mockBasename.mockReturnValueOnce("block1");
+      mockExtname.mockReturnValueOnce(".ts");
 
       const result = await fileDiscoverer.discoverFiles();
 
@@ -176,13 +185,8 @@ describe("FileDiscoverer", () => {
         .mockResolvedValueOnce(blockFiles)
         .mockResolvedValueOnce(modelFiles);
 
-      mockPath.basename
-        .mockReturnValueOnce("block1")
-        .mockReturnValueOnce("block2");
-      mockPath.extname.mockReturnValueOnce(".ts").mockReturnValueOnce(".js");
-      mockPath.resolve
-        .mockReturnValueOnce("/resolved/blocks/block1.ts")
-        .mockReturnValueOnce("/resolved/blocks/block2.js");
+      mockBasename.mockReturnValueOnce("block1").mockReturnValueOnce("block2");
+      mockExtname.mockReturnValueOnce(".ts").mockReturnValueOnce(".js");
 
       const result = await fileDiscoverer.discoverFiles();
 
@@ -191,10 +195,10 @@ describe("FileDiscoverer", () => {
       expect(result.has("block:block2")).toBe(true);
 
       const block1Info = result.get("block:block1");
-      expect(block1Info?.filePath).toBe("/resolved/blocks/block1.ts");
+      expect(block1Info?.filePath).toBe("/test/blocks/block1.ts");
 
       const block2Info = result.get("block:block2");
-      expect(block2Info?.filePath).toBe("/resolved/blocks/block2.js");
+      expect(block2Info?.filePath).toBe("/test/blocks/block2.js");
     });
   });
 });
