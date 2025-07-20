@@ -200,7 +200,7 @@ describe("CLIInitializer", () => {
         },
       );
 
-      expect(MockConfigParser).toHaveBeenCalledWith(mockLogger);
+      expect(MockConfigParser).toHaveBeenCalledWith(mockLogger, undefined);
       expect(mockConfigParser.loadConfig).toHaveBeenCalled();
 
       expect(MockCacheManager).toHaveBeenCalledWith(
@@ -218,6 +218,24 @@ describe("CLIInitializer", () => {
         logger: mockLogger,
       });
 
+      expect(result).toBe(mockCLI);
+    });
+
+    it("should initialize CLI with custom config path", async () => {
+      const options: GlobalOptions = {
+        debug: false,
+        verbose: false,
+        quiet: false,
+        cache: true,
+      };
+      const customConfigPath = "/test/fixtures/custom-config.js";
+
+      const result = await initializeCLI(options, customConfigPath);
+
+      expect(MockConfigParser).toHaveBeenCalledWith(
+        mockLogger,
+        customConfigPath,
+      );
       expect(result).toBe(mockCLI);
     });
 
@@ -343,6 +361,37 @@ describe("CLIInitializer", () => {
       expect(mockConfig.logLevel).toBe(LogLevel.DEBUG);
     });
 
+    it("should handle custom config path with debug options", async () => {
+      const options: GlobalOptions = {
+        debug: true,
+        verbose: false,
+        quiet: false,
+        cache: true,
+      };
+      const customConfigPath = "/test/fixtures/debug-config.js";
+
+      await initializeCLI(options, customConfigPath);
+
+      expect(MockConfigParser).toHaveBeenCalledWith(
+        mockLogger,
+        customConfigPath,
+      );
+      expect(mockLogger.setLevel).toHaveBeenCalledWith(LogLevel.DEBUG);
+    });
+
+    it("should handle empty string as custom config path", async () => {
+      const options: GlobalOptions = {
+        debug: false,
+        verbose: false,
+        quiet: false,
+        cache: true,
+      };
+
+      await initializeCLI(options, "");
+
+      expect(MockConfigParser).toHaveBeenCalledWith(mockLogger, "");
+    });
+
     it("should handle config loading errors", async () => {
       const options: GlobalOptions = {
         debug: false,
@@ -355,6 +404,27 @@ describe("CLIInitializer", () => {
       mockConfigParser.loadConfig.mockRejectedValue(configError);
 
       await expect(initializeCLI(options)).rejects.toThrow("Config not found");
+    });
+
+    it("should handle config loading errors with custom path", async () => {
+      const options: GlobalOptions = {
+        debug: false,
+        verbose: false,
+        quiet: false,
+        cache: true,
+      };
+      const customConfigPath = "/nonexistent/config.js";
+
+      const configError = new Error("Custom config not found");
+      mockConfigParser.loadConfig.mockRejectedValue(configError);
+
+      await expect(initializeCLI(options, customConfigPath)).rejects.toThrow(
+        "Custom config not found",
+      );
+      expect(MockConfigParser).toHaveBeenCalledWith(
+        mockLogger,
+        customConfigPath,
+      );
     });
 
     it("should handle cache initialization errors", async () => {

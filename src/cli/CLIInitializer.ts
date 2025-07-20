@@ -26,6 +26,7 @@ export function getLogLevelFromOptions(options: GlobalOptions): LogLevel {
  */
 export async function initializeCLI(
   globalOptions: GlobalOptions,
+  customConfigPath?: string,
 ): Promise<DatoBuilderCLI> {
   const level = getLogLevelFromOptions(globalOptions);
 
@@ -41,7 +42,7 @@ export async function initializeCLI(
   );
 
   // Create config parser and cache manager
-  const configParser = new ConfigParser(logger);
+  const configParser = new ConfigParser(logger, customConfigPath);
   const cache = new CacheManager(
     path.join(process.cwd(), ".dato-builder-cache", "item-types.json"),
     {
