@@ -340,20 +340,24 @@ npm run test:integration -- --testPathPatterns="ConfigLoading"
 - [x] Unit tests for ConfigParser custom path functionality
 - [x] Integration test guidelines documentation
 - [x] Clean integration test directory preparation
-- [x] **CLI Infrastructure Enhancement** (NEW)
+- [x] **CLI Infrastructure Enhancement**
   - [x] Modified CLI.ts to accept optional customConfigPath constructor parameter
   - [x] Enhanced CommandBuilder.ts to support custom config paths for all commands
   - [x] Updated CLIInitializer.ts to pass custom config to ConfigParser
   - [x] All changes verified with `npm run typecheck` - no breaking changes
   - [x] Backward compatibility maintained for normal CLI usage
+- [x] **Unit Tests for CLI Custom Config** (NEW)
+  - [x] Added comprehensive unit tests for CLI.ts constructor with custom config paths
+  - [x] Added unit tests for CommandBuilder.ts custom config propagation through all commands
+  - [x] Added unit tests for CLIInitializer.ts custom config integration with ConfigParser
+  - [x] Added end-to-end unit tests validating complete CLI → CommandBuilder → initializeCLI chain
+  - [x] All tests pass with no regressions (265 tests passing)
 
 ### In Progress 🔄
-- [ ] **Unit tests needed** for new CLI custom config functionality
 - [ ] Per-test fixture structure design and implementation
 
 ### Next Steps 📋
-- [ ] **PRIORITY: Add unit tests for CLI custom config modifications**
-- [ ] Create test-specific fixture structure for SimpleBlocks integration test
+- [ ] **NEXT PRIORITY: Create test-specific fixture structure for SimpleBlocks integration test**
 - [ ] Implement first integration test: SimpleBlocks.integration.test.ts
 - [ ] Establish testing patterns and utilities
 - [ ] Build out core integration test suite
