@@ -31,9 +31,7 @@ export class PlopGenerator {
    * Setup plop instance with all generators
    */
   private async setupPlop(): Promise<NodePlopAPI> {
-    // Use Function constructor to create dynamic import that works in compiled CommonJS
-    const dynamicImport = new Function("specifier", "return import(specifier)");
-    const { default: nodePlop } = await dynamicImport("node-plop");
+    const { default: nodePlop } = await import("node-plop");
     const plop = await nodePlop();
 
     const __dirname = dirname(__filename);
