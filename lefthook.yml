@@ -37,4 +37,4 @@ pre-push:
 
     test:
       # Run tests only for affected files
-      run: git diff --name-only origin/main...HEAD | grep -E '\.(js|ts)$' | xargs -r npx jest --findRelatedTests --passWithNoTests
+      run: git diff --name-only origin/main...HEAD | grep -E '\.(js|ts)$' | xargs -r npx jest --experimental-vm-modules --findRelatedTests --passWithNoTests
