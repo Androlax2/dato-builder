@@ -28,7 +28,10 @@ describe("CommandBuilder", () => {
   let mockProgram: any;
   let mockCommand: any;
   let mockInitializeCLI: jest.MockedFunction<
-    (options: GlobalOptions) => Promise<DatoBuilderCLI>
+    (
+      options: GlobalOptions,
+      customConfigPath?: string,
+    ) => Promise<DatoBuilderCLI>
   >;
   let mockCLI: jest.Mocked<DatoBuilderCLI>;
 
@@ -66,7 +69,12 @@ describe("CommandBuilder", () => {
 
     mockCLI = createMockDatoBuilderCLI();
     mockInitializeCLI = jest
-      .fn<(options: GlobalOptions) => Promise<DatoBuilderCLI>>()
+      .fn<
+        (
+          options: GlobalOptions,
+          customConfigPath?: string,
+        ) => Promise<DatoBuilderCLI>
+      >()
       .mockResolvedValue(mockCLI);
 
     commandBuilder = new CommandBuilder("1.0.0");
@@ -99,6 +107,20 @@ describe("CommandBuilder", () => {
         "Only display errors.",
         false,
       );
+    });
+
+    it("should store custom config path when provided", () => {
+      const customConfigPath = "/test/custom-config.js";
+      const commandBuilder = new CommandBuilder("1.0.0", customConfigPath);
+
+      // Verify the instance was created (the path is private, but we'll test its usage in action methods)
+      expect(commandBuilder).toBeInstanceOf(CommandBuilder);
+    });
+
+    it("should handle undefined custom config path", () => {
+      const commandBuilder = new CommandBuilder("1.0.0", undefined);
+
+      expect(commandBuilder).toBeInstanceOf(CommandBuilder);
     });
   });
 
@@ -160,17 +182,53 @@ describe("CommandBuilder", () => {
 
       await actionHandler.call(mockCommand, buildOptions, mockCommand);
 
-      expect(mockInitializeCLI).toHaveBeenCalledWith({
-        debug: false,
-        verbose: false,
-        quiet: false,
-        cache: true,
-      });
+      expect(mockInitializeCLI).toHaveBeenCalledWith(
+        {
+          debug: false,
+          verbose: false,
+          quiet: false,
+          cache: true,
+        },
+        undefined,
+      );
       expect(mockCLI.build).toHaveBeenCalledWith({
         enableDeletion: true,
         skipDeletionConfirmation: false,
         concurrency: 1,
       });
+    });
+
+    it("should pass custom config path to initializeCLI", async () => {
+      const customConfigPath = "/test/fixtures/test-config.js";
+      const customCommandBuilder = new CommandBuilder(
+        "1.0.0",
+        customConfigPath,
+      );
+      customCommandBuilder.addBuildCommand(mockInitializeCLI);
+
+      if (!mockCommand.action?.mock?.calls?.[0]) {
+        throw new Error(
+          "Expected mockCommand.action to have been called at least once.",
+        );
+      }
+      const actionHandler = mockCommand.action.mock.calls[0][0];
+
+      const buildOptions: BuildOptions = {
+        skipDeletion: false,
+        skipDeletionConfirmation: false,
+      };
+
+      await actionHandler.call(mockCommand, buildOptions, mockCommand);
+
+      expect(mockInitializeCLI).toHaveBeenCalledWith(
+        {
+          debug: false,
+          verbose: false,
+          quiet: false,
+          cache: true,
+        },
+        customConfigPath,
+      );
     });
 
     it("should handle build command with auto-concurrency", async () => {
@@ -313,6 +371,45 @@ describe("CommandBuilder", () => {
       expect(mockCLI.generate).toHaveBeenCalledWith();
     });
 
+    it("should pass custom config path to generate command", async () => {
+      const customConfigPath = "/test/fixtures/generate-config.js";
+      const customCommandBuilder = new CommandBuilder(
+        "1.0.0",
+        customConfigPath,
+      );
+      customCommandBuilder.addGenerateCommands(mockInitializeCLI);
+
+      // Find the generate command action
+      const generateCall = mockCommand.action.mock.calls.find(
+        (_: unknown, index: number) => {
+          return (
+            mockProgram.command.mock.calls[index] &&
+            mockProgram.command.mock.calls[index][0] === "generate"
+          );
+        },
+      );
+
+      expect(generateCall).toBeDefined();
+
+      if (!generateCall) {
+        throw new Error("Expected generate command to be defined.");
+      }
+
+      const actionHandler = generateCall[0];
+
+      await actionHandler.call(mockCommand, {}, mockCommand);
+
+      expect(mockInitializeCLI).toHaveBeenCalledWith(
+        {
+          debug: false,
+          verbose: false,
+          quiet: false,
+          cache: true,
+        },
+        customConfigPath,
+      );
+    });
+
     it("should handle generate:block command execution", async () => {
       commandBuilder.addGenerateCommands(mockInitializeCLI);
 
@@ -419,6 +516,35 @@ describe("CommandBuilder", () => {
       await actionHandler.call(mockCommand, {}, mockCommand);
 
       expect(mockInitializeCLI).toHaveBeenCalled();
+      expect(mockCLI.clearCache).toHaveBeenCalled();
+    });
+
+    it("should pass custom config path to clear cache command", async () => {
+      const customConfigPath = "/test/fixtures/cache-config.js";
+      const customCommandBuilder = new CommandBuilder(
+        "1.0.0",
+        customConfigPath,
+      );
+      customCommandBuilder.addClearCacheCommand(mockInitializeCLI);
+
+      if (!mockCommand.action?.mock?.calls?.[0]) {
+        throw new Error(
+          "Expected mockCommand.action to have been called at least once.",
+        );
+      }
+
+      const actionHandler = mockCommand.action.mock.calls[0][0];
+      await actionHandler.call(mockCommand, {}, mockCommand);
+
+      expect(mockInitializeCLI).toHaveBeenCalledWith(
+        {
+          debug: false,
+          verbose: false,
+          quiet: false,
+          cache: true,
+        },
+        customConfigPath,
+      );
       expect(mockCLI.clearCache).toHaveBeenCalled();
     });
 

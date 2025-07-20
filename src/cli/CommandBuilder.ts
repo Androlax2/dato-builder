@@ -20,8 +20,10 @@ export interface BuildOptions {
 
 export class CommandBuilder {
   private readonly program: Command;
+  private readonly customConfigPath?: string;
 
-  constructor(version: string) {
+  constructor(version: string, customConfigPath?: string) {
+    this.customConfigPath = customConfigPath;
     this.program = new Command()
       .name("dato-builder")
       .description("DatoCMS Builder CLI")
@@ -33,10 +35,26 @@ export class CommandBuilder {
   }
 
   /**
+   * Create a custom initializeCLI function that uses custom config path if provided
+   */
+  private createInitializeCLI(
+    originalInitializeCLI: (
+      options: GlobalOptions,
+      customConfigPath?: string,
+    ) => Promise<DatoBuilderCLI>,
+  ) {
+    return (options: GlobalOptions) =>
+      originalInitializeCLI(options, this.customConfigPath);
+  }
+
+  /**
    * Add build command
    */
   public addBuildCommand(
-    initializeCLI: (options: GlobalOptions) => Promise<DatoBuilderCLI>,
+    initializeCLI: (
+      options: GlobalOptions,
+      customConfigPath?: string,
+    ) => Promise<DatoBuilderCLI>,
   ): this {
     this.program
       .command("build")
@@ -69,7 +87,8 @@ export class CommandBuilder {
       .action(async (options: BuildOptions, command) => {
         try {
           const globalOptions = this.extractGlobalOptions(command);
-          const cli = await initializeCLI(globalOptions);
+          const cli =
+            await this.createInitializeCLI(initializeCLI)(globalOptions);
 
           const concurrency = this.determineConcurrency(options);
 
@@ -90,7 +109,10 @@ export class CommandBuilder {
    * Add generate commands
    */
   public addGenerateCommands(
-    initializeCLI: (options: GlobalOptions) => Promise<DatoBuilderCLI>,
+    initializeCLI: (
+      options: GlobalOptions,
+      customConfigPath?: string,
+    ) => Promise<DatoBuilderCLI>,
   ): this {
     // Generate command
     this.program
@@ -99,7 +121,8 @@ export class CommandBuilder {
       .action(async (_options, command) => {
         try {
           const globalOptions = this.extractGlobalOptions(command);
-          const cli = await initializeCLI(globalOptions);
+          const cli =
+            await this.createInitializeCLI(initializeCLI)(globalOptions);
 
           await cli.generate();
         } catch (error) {
@@ -114,7 +137,8 @@ export class CommandBuilder {
       .action(async (_options, command) => {
         try {
           const globalOptions = this.extractGlobalOptions(command);
-          const cli = await initializeCLI(globalOptions);
+          const cli =
+            await this.createInitializeCLI(initializeCLI)(globalOptions);
 
           await cli.generate("block");
         } catch (error) {
@@ -129,7 +153,8 @@ export class CommandBuilder {
       .action(async (_options, command) => {
         try {
           const globalOptions = this.extractGlobalOptions(command);
-          const cli = await initializeCLI(globalOptions);
+          const cli =
+            await this.createInitializeCLI(initializeCLI)(globalOptions);
 
           await cli.generate("model");
         } catch (error) {
@@ -144,7 +169,10 @@ export class CommandBuilder {
    * Add clear cache command
    */
   public addClearCacheCommand(
-    initializeCLI: (options: GlobalOptions) => Promise<DatoBuilderCLI>,
+    initializeCLI: (
+      options: GlobalOptions,
+      customConfigPath?: string,
+    ) => Promise<DatoBuilderCLI>,
   ): this {
     this.program
       .command("clear-cache")
@@ -152,7 +180,8 @@ export class CommandBuilder {
       .action(async (_options, command) => {
         try {
           const globalOptions = this.extractGlobalOptions(command);
-          const cli = await initializeCLI(globalOptions);
+          const cli =
+            await this.createInitializeCLI(initializeCLI)(globalOptions);
 
           await cli.clearCache();
         } catch (error) {
