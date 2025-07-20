@@ -1,45 +1,72 @@
-import path from "node:path";
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 import { createMockCache } from "../../tests/utils/mockCache";
 import { createMockConfig } from "../../tests/utils/mockConfig";
 import { createMockLogger } from "../../tests/utils/mockLogger";
-import { CacheManager } from "../cache/CacheManager";
-import { ConfigParser } from "../config/ConfigParser";
-import { DatoBuilderCLI } from "../DatoBuilderCLI";
-import { ConsoleLogger, LogLevel } from "../logger";
 import type { DatoBuilderConfig } from "../types/DatoBuilderConfig";
-import { getLogLevelFromOptions, initializeCLI } from "./CLIInitializer";
 import type { GlobalOptions } from "./CommandBuilder";
 
-// Mock dependencies
-jest.mock("node:path");
-jest.mock("../cache/CacheManager");
-jest.mock("../config/ConfigParser");
-jest.mock("../DatoBuilderCLI");
-jest.mock("../logger");
+// Create mock functions and classes before mocking modules
+const mockJoin = jest.fn() as jest.MockedFunction<
+  (...paths: string[]) => string
+>;
 
-const mockPath = path as jest.Mocked<typeof path>;
-const MockCacheManager = CacheManager as jest.MockedClass<typeof CacheManager>;
-const MockConfigParser = ConfigParser as jest.MockedClass<typeof ConfigParser>;
-const MockDatoBuilderCLI = DatoBuilderCLI as jest.MockedClass<
-  typeof DatoBuilderCLI
->;
-const MockConsoleLogger = ConsoleLogger as jest.MockedClass<
-  typeof ConsoleLogger
->;
+const MockCacheManager = jest.fn();
+const MockConfigParser = jest.fn();
+const MockDatoBuilderCLI = jest.fn();
+const MockConsoleLogger = jest.fn();
+
+// Mock all modules using unstable_mockModule for ESM compatibility
+jest.unstable_mockModule("node:path", () => {
+  const mockPath = {
+    join: mockJoin,
+  };
+  return {
+    default: mockPath,
+    join: mockJoin,
+  };
+});
+
+jest.unstable_mockModule("../cache/CacheManager", () => ({
+  CacheManager: MockCacheManager,
+}));
+
+jest.unstable_mockModule("../config/ConfigParser", () => ({
+  ConfigParser: MockConfigParser,
+}));
+
+jest.unstable_mockModule("../DatoBuilderCLI", () => ({
+  DatoBuilderCLI: MockDatoBuilderCLI,
+}));
+
+jest.unstable_mockModule("../logger", () => ({
+  ConsoleLogger: MockConsoleLogger,
+  LogLevel: {
+    ERROR: 0,
+    WARN: 1,
+    INFO: 2,
+    DEBUG: 3,
+    TRACE: 4,
+  },
+}));
+
+// Import after mocking
+const { getLogLevelFromOptions, initializeCLI } = await import(
+  "./CLIInitializer"
+);
+const { LogLevel } = await import("../logger");
 
 describe("CLIInitializer", () => {
-  let mockLogger: jest.Mocked<ConsoleLogger>;
-  let mockConfigParser: jest.Mocked<ConfigParser>;
-  let mockCache: jest.Mocked<CacheManager>;
-  let mockCLI: jest.Mocked<DatoBuilderCLI>;
+  let mockLogger: any;
+  let mockConfigParser: any;
+  let mockCache: any;
+  let mockCLI: any;
   let mockConfig: Required<DatoBuilderConfig>;
 
   beforeEach(() => {
     jest.clearAllMocks();
 
     // Mock path.join
-    mockPath.join.mockImplementation((...paths) => paths.join("/"));
+    mockJoin.mockImplementation((...paths) => paths.join("/"));
 
     // Mock process.cwd
     jest.spyOn(process, "cwd").mockReturnValue("/mock/cwd");
@@ -60,7 +87,7 @@ describe("CLIInitializer", () => {
       loadConfig: jest
         .fn<() => Promise<Required<DatoBuilderConfig>>>()
         .mockResolvedValue(mockConfig),
-    } as unknown as jest.Mocked<ConfigParser>;
+    };
     MockConfigParser.mockImplementation(() => mockConfigParser);
 
     // Mock cache manager
@@ -68,7 +95,7 @@ describe("CLIInitializer", () => {
     MockCacheManager.mockImplementation(() => mockCache);
 
     // Mock DatoBuilderCLI
-    mockCLI = {} as jest.Mocked<DatoBuilderCLI>;
+    mockCLI = {};
     MockDatoBuilderCLI.mockImplementation(() => mockCLI);
   });
 
@@ -356,10 +383,12 @@ describe("CLIInitializer", () => {
 
       await initializeCLI(options);
 
-      expect(mockPath.join).toHaveBeenCalledWith(
-        "/mock/cwd",
-        ".dato-builder-cache",
-        "item-types.json",
+      // Verify cache manager is created with expected path
+      expect(MockCacheManager).toHaveBeenCalledWith(
+        "/mock/cwd/.dato-builder-cache/item-types.json",
+        {
+          skipReads: false,
+        },
       );
     });
 
