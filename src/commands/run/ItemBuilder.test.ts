@@ -1,10 +1,25 @@
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
-import type { BuilderContext } from "src/types/BuilderContext";
-import { createMockCache } from "tests/utils/mockCache";
-import { createMockConfig } from "tests/utils/mockConfig";
-import { createMockLogger } from "tests/utils/mockLogger";
-import { ItemBuildError, ItemBuilder } from "./ItemBuilder";
+import { createMockCache } from "../../../tests/utils/mockCache";
+import { createMockConfig } from "../../../tests/utils/mockConfig";
+import { createMockLogger } from "../../../tests/utils/mockLogger";
+import type { BuilderContext } from "../../types/BuilderContext";
 import type { FileInfo } from "./types";
+
+// Import the classes to test
+const { ItemBuildError, ItemBuilder } = await import("./ItemBuilder");
+
+// Mock builder instances
+const mockBlockBuilder = {
+  upsert: jest.fn<() => Promise<string>>(),
+  getHash: jest.fn<() => string>(),
+  constructor: { name: "BlockBuilder" },
+};
+
+const mockModelBuilder = {
+  upsert: jest.fn<() => Promise<string>>(),
+  getHash: jest.fn<() => string>(),
+  constructor: { name: "ModelBuilder" },
+};
 
 // Mock CacheManager
 const mockCacheManager = createMockCache();
@@ -23,48 +38,49 @@ const mockGetContext = jest
   .fn<() => BuilderContext>()
   .mockReturnValue(mockContext);
 
-// Mock builder instances
-const mockBlockBuilder = {
-  upsert: jest.fn(),
-  getHash: jest.fn(),
-  constructor: { name: "BlockBuilder" },
-};
-
-const mockModelBuilder = {
-  upsert: jest.fn(),
-  getHash: jest.fn(),
-  constructor: { name: "ModelBuilder" },
-};
-
-// Mock dynamic imports
-jest.mock(
-  "/path/to/block1.ts",
-  () => jest.fn().mockImplementation(() => Promise.resolve(mockBlockBuilder)),
-  { virtual: true },
-);
-jest.mock(
-  "/path/to/model1.ts",
-  () => jest.fn().mockImplementation(() => Promise.resolve(mockModelBuilder)),
-  { virtual: true },
-);
-jest.mock(
-  "/path/to/invalid.ts",
-  () => jest.fn().mockImplementation(() => Promise.resolve("not-a-builder")),
-  { virtual: true },
-);
-jest.mock(
-  "/path/to/no-default.ts",
-  () => ({
-    __esModule: true,
-  }),
-  { virtual: true },
-);
+// Create a test ItemBuilder that we can control the dynamic imports for
+class TestItemBuilder extends ItemBuilder {
+  // Override the protected loadModule method for testing
+  protected override async loadModule(filePath: string): Promise<any> {
+    // Mock the dynamic import behavior for test paths
+    switch (filePath) {
+      case "/path/to/block1.ts":
+        return {
+          default: jest
+            .fn()
+            .mockImplementation(() => Promise.resolve(mockBlockBuilder)),
+        };
+      case "/path/to/model1.ts":
+        return {
+          default: jest
+            .fn()
+            .mockImplementation(() => Promise.resolve(mockModelBuilder)),
+        };
+      case "/path/to/invalid.ts":
+        return {
+          default: jest
+            .fn()
+            .mockImplementation(() => Promise.resolve("not-a-builder")),
+        };
+      case "/path/to/no-default.ts":
+        return {
+          __esModule: true,
+        };
+      default:
+        throw new Error(`Module not found: ${filePath}`);
+    }
+  }
+}
 
 describe("ItemBuilder", () => {
-  let itemBuilder: ItemBuilder;
+  let itemBuilder: TestItemBuilder;
 
   beforeEach(() => {
-    itemBuilder = new ItemBuilder(mockCacheManager, mockLogger, mockGetContext);
+    itemBuilder = new TestItemBuilder(
+      mockCacheManager,
+      mockLogger,
+      mockGetContext,
+    );
     jest.clearAllMocks();
   });
 
@@ -96,7 +112,7 @@ describe("ItemBuilder", () => {
       };
 
       mockCacheManager.get.mockReturnValue(undefined);
-      (mockBlockBuilder.upsert as any).mockResolvedValue("new-id");
+      mockBlockBuilder.upsert.mockResolvedValue("new-id");
       mockBlockBuilder.getHash.mockReturnValue("new-hash");
 
       const result = await itemBuilder.buildItem(fileInfo);
@@ -120,7 +136,7 @@ describe("ItemBuilder", () => {
       const cachedData = { id: "cached-id", hash: "old-hash" };
       mockCacheManager.get.mockReturnValue(cachedData);
       mockBlockBuilder.getHash.mockReturnValue("new-hash");
-      (mockBlockBuilder.upsert as any).mockResolvedValue("new-id");
+      mockBlockBuilder.upsert.mockResolvedValue("new-id");
 
       const result = await itemBuilder.buildItem(fileInfo);
 
@@ -137,7 +153,7 @@ describe("ItemBuilder", () => {
       };
 
       mockCacheManager.get.mockReturnValue(undefined);
-      (mockModelBuilder.upsert as any).mockResolvedValue("model-id");
+      mockModelBuilder.upsert.mockResolvedValue("model-id");
       mockModelBuilder.getHash.mockReturnValue("model-hash");
 
       const result = await itemBuilder.buildItem(fileInfo);
@@ -185,9 +201,7 @@ describe("ItemBuilder", () => {
       };
 
       mockCacheManager.get.mockReturnValue(undefined);
-      (mockBlockBuilder.upsert as any).mockRejectedValue(
-        new Error("Build failed"),
-      );
+      mockBlockBuilder.upsert.mockRejectedValue(new Error("Build failed"));
 
       await expect(itemBuilder.buildItem(fileInfo)).rejects.toThrow(
         ItemBuildError,

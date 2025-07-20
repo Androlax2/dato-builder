@@ -229,7 +229,7 @@ export class ItemBuilder {
     return builder;
   }
 
-  private async loadModule(filePath: string): Promise<any> {
+  protected async loadModule(filePath: string): Promise<any> {
     this.logger.traceJson("Loading module", { filePath });
 
     // Check module cache first
