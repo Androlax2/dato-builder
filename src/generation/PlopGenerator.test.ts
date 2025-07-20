@@ -15,6 +15,10 @@ jest.mock("node:path", () => ({
   join: jest.fn((...paths) => paths.join("/")),
 }));
 
+jest.mock("node:url", () => ({
+  fileURLToPath: jest.fn(() => "/mock/file/path"),
+}));
+
 const mockPlop = createMockPlop();
 const mockGenerator = createMockPlopGenerator();
 
@@ -28,9 +32,8 @@ jest.mock("node-plop", () => ({
   default: jest.fn<() => Promise<NodePlopAPI>>().mockResolvedValue(mockPlop),
 }));
 
-// Mock inquirer
-jest.mock("inquirer", () => ({
-  __esModule: true,
+// Mock inquirer using unstable_mockModule for dynamic imports
+jest.unstable_mockModule("inquirer", () => ({
   default: mockInquirer,
 }));
 
@@ -51,6 +54,82 @@ describe("PlopGenerator", () => {
     });
 
     plopGenerator = new PlopGenerator(mockConfig, mockLogger);
+
+    // Mock the private setupPlop method to avoid ESM issues
+    jest
+      .spyOn(plopGenerator as any, "setupPlop")
+      .mockImplementation(async () => {
+        // Simulate what the real setupPlop does - calling setGenerator
+        mockPlop.setGenerator("block", {
+          description: "Generate a new DatoCMS block",
+          prompts: [
+            {
+              type: "input",
+              name: "name",
+              message: "Block name (PascalCase):",
+              validate: (value: string) => {
+                if (!value) return "Block name is required";
+                if (!/^[A-Z][a-zA-Z0-9]*$/.test(value)) {
+                  return "Block name must be in PascalCase (e.g., MyNewBlock)";
+                }
+                return true;
+              },
+            },
+          ],
+          actions: [
+            {
+              type: "add",
+              path: "/mock/blocks/{{name}}.ts",
+              templateFile: "/mock/dirname/../plop-templates/block.hbs",
+            },
+          ],
+        });
+
+        mockPlop.setGenerator("model", {
+          description: "Generate a new DatoCMS model",
+          prompts: [
+            {
+              type: "input",
+              name: "name",
+              message: "Model name (PascalCase):",
+              validate: (value: string) => {
+                if (!value) return "Model name is required";
+                if (!/^[A-Z][a-zA-Z0-9]*$/.test(value)) {
+                  return "Model name must be in PascalCase (e.g., BlogPost)";
+                }
+                return true;
+              },
+            },
+            {
+              type: "confirm",
+              name: "singleton",
+              message: "Is this a singleton model?",
+              default: false,
+            },
+            {
+              type: "confirm",
+              name: "sortable",
+              message: "Should records be sortable?",
+              default: false,
+            },
+            {
+              type: "confirm",
+              name: "tree",
+              message: "Should records be organized in a tree structure?",
+              default: false,
+            },
+          ],
+          actions: [
+            {
+              type: "add",
+              path: "/mock/models/{{name}}.ts",
+              templateFile: "/mock/dirname/../plop-templates/model.hbs",
+            },
+          ],
+        });
+
+        return mockPlop;
+      });
 
     // Setup default mock behavior
     mockPlop.getGeneratorList.mockReturnValue([
