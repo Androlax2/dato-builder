@@ -332,7 +332,10 @@ npx dato-builder build --no-cache
 import { BlockBuilder, type BuilderContext } from "dato-builder";
 
 export default async function buildTestBlock({ config }: BuilderContext) {
-  return new BlockBuilder("Test Block")
+  return new BlockBuilder({
+      name: "Test Block",
+      config,
+  })
     .addHeading({ label: "Title" })
     .addTextarea({ label: "Description" })
     .addImage({
@@ -368,7 +371,10 @@ npx dato-builder generate:model
 import { ModelBuilder, type BuilderContext } from "dato-builder";
 
 export default async function buildTestModel({ config, getBlock }: BuilderContext) {
-  return new ModelBuilder("Test Model")
+  return new ModelBuilder({
+      name: "Test Model",
+      config,
+  })
     .addHeading({ label: "Title" })
     .addTextarea({ label: "Description" })
     .addModularContent({
@@ -606,23 +612,20 @@ builder.addLocation({
 
 ### ModularContent
 
-> **Option A**: Dynamic IDs via builder functions
+> **Option A**: Use `getBlock()` via `BuilderContext`
 >
-> Run each builder first to get its generated API key (ID), then plug those IDs in.
+> The `BuilderContext` now includes a `getBlock()` & a `getModel()` helper to automatically resolve block API keys (IDs) / Model API 
+> Keys (IDs) at runtime.
 
 ```typescript
 // datocms/models/TestModel.ts
-import { ModelBuilder } from "dato-builder";
-import buildSectionBlock from "../blocks/SectionBlock";
-import buildHighlightModel from "../models/HighlightModel";
+import { ModelBuilder, type BuilderContext } from "dato-builder";
 
-export default async function buildTestModel() {
-  // 1. Build the other blocks/models and capture their API keys:
-  const sectionBlockId = await buildSectionBlock();
-  const highlightModelId = await buildHighlightModel();
-
-  // 2. Use those IDs in your modular-content validator:
-  const model = new ModelBuilder("Test Model")
+export default async function buildTestModel({ config, getBlock, getModel }: BuilderContext) {
+  return new ModelBuilder({
+      name: "Test Model",
+      config
+  })
     .addHeading({ label: "Title" })
     .addTextarea({ label: "Description" })
     .addModularContent({
@@ -630,17 +633,16 @@ export default async function buildTestModel() {
       body: {
         validators: {
           rich_text_blocks: {
-            item_types: [sectionBlockId, highlightModelId],
+            item_types: [
+                await getBlock("SectionBlock"), // dynamically resolve SectionBlock ID
+                await getModel("HighlightModel"), // dynamically resolve HighlightModel ID
+            ],
           },
           size: { min: 1 },
         },
       },
     });
-
-  return model.upsert();
 }
-
-void buildTestModel();
 ```
 
 > **Option B**: Hard-coded IDs
@@ -649,10 +651,13 @@ void buildTestModel();
 
 ```typescript
 // datocms/models/TestModel.ts
-import { ModelBuilder } from "dato-builder";
+import { ModelBuilder, type BuilderContext } from "dato-builder";
 
-export default function buildTestModel() {
-  const model = new ModelBuilder("Test Model")
+export default function buildTestModel({config}: BuilderContext) {
+  return new ModelBuilder({
+      name: "Test Model",
+      config
+  })
     .addHeading({ label: "Title" })
     .addTextarea({ label: "Description" })
     .addModularContent({
@@ -660,50 +665,45 @@ export default function buildTestModel() {
       body: {
         validators: {
           rich_text_blocks: {
-            // replace these with the real API keys you got earlier
+            // replace these with the real API keys you got from DatoCMS
             item_types: ["section_block_item_type_id", "highlight_model_item_type_id"],
           },
           size: { min: 1 },
         },
       },
     });
-
-  return model.upsert();
 }
-
-void buildTestModel();
 ```
 
 ### SingleBlock
 
-> **Option A**: Dynamic IDs via builder functions
+> **Option A**: Use `getBlock()` via `BuilderContext`
 >
-> Capture the block ID from your builder before using it:
+> The `BuilderContext` now includes a `getBlock()` & a `getModel()` helper to automatically resolve block API keys (IDs) / Model API
+> Keys (IDs) at runtime.
 
 ```typescript
-import { ModelBuilder } from "dato-builder";
-import buildHeroBlock from "../blocks/HeroBlock";
+// datocms/models/PageModel.ts
+import { ModelBuilder, type BuilderContext } from "dato-builder";
 
-export default async function buildPageModel() {
-  const heroBlockId = await buildHeroBlock();
-
-  const model = new ModelBuilder("Page Model").addSingleBlock({
-    label: "Hero",
-    type: "framed_single_block",
-    start_collapsed: true,
-    body: {
-      validators: {
-        single_block_blocks: {
-          item_types: [heroBlockId],
-        },
-      },
-    },
-  });
-
-  return model.upsert();
+export default async function buildPageModel({ config, getBlock }: BuilderContext) {
+    return new ModelBuilder({
+        name: "Page Model",
+        config,
+    })
+        .addSingleBlock({
+            label: "Hero",
+            type: "framed_single_block",
+            start_collapsed: true,
+            body: {
+                validators: {
+                    single_block_blocks: {
+                        item_types: [await getBlock("HeroBlock")],
+                    },
+                },
+            },
+        });
 }
-
-void buildPageModel();
 ```
 
 > **Option B**: Hard-coded IDs
@@ -727,34 +727,33 @@ builder.addSingleBlock({
 
 ### StructuredText
 
-> **Option A**: Dynamic IDs via builder functions
+> **Option A**: Use `getBlock()` via `BuilderContext`
 >
-> Fetch block IDs before defining your structured text field:
+> The `BuilderContext` now includes a `getBlock()` & a `getModel()` helper to automatically resolve block API keys (IDs) / Model API
+> Keys (IDs) at runtime.
 
 ```typescript
-import { ModelBuilder } from "dato-builder";
-import buildQuoteBlock from "../blocks/QuoteBlock";
+// datocms/models/ArticleModel.ts
+import { ModelBuilder, type BuilderContext } from "dato-builder";
 
-export default async function buildArticleModel() {
-  const quoteBlockId = await buildQuoteBlock();
-
-  const model = new ModelBuilder("Article Model").addStructuredText({
-    label: "Content",
-    nodes: ["heading", "link"],
-    marks: ["strong", "emphasis"],
-    body: {
-      validators: {
-        structured_text_blocks: {
-          item_types: [quoteBlockId],
-        },
-      },
-    },
-  });
-
-  return model.upsert();
+export default async function buildArticleModel({ config, getBlock }: BuilderContext) {
+    return new ModelBuilder({
+        name: "Article Model",
+        config,
+    })
+        .addStructuredText({
+            label: "Content",
+            nodes: ["heading", "paragraph", "link"],
+            marks: ["strong", "emphasis"],
+            body: {
+                validators: {
+                    structured_text_blocks: {
+                        item_types: [await getBlock("QuoteBlock")],
+                    },
+                },
+            },
+        });
 }
-
-void buildArticleModel();
 ```
 
 > **Option B**: Hard-coded IDs
