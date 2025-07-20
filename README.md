@@ -18,8 +18,6 @@ Quickly create Models, Blocks, and content structures in DatoCMS from your TypeS
   - [2. Generate Files Quickly](#2-generate-files-quickly)
   - [3. Define a Model](#3-define-a-model)
   - [4. Build Everything](#4-build-everything)
-- [Development & Testing](#development--testing)
-- [Migration Guide](#migration-guide)
 - [Comprehensive Field \& Validator Reference](#comprehensive-field--validator-reference)
   - [Text Fields](#text-fields)
     - [`SingleLineString`](#singlelinestring)
