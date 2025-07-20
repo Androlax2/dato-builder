@@ -1,5 +1,5 @@
 import { jest } from "@jest/globals";
-import type { DatoBuilderCLI } from "@/DatoBuilderCLI";
+import type { DatoBuilderCLI } from "../../src/DatoBuilderCLI";
 
 export function createMockDatoBuilderCLI(): jest.Mocked<DatoBuilderCLI> {
   return {

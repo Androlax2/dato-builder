@@ -1,4 +1,4 @@
-import type { LogLevel } from "../logger";
+import type { LogLevel } from "../logger.js";
 
 export interface DatoBuilderConfig {
   /**

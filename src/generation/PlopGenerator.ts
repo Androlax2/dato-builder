@@ -1,7 +1,8 @@
 import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import type { NodePlopAPI } from "node-plop";
-import type { ConsoleLogger } from "../logger";
-import type { DatoBuilderConfig } from "../types/DatoBuilderConfig";
+import type { ConsoleLogger } from "../logger.js";
+import type { DatoBuilderConfig } from "../types/DatoBuilderConfig.js";
 
 interface ResultChange {
   type: string;
@@ -34,8 +35,11 @@ export class PlopGenerator {
     const { default: nodePlop } = await import("node-plop");
     const plop = await nodePlop();
 
-    const __dirname = dirname(__filename);
-    const plopTemplatesPath = join(__dirname, "..", "plop-templates");
+    const plopTemplatesPath = join(
+      dirname(fileURLToPath(import.meta.url)),
+      "..",
+      "plop-templates",
+    );
 
     // Block generator
     plop.setGenerator("block", {

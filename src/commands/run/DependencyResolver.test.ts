@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
-import { createMockLogger } from "@tests/utils/mockLogger";
+import { createMockLogger } from "../../../tests/utils/mockLogger";
 import { DependencyResolver } from "./DependencyResolver";
 import type { FileInfo } from "./types";
 

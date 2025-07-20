@@ -1,16 +1,16 @@
-import type BlockBuilder from "@/BlockBuilder";
-import type { CacheManager } from "@/cache/CacheManager";
-import type { ConsoleLogger } from "@/logger";
-import type ModelBuilder from "@/ModelBuilder";
-import type { BuilderContext } from "@/types/BuilderContext";
-import type { FileInfo } from "./types";
+import type BlockBuilder from "../../BlockBuilder.js";
+import type { CacheManager } from "../../cache/CacheManager.js";
+import type { ConsoleLogger } from "../../logger.js";
+import type ModelBuilder from "../../ModelBuilder.js";
+import type { BuilderContext } from "../../types/BuilderContext.js";
+import type { FileInfo } from "./types.js";
 
 export class ItemBuildError extends Error {
   constructor(
     message: string,
     public readonly itemType: string,
     public readonly itemName: string,
-    public readonly cause?: Error,
+    public override readonly cause?: Error,
   ) {
     super(message);
     this.name = "ItemBuildError";

@@ -1,5 +1,5 @@
-import type { ConsoleLogger } from "@/logger";
-import type { FileInfo } from "./types";
+import type { ConsoleLogger } from "../../logger.js";
+import type { FileInfo } from "./types.js";
 
 export class DependencyResolver {
   constructor(private readonly logger: ConsoleLogger) {

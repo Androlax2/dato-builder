@@ -1,60 +1,64 @@
 import { createHash } from "node:crypto";
 import type * as SimpleSchemaTypes from "@datocms/cma-client/src/generated/SimpleSchemaTypes";
 import { buildClient } from "@datocms/cma-client-node";
-import DatoApi from "./Api/DatoApi";
-import AssetGallery, { type AssetGalleryConfig } from "./Fields/AssetGallery";
-import BooleanField, { type BooleanConfig } from "./Fields/Boolean";
+import DatoApi from "./Api/DatoApi.js";
+import AssetGallery, {
+  type AssetGalleryConfig,
+} from "./Fields/AssetGallery.js";
+import BooleanField, { type BooleanConfig } from "./Fields/Boolean.js";
 import BooleanRadioGroup, {
   type BooleanRadioGroupConfig,
-} from "./Fields/BooleanRadioGroup";
-import ColorPicker, { type ColorPickerConfig } from "./Fields/ColorPicker";
-import DateField, { type DateConfig } from "./Fields/Date";
-import DateTime, { type DateTimeConfig } from "./Fields/DateTime";
-import Email, { type EmailConfig } from "./Fields/Email";
+} from "./Fields/BooleanRadioGroup.js";
+import ColorPicker, { type ColorPickerConfig } from "./Fields/ColorPicker.js";
+import DateField, { type DateConfig } from "./Fields/Date.js";
+import DateTime, { type DateTimeConfig } from "./Fields/DateTime.js";
+import Email, { type EmailConfig } from "./Fields/Email.js";
 import ExternalVideo, {
   type ExternalVideoConfig,
-} from "./Fields/ExternalVideo";
-import type Field from "./Fields/Field";
-import Float, { type FloatConfig } from "./Fields/Float";
-import Integer, { type IntegerConfig } from "./Fields/Integer";
-import Json, { type JsonConfig } from "./Fields/Json";
-import Link, { type LinkConfig } from "./Fields/Link";
-import Links, { type LinksConfig } from "./Fields/Links";
-import Location, { type LocationConfig } from "./Fields/Location";
-import Markdown, { type MarkdownConfig } from "./Fields/Markdown";
+} from "./Fields/ExternalVideo.js";
+import type Field from "./Fields/Field.js";
+import Float, { type FloatConfig } from "./Fields/Float.js";
+import Integer, { type IntegerConfig } from "./Fields/Integer.js";
+import Json, { type JsonConfig } from "./Fields/Json.js";
+import Link, { type LinkConfig } from "./Fields/Link.js";
+import Links, { type LinksConfig } from "./Fields/Links.js";
+import Location, { type LocationConfig } from "./Fields/Location.js";
+import Markdown, { type MarkdownConfig } from "./Fields/Markdown.js";
 import ModularContent, {
   type ModularContentConfig,
-} from "./Fields/ModularContent";
+} from "./Fields/ModularContent.js";
 import MultiLineText, {
   type MultiLineTextConfig,
-} from "./Fields/MultiLineText";
-import Seo, { type SeoConfig } from "./Fields/Seo";
-import SingleAsset, { type SingleAssetConfig } from "./Fields/SingleAsset";
-import SingleBlock, { type SingleBlockConfig } from "./Fields/SingleBlock";
+} from "./Fields/MultiLineText.js";
+import Seo, { type SeoConfig } from "./Fields/Seo.js";
+import SingleAsset, { type SingleAssetConfig } from "./Fields/SingleAsset.js";
+import SingleBlock, { type SingleBlockConfig } from "./Fields/SingleBlock.js";
 import SingleLineString, {
   type SingleLineStringConfig,
-} from "./Fields/SingleLineString";
-import Slug, { type SlugConfig } from "./Fields/Slug";
+} from "./Fields/SingleLineString.js";
+import Slug, { type SlugConfig } from "./Fields/Slug.js";
 import StringCheckboxGroup, {
   type StringCheckboxGroupConfig,
-} from "./Fields/StringCheckboxGroup";
+} from "./Fields/StringCheckboxGroup.js";
 import StringMultiSelect, {
   type StringMultiSelectConfig,
-} from "./Fields/StringMultiSelect";
+} from "./Fields/StringMultiSelect.js";
 import StringRadioGroup, {
   type StringRadioGroupConfig,
-} from "./Fields/StringRadioGroup";
-import StringSelect, { type StringSelectConfig } from "./Fields/StringSelect";
+} from "./Fields/StringRadioGroup.js";
+import StringSelect, {
+  type StringSelectConfig,
+} from "./Fields/StringSelect.js";
 import StructuredText, {
   type StructuredTextConfig,
-} from "./Fields/StructuredText";
-import Textarea, { type TextareaConfig } from "./Fields/Textarea";
-import Url, { type UrlConfig } from "./Fields/Url";
-import Wysiwyg, { type WysiwygConfig } from "./Fields/Wysiwyg";
-import { ConsoleLogger } from "./logger";
-import type { DatoBuilderConfig } from "./types/DatoBuilderConfig";
-import { executeWithErrorHandling } from "./utils/errors";
-import { generateDatoApiKey } from "./utils/utils";
+} from "./Fields/StructuredText.js";
+import Textarea, { type TextareaConfig } from "./Fields/Textarea.js";
+import Url, { type UrlConfig } from "./Fields/Url.js";
+import Wysiwyg, { type WysiwygConfig } from "./Fields/Wysiwyg.js";
+import { ConsoleLogger } from "./logger.js";
+import type { DatoBuilderConfig } from "./types/DatoBuilderConfig.js";
+import { executeWithErrorHandling } from "./utils/errors.js";
+import { generateDatoApiKey } from "./utils/utils.js";
 
 export type ItemTypeBuilderType = "model" | "block";
 

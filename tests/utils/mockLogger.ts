@@ -1,5 +1,5 @@
 import { jest } from "@jest/globals";
-import type { ConsoleLogger } from "@/logger";
+import type { ConsoleLogger } from "../../src/logger";
 
 export function createMockLogger(): jest.Mocked<ConsoleLogger> {
   const mock = {

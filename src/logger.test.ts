@@ -6,7 +6,7 @@ import {
   it,
   jest,
 } from "@jest/globals";
-import { ConsoleLogger, LogLevel } from "@/logger";
+import { ConsoleLogger, LogLevel } from "./logger";
 
 describe("ConsoleLogger", () => {
   let logger: ConsoleLogger;

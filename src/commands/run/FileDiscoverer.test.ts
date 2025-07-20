@@ -7,8 +7,8 @@ import {
   it,
   jest,
 } from "@jest/globals";
-import { createMockLogger } from "@tests/utils/mockLogger";
 import { glob } from "glob";
+import { createMockLogger } from "../../../tests/utils/mockLogger";
 import { FileDiscoverer } from "./FileDiscoverer";
 
 // Mock the glob module

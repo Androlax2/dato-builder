@@ -1,17 +1,17 @@
 import { buildClient } from "@datocms/cma-client-node";
-import type { CacheManager } from "@/cache/CacheManager";
-import type { ConsoleLogger } from "@/logger";
-import type { BuilderContext } from "@/types/BuilderContext";
-import type { DatoBuilderConfig } from "@/types/DatoBuilderConfig";
-import DatoApi from "../../Api/DatoApi";
-import { BuildExecutor } from "./BuildExecutor";
-import { DeletionDetector } from "./DeletionDetector";
-import { DeletionManager } from "./DeletionManager";
-import { DependencyAnalyzer } from "./DependencyAnalyzer";
-import { DependencyResolver } from "./DependencyResolver";
-import { FileDiscoverer } from "./FileDiscoverer";
-import { ItemBuilder } from "./ItemBuilder";
-import type { BuildResult, FileInfo } from "./types";
+import DatoApi from "../../Api/DatoApi.js";
+import type { CacheManager } from "../../cache/CacheManager.js";
+import type { ConsoleLogger } from "../../logger.js";
+import type { BuilderContext } from "../../types/BuilderContext.js";
+import type { DatoBuilderConfig } from "../../types/DatoBuilderConfig.js";
+import { BuildExecutor } from "./BuildExecutor.js";
+import { DeletionDetector } from "./DeletionDetector.js";
+import { DeletionManager } from "./DeletionManager.js";
+import { DependencyAnalyzer } from "./DependencyAnalyzer.js";
+import { DependencyResolver } from "./DependencyResolver.js";
+import { FileDiscoverer } from "./FileDiscoverer.js";
+import { ItemBuilder } from "./ItemBuilder.js";
+import type { BuildResult, FileInfo } from "./types.js";
 
 interface RunCommandOptions {
   config: Required<DatoBuilderConfig>;

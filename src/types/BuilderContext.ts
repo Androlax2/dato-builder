@@ -1,4 +1,4 @@
-import type { DatoBuilderConfig } from "./DatoBuilderConfig";
+import type { DatoBuilderConfig } from "./DatoBuilderConfig.js";
 
 export interface BuilderContext {
   /**

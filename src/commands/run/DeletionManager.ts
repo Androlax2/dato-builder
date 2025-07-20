@@ -1,8 +1,8 @@
 import inquirer from "inquirer";
-import type DatoApi from "../../Api/DatoApi";
-import type { CacheManager } from "../../cache/CacheManager";
-import type { ConsoleLogger } from "../../logger";
-import type { DeletionCandidate, DeletionSummary } from "./DeletionDetector";
+import type DatoApi from "../../Api/DatoApi.js";
+import type { CacheManager } from "../../cache/CacheManager.js";
+import type { ConsoleLogger } from "../../logger.js";
+import type { DeletionCandidate, DeletionSummary } from "./DeletionDetector.js";
 
 export interface DeletionResult {
   success: boolean;

@@ -1,5 +1,5 @@
 /** @type {import('ts-jest').JestConfigWithTsJest} **/
-module.exports = {
+const jestConfig = {
   preset: "ts-jest",
   testEnvironment: "node",
   moduleNameMapper: {
@@ -21,3 +21,5 @@ module.exports = {
   restoreMocks: true,
   maxWorkers: "50%",
 };
+
+export default jestConfig;

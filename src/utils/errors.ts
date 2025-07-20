@@ -1,4 +1,4 @@
-import type GenericDatoError from "../Api/Error/GenericDatoError";
+import type GenericDatoError from "../Api/Error/GenericDatoError.js";
 /**
  * Operation types for error messaging
  */

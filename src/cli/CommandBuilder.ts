@@ -1,7 +1,7 @@
 import os from "node:os";
 import { Command } from "@commander-js/extra-typings";
-import type { DatoBuilderCLI } from "../DatoBuilderCLI";
-import { ConsoleLogger, LogLevel } from "../logger";
+import type { DatoBuilderCLI } from "../DatoBuilderCLI.js";
+import { ConsoleLogger, LogLevel } from "../logger.js";
 
 export interface GlobalOptions {
   debug: boolean;

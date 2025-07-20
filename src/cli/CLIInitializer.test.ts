@@ -1,13 +1,13 @@
 import path from "node:path";
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
-import { createMockCache } from "@tests/utils/mockCache";
-import { createMockConfig } from "@tests/utils/mockConfig";
-import { createMockLogger } from "@tests/utils/mockLogger";
-import type { DatoBuilderConfig } from "@/types/DatoBuilderConfig";
+import { createMockCache } from "../../tests/utils/mockCache";
+import { createMockConfig } from "../../tests/utils/mockConfig";
+import { createMockLogger } from "../../tests/utils/mockLogger";
 import { CacheManager } from "../cache/CacheManager";
 import { ConfigParser } from "../config/ConfigParser";
 import { DatoBuilderCLI } from "../DatoBuilderCLI";
 import { ConsoleLogger, LogLevel } from "../logger";
+import type { DatoBuilderConfig } from "../types/DatoBuilderConfig";
 import { getLogLevelFromOptions, initializeCLI } from "./CLIInitializer";
 import type { GlobalOptions } from "./CommandBuilder";
 

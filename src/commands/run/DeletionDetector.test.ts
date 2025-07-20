@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
-import { createMockCache } from "@tests/utils/mockCache";
-import { createMockLogger } from "@tests/utils/mockLogger";
+import { createMockCache } from "../../../tests/utils/mockCache";
+import { createMockLogger } from "../../../tests/utils/mockLogger";
 import { DeletionDetector } from "./DeletionDetector";
 import type { FileInfo } from "./types";
 

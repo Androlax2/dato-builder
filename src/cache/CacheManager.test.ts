@@ -1,7 +1,7 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
-import { CacheManager } from "./CacheManager";
+import { CacheManager } from "./CacheManager.js";
 
 // Mock fs module
 jest.mock("node:fs", () => ({

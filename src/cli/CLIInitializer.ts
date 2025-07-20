@@ -1,9 +1,9 @@
 import path from "node:path";
-import { CacheManager } from "../cache/CacheManager";
-import { ConfigParser } from "../config/ConfigParser";
-import { DatoBuilderCLI } from "../DatoBuilderCLI";
-import { ConsoleLogger, LogLevel } from "../logger";
-import type { GlobalOptions } from "./CommandBuilder";
+import { CacheManager } from "../cache/CacheManager.js";
+import { ConfigParser } from "../config/ConfigParser.js";
+import { DatoBuilderCLI } from "../DatoBuilderCLI.js";
+import { ConsoleLogger, LogLevel } from "../logger.js";
+import type { GlobalOptions } from "./CommandBuilder.js";
 
 /**
  * Get log level from global options

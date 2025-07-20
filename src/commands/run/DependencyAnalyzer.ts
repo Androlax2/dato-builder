@@ -1,7 +1,7 @@
-import type { ConsoleLogger } from "../../logger";
-import type { BuilderContext } from "../../types/BuilderContext";
-import type { DatoBuilderConfig } from "../../types/DatoBuilderConfig";
-import type { FileInfo } from "./types";
+import type { ConsoleLogger } from "../../logger.js";
+import type { BuilderContext } from "../../types/BuilderContext.js";
+import type { DatoBuilderConfig } from "../../types/DatoBuilderConfig.js";
+import type { FileInfo } from "./types.js";
 
 export class DependencyAnalyzer {
   constructor(

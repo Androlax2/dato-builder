@@ -1,5 +1,5 @@
 #!/usr/bin/env node
 
-const { setupCLI } = require("../build/cli");
+import { CLI } from "../build/cli.js";
 
-setupCLI();
+new CLI().execute();

@@ -1,6 +1,6 @@
-import type { CacheManager } from "@/cache/CacheManager";
-import type { ConsoleLogger } from "@/logger";
-import type { FileInfo } from "./types";
+import type { CacheManager } from "../../cache/CacheManager.js";
+import type { ConsoleLogger } from "../../logger.js";
+import type { FileInfo } from "./types.js";
 
 export interface DeletionCandidate {
   key: string;

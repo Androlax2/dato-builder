@@ -1,9 +1,9 @@
 import fs from "node:fs";
 import path from "node:path";
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
-import { createMockLogger } from "@tests/utils/mockLogger";
-import { ConfigParser } from "@/config/ConfigParser";
-import type { DatoBuilderConfig } from "../../src";
+import type { DatoBuilderConfig } from "../../src/index.js";
+import { createMockLogger } from "../../tests/utils/mockLogger";
+import { ConfigParser } from "./ConfigParser";
 
 // Mock fs and path modules
 jest.mock("node:fs");

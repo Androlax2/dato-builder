@@ -92,11 +92,13 @@ Create a `dato-builder.config.js` in your project root:
 
 ```javascript
 /** @type {import("dato-builder").DatoBuilderConfig} */
-module.exports = {
+const config = {
   apiToken: process.env.DATO_CMA_TOKEN,
   overwriteExistingFields: false,
   blockApiKeySuffix: "block",
 };
+
+export default config;
 ```
 
 ### Complete Configuration Reference
@@ -124,9 +126,12 @@ The `overwriteExistingFields` option controls how dato-builder handles existing 
 
 #### `false` (Default - Safe Mode)
 ```javascript
-module.exports = {
+/** @type {import("dato-builder").DatoBuilderConfig} */
+const config = {
   overwriteExistingFields: false, // Safe: preserve manual changes
 };
+
+export default config;
 ```
 - ✅ **New fields**: Created as defined in code
 - ✅ **Removed fields**: Deleted from DatoCMS
@@ -135,9 +140,12 @@ module.exports = {
 
 #### `true` (Sync Mode)
 ```javascript
-module.exports = {
+/** @type {import("dato-builder").DatoBuilderConfig} */
+const config = {
   overwriteExistingFields: true, // Sync: code is source of truth
 };
+
+export default config;
 ```
 - ✅ **New fields**: Created as defined in code
 - ✅ **Removed fields**: Deleted from DatoCMS
@@ -149,11 +157,13 @@ module.exports = {
 #### JavaScript Configuration
 ```javascript
 /** @type {import("dato-builder").DatoBuilderConfig} */
-module.exports = {
+const config = {
   apiToken: process.env.DATO_CMA_TOKEN,
   overwriteExistingFields: false,
   // ... other options
 };
+
+export default config;
 ```
 
 #### TypeScript Configuration
@@ -177,9 +187,12 @@ Configure logging verbosity with the `logLevel` option:
 ```javascript
 import { LogLevel } from "dato-builder";
 
-module.exports = {
+/** @type {import("dato-builder").DatoBuilderConfig} */
+const config = {
   logLevel: LogLevel.DEBUG, // or use numeric values
 };
+
+export default config;
 ```
 
 #### Available Log Levels
@@ -219,10 +232,13 @@ touch dato-builder.config.js
 
 #### Configuration Debugging
 ```javascript
-module.exports = {
+/** @type {import("dato-builder").DatoBuilderConfig} */
+const config = {
   logLevel: 3, // Enable DEBUG logging
   // ... other config
 };
+
+export default config;
 ```
 
 ```bash

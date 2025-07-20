@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
-import { createMockDatoBuilderCLI } from "@tests/utils/mockDatoBuilderCLI";
-import { setupCLI } from "./cli";
+import { createMockDatoBuilderCLI } from "../tests/utils/mockDatoBuilderCLI";
+import { CLI } from "./cli";
 import { initializeCLI } from "./cli/CLIInitializer";
 import { CommandBuilder, type GlobalOptions } from "./cli/CommandBuilder";
 import type { DatoBuilderCLI } from "./DatoBuilderCLI";
@@ -41,13 +41,13 @@ describe("CLI", () => {
 
   describe("setupCLI", () => {
     it("should initialize CommandBuilder with correct version", async () => {
-      await setupCLI();
+      new CLI().execute();
 
       expect(MockCommandBuilder).toHaveBeenCalledWith("__PACKAGE_VERSION__");
     });
 
     it("should configure all commands", async () => {
-      await setupCLI();
+      new CLI().execute();
 
       expect(mockCommandBuilder.addBuildCommand).toHaveBeenCalledWith(
         initializeCLI,
@@ -64,7 +64,7 @@ describe("CLI", () => {
       const originalProcessArgv = process.argv;
       process.argv = ["node", "cli.js", "build"];
 
-      await setupCLI();
+      new CLI().execute();
 
       expect(mockCommandBuilder.parse).toHaveBeenCalledWith(process.argv);
 
@@ -75,7 +75,7 @@ describe("CLI", () => {
       const setupError = new Error("CLI setup failed");
       mockCommandBuilder.parse.mockRejectedValue(setupError);
 
-      await expect(setupCLI()).rejects.toThrow("CLI setup failed");
+      await expect(new CLI().execute()).rejects.toThrow("CLI setup failed");
     });
   });
 
@@ -158,15 +158,9 @@ describe("CLI", () => {
     });
   });
 
-  describe("Module Export Integration", () => {
-    it("should export setupCLI function", () => {
-      expect(typeof setupCLI).toBe("function");
-    });
-  });
-
   describe("Version Integration", () => {
     it("should use package version placeholder", async () => {
-      await setupCLI();
+      new CLI().execute();
 
       expect(MockCommandBuilder).toHaveBeenCalledWith("__PACKAGE_VERSION__");
     });
@@ -178,7 +172,7 @@ describe("CLI", () => {
       const originalArgv = process.argv;
       process.argv = testArgv;
 
-      await setupCLI();
+      new CLI().execute();
 
       expect(mockCommandBuilder.parse).toHaveBeenCalledWith(testArgv);
 
@@ -201,7 +195,7 @@ describe("CLI", () => {
         const originalArgv = process.argv;
         process.argv = argv;
 
-        await setupCLI();
+        new CLI().execute();
 
         expect(mockCommandBuilder.parse).toHaveBeenCalledWith(argv);
 
@@ -212,7 +206,7 @@ describe("CLI", () => {
 
   describe("Initialization Function Integration", () => {
     it("should pass initializeCLI to all command builders", async () => {
-      await setupCLI();
+      new CLI().execute();
 
       expect(mockCommandBuilder.addBuildCommand).toHaveBeenCalledWith(
         initializeCLI,
@@ -231,7 +225,7 @@ describe("CLI", () => {
       // Simulate a complete workflow from CLI setup to command execution
 
       // 1. Setup CLI
-      await setupCLI();
+      new CLI().execute();
 
       // 2. Verify CLI was configured
       expect(MockCommandBuilder).toHaveBeenCalledWith("__PACKAGE_VERSION__");
@@ -275,14 +269,14 @@ describe("CLI", () => {
         throw propagationError;
       });
 
-      await expect(setupCLI()).rejects.toThrow("Propagation test");
+      await expect(new CLI().execute()).rejects.toThrow("Propagation test");
     });
 
     it("should propagate parse errors correctly", async () => {
       const parseError = new Error("Parse error");
       mockCommandBuilder.parse.mockRejectedValue(parseError);
 
-      await expect(setupCLI()).rejects.toThrow("Parse error");
+      await expect(new CLI().execute()).rejects.toThrow("Parse error");
     });
   });
 });

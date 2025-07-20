@@ -1,8 +1,8 @@
-import type { CacheManager } from "./cache/CacheManager";
-import { RunCommand } from "./commands/run/RunCommand";
-import { PlopGenerator } from "./generation/PlopGenerator";
-import type { ConsoleLogger } from "./logger";
-import type { DatoBuilderConfig } from "./types/DatoBuilderConfig";
+import type { CacheManager } from "./cache/CacheManager.js";
+import { RunCommand } from "./commands/run/RunCommand.js";
+import { PlopGenerator } from "./generation/PlopGenerator.js";
+import type { ConsoleLogger } from "./logger.js";
+import type { DatoBuilderConfig } from "./types/DatoBuilderConfig.js";
 
 interface BaseCommandOptions {
   config: Required<DatoBuilderConfig>;

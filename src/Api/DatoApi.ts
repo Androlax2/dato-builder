@@ -1,5 +1,5 @@
 import { ApiError, type Client } from "@datocms/cma-client-node";
-import { parseApiError, throwMappedApiError } from "./apiErrorHandler";
+import { parseApiError, throwMappedApiError } from "./apiErrorHandler.js";
 
 export default class DatoApi {
   constructor(readonly client: Client) {}

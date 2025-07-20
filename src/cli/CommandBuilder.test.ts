@@ -1,7 +1,7 @@
 import os from "node:os";
 import { Command } from "@commander-js/extra-typings";
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
-import { createMockDatoBuilderCLI } from "@tests/utils/mockDatoBuilderCLI";
+import { createMockDatoBuilderCLI } from "tests/utils/mockDatoBuilderCLI";
 import type { DatoBuilderCLI } from "../DatoBuilderCLI";
 import {
   type BuildOptions,

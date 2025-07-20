@@ -1,6 +1,6 @@
-import type { ConsoleLogger } from "../../logger";
-import type { ItemBuilder } from "./ItemBuilder";
-import type { BuildResult, FileInfo } from "./types";
+import type { ConsoleLogger } from "../../logger.js";
+import type { ItemBuilder } from "./ItemBuilder.js";
+import type { BuildResult, FileInfo } from "./types.js";
 
 export class BuildExecutor {
   private readonly buildPromises = new Map<

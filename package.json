@@ -1,5 +1,6 @@
 {
   "name": "dato-builder",
+  "type": "module",
   "version": "3.8.0",
   "description": "A DatoCMS configuration builder",
   "license": "MIT",
@@ -19,12 +20,12 @@
   "scripts": {
     "dev": "tsc -p tsconfig.build.json --watch",
     "build": "rimraf ./build && tsc -p tsconfig.build.json && cp -r src/plop-templates build/",
-    "build:version": "node -e \"const fs=require('fs'); const pkg=require('./package.json'); const file='build/cli.js'; fs.writeFileSync(file, fs.readFileSync(file, 'utf8').replace('__PACKAGE_VERSION__', pkg.version));\"",
+    "build:version": "node --input-type=module -e \"import fs from 'fs'; import pkg from './package.json' assert { type: 'json' }; const file='build/cli.js'; fs.writeFileSync(file, fs.readFileSync(file, 'utf8').replace('__PACKAGE_VERSION__', pkg.version));\"",
     "build:watch": "tsc -p tsconfig.build.json --watch",
     "start": "npm run build && node build/index.js",
-    "test": "jest --detectOpenHandles --passWithNoTests",
-    "test:watch": "jest --watch --passWithNoTests",
-    "test:coverage": "jest --coverage --passWithNoTests",
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --detectOpenHandles --passWithNoTests",
+    "test:watch": "node --experimental-vm-modules node_modules/jest/bin/jest.js --watch --passWithNoTests",
+    "test:coverage": "node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage --passWithNoTests",
     "lint": "npx @biomejs/biome lint --write .",
     "format": "npx @biomejs/biome format --write .",
     "check:unsafe": "npx @biomejs/biome check --fix --unsafe",

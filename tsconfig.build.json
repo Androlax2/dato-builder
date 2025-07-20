@@ -12,18 +12,13 @@
     "*.ts"
   ],
   "compilerOptions": {
-    "target": "es2020",
-    "module": "commonjs",
+    "target": "ES2022",
+    "module": "ES2022",
+    "lib": ["ES2022"],
+    "moduleResolution": "node",
     "declaration": true,
-    "emitDeclarationOnly": false,
-    "lib": ["es2020"],
-    "allowJs": true,
     "outDir": "build",
     "rootDir": "src",
-    "baseUrl": ".",
-    "paths": {
-      "@/*": ["src/*"]
-    },
     "strict": true,
     "noImplicitAny": true,
     "noImplicitReturns": true,
@@ -33,18 +28,18 @@
     "noImplicitOverride": true,
     "noPropertyAccessFromIndexSignature": false,
     "noUncheckedIndexedAccess": true,
-    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
     "noFallthroughCasesInSwitch": true,
     "isolatedModules": true,
-    "moduleResolution": "node",
-    "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "incremental": true,
     "tsBuildInfoFile": "./build/.tsbuildinfo",
     "removeComments": true,
-    "sourceMap": false
+    "sourceMap": false,
+    "noEmit": false,
+    "allowImportingTsExtensions": false
   },
   "include": ["src/**/*"]
 }

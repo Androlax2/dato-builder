@@ -1,8 +1,8 @@
 import type { ErrorEntity } from "@datocms/rest-client-utils/src/errors";
-import GenericDatoError from "./Error/GenericDatoError";
-import NotFoundError from "./Error/NotFoundError";
-import UniquenessError from "./Error/UniquenessError";
-import type { ParsedError } from "./ParsedError";
+import GenericDatoError from "./Error/GenericDatoError.js";
+import NotFoundError from "./Error/NotFoundError.js";
+import UniquenessError from "./Error/UniquenessError.js";
+import type { ParsedError } from "./ParsedError.js";
 
 type ErrorBody = { data: ErrorEntity[] };
 

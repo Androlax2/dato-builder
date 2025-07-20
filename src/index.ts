@@ -1,5 +1,5 @@
-export { default as BlockBuilder } from "./BlockBuilder";
-export * from "./ItemTypeBuilder";
-export { default as ModelBuilder } from "./ModelBuilder";
-export * from "./types/BuilderContext";
-export * from "./types/DatoBuilderConfig";
+export { default as BlockBuilder } from "./BlockBuilder.js";
+export * from "./ItemTypeBuilder.js";
+export { default as ModelBuilder } from "./ModelBuilder.js";
+export * from "./types/BuilderContext.js";
+export * from "./types/DatoBuilderConfig.js";

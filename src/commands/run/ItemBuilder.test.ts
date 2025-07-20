@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
-import { createMockCache } from "@tests/utils/mockCache";
-import { createMockConfig } from "@tests/utils/mockConfig";
-import { createMockLogger } from "@tests/utils/mockLogger";
-import type { BuilderContext } from "@/types/BuilderContext";
+import type { BuilderContext } from "src/types/BuilderContext";
+import { createMockCache } from "tests/utils/mockCache";
+import { createMockConfig } from "tests/utils/mockConfig";
+import { createMockLogger } from "tests/utils/mockLogger";
 import { ItemBuildError, ItemBuilder } from "./ItemBuilder";
 import type { FileInfo } from "./types";
 

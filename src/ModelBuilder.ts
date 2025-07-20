@@ -1,8 +1,8 @@
 import ItemTypeBuilder, {
   type ItemTypeBuilderBody,
   type ItemTypeBuilderType,
-} from "./ItemTypeBuilder";
-import type { DatoBuilderConfig } from "./types/DatoBuilderConfig";
+} from "./ItemTypeBuilder.js";
+import type { DatoBuilderConfig } from "./types/DatoBuilderConfig.js";
 
 type ModelBuilderOptions = {
   name: string;
