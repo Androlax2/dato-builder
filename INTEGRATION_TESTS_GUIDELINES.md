@@ -24,6 +24,14 @@ This document outlines the comprehensive integration testing strategy for dato-b
 - **Removed**: All existing broken integration tests
 - **Ready**: Clean `tests/integration/` directory for new tests
 
+### 4. CLI Infrastructure Enhancement ⭐ **NEW**
+- **Modified**: `src/cli.ts` - Added optional `customConfigPath` constructor parameter
+- **Enhanced**: `src/cli/CommandBuilder.ts` - Support custom config paths for all commands (build, generate, clear-cache)
+- **Updated**: `src/cli/CLIInitializer.ts` - Pass custom config path to ConfigParser
+- **Verified**: All changes pass `npm run typecheck` with no breaking changes
+- **Backward Compatible**: Normal CLI usage unchanged
+- **Ready for Testing**: Can now create CLI instances with custom configs for isolated integration tests
+
 ## 📁 Fixture Structure Analysis
 
 ### Available Test Fixtures
@@ -332,12 +340,20 @@ npm run test:integration -- --testPathPatterns="ConfigLoading"
 - [x] Unit tests for ConfigParser custom path functionality
 - [x] Integration test guidelines documentation
 - [x] Clean integration test directory preparation
+- [x] **CLI Infrastructure Enhancement** (NEW)
+  - [x] Modified CLI.ts to accept optional customConfigPath constructor parameter
+  - [x] Enhanced CommandBuilder.ts to support custom config paths for all commands
+  - [x] Updated CLIInitializer.ts to pass custom config to ConfigParser
+  - [x] All changes verified with `npm run typecheck` - no breaking changes
+  - [x] Backward compatibility maintained for normal CLI usage
 
 ### In Progress 🔄
-- [ ] *Ready for first integration test implementation*
+- [ ] **Unit tests needed** for new CLI custom config functionality
+- [ ] Per-test fixture structure design and implementation
 
 ### Next Steps 📋
-- [ ] Choose and implement first separated integration test
+- [ ] **PRIORITY: Add unit tests for CLI custom config modifications**
+- [ ] Create test-specific fixture structure for SimpleBlocks integration test
+- [ ] Implement first integration test: SimpleBlocks.integration.test.ts
 - [ ] Establish testing patterns and utilities
 - [ ] Build out core integration test suite
-- [ ] Add comprehensive error scenario testing
