@@ -6,12 +6,31 @@ type CacheData = {
   id: string;
 };
 
+interface FileSystemInterface {
+  readFile: (path: string, encoding: BufferEncoding) => Promise<string>;
+  writeFile: (
+    path: string,
+    data: string,
+    encoding: BufferEncoding,
+  ) => Promise<void>;
+  mkdir: (
+    path: string,
+    options: { recursive: boolean },
+  ) => Promise<string | undefined>;
+}
+
+interface PathInterface {
+  dirname: typeof path.dirname;
+}
+
 export class CacheManager {
   // biome-ignore lint/nursery/useReadonlyClassProperties: It is not a read-only property.
   private items: Map<string, CacheData>;
 
   private readonly cachePath: string;
   private readonly skipReads: boolean;
+  private readonly fs: FileSystemInterface;
+  private readonly path: PathInterface;
 
   // biome-ignore lint/nursery/useReadonlyClassProperties: It is not a read-only property.
   private writeQueue: Array<{
@@ -22,9 +41,18 @@ export class CacheManager {
   private isWriting: boolean = false;
   private processingNeeded: boolean = false;
 
-  constructor(cachePath: string, options: { skipReads?: boolean } = {}) {
+  constructor(
+    cachePath: string,
+    options: {
+      skipReads?: boolean;
+      fs?: FileSystemInterface;
+      path?: PathInterface;
+    } = {},
+  ) {
     this.cachePath = cachePath;
     this.skipReads = options.skipReads || false;
+    this.fs = options.fs || fs;
+    this.path = options.path || path;
     // Always initialize the Map for in-memory caching
     this.items = new Map();
   }
@@ -150,7 +178,7 @@ export class CacheManager {
    */
   private async loadFromFile(): Promise<void> {
     try {
-      const data = await fs.readFile(this.cachePath, "utf8");
+      const data = await this.fs.readFile(this.cachePath, "utf8");
       const parsed = JSON.parse(data);
 
       if (Array.isArray(parsed)) {
@@ -176,8 +204,8 @@ export class CacheManager {
    * Ensure the cache directory exists
    */
   private async ensureCacheDirectoryExists(): Promise<void> {
-    const dir = path.dirname(this.cachePath);
-    await fs.mkdir(dir, { recursive: true });
+    const dir = this.path.dirname(this.cachePath);
+    await this.fs.mkdir(dir, { recursive: true });
   }
 
   /**
@@ -244,7 +272,7 @@ export class CacheManager {
     // Convert Map to array of [key, value] pairs for JSON serialization
     const dataToWrite = Array.from(this.items.entries());
 
-    await fs.writeFile(
+    await this.fs.writeFile(
       this.cachePath,
       JSON.stringify(dataToWrite, null, 2),
       "utf8",

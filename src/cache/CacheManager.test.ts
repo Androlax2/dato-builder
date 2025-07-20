@@ -1,74 +1,93 @@
-import { promises as fs } from "node:fs";
-import path from "node:path";
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 import { CacheManager } from "./CacheManager.js";
-
-// Mock fs module
-jest.mock("node:fs", () => ({
-  promises: {
-    readFile: jest.fn(),
-    writeFile: jest.fn(),
-    mkdir: jest.fn(),
-  },
-}));
-
-// Mock path module
-jest.mock("node:path", () => ({
-  dirname: jest.fn(),
-}));
-
-const mockFs = fs as jest.Mocked<typeof fs>;
-const mockPath = path as jest.Mocked<typeof path>;
 
 describe("CacheManager", () => {
   const cachePath = "/test/cache.json";
   const cacheDir = "/test";
 
+  // Mock implementations
+  const mockReadFile =
+    jest.fn<(path: string, encoding: BufferEncoding) => Promise<string>>();
+  const mockWriteFile =
+    jest.fn<
+      (path: string, data: string, encoding: BufferEncoding) => Promise<void>
+    >();
+  const mockMkdir =
+    jest.fn<
+      (
+        path: string,
+        options: { recursive: boolean },
+      ) => Promise<string | undefined>
+    >();
+  const mockDirname = jest.fn<(path: string) => string>();
+
+  const mockFs = {
+    readFile: mockReadFile,
+    writeFile: mockWriteFile,
+    mkdir: mockMkdir,
+  };
+
+  const mockPath = {
+    dirname: mockDirname,
+  };
+
   beforeEach(() => {
     jest.clearAllMocks();
-    mockPath.dirname.mockReturnValue(cacheDir);
+    mockDirname.mockReturnValue(cacheDir);
+    // Set default mock implementation for mkdir to avoid ENOENT errors
+    mockMkdir.mockResolvedValue(undefined);
+    mockWriteFile.mockResolvedValue(undefined);
   });
 
   describe("constructor", () => {
     it("should create instance with default options", () => {
-      const cache = new CacheManager(cachePath);
+      const cache = new CacheManager(cachePath, { fs: mockFs, path: mockPath });
       expect(cache.isSkippingReads()).toBe(false);
     });
 
     it("should create instance with skipReads option", () => {
-      const cache = new CacheManager(cachePath, { skipReads: true });
+      const cache = new CacheManager(cachePath, {
+        skipReads: true,
+        fs: mockFs,
+        path: mockPath,
+      });
       expect(cache.isSkippingReads()).toBe(true);
     });
   });
 
   describe("initialize", () => {
     it("should skip initialization when skipReads is true", async () => {
-      const cache = new CacheManager(cachePath, { skipReads: true });
+      const cache = new CacheManager(cachePath, {
+        skipReads: true,
+        fs: mockFs,
+        path: mockPath,
+      });
       await cache.initialize();
 
-      expect(mockFs.mkdir).not.toHaveBeenCalled();
-      expect(mockFs.readFile).not.toHaveBeenCalled();
+      expect(mockMkdir).not.toHaveBeenCalled();
+      expect(mockReadFile).not.toHaveBeenCalled();
     });
 
     it("should create cache directory and load from file", async () => {
-      const cache = new CacheManager(cachePath);
+      const cache = new CacheManager(cachePath, { fs: mockFs, path: mockPath });
       const cacheData = [["key1", { hash: "hash1", id: "id1" }]];
 
-      mockFs.readFile.mockResolvedValue(JSON.stringify(cacheData));
+      mockReadFile.mockResolvedValue(JSON.stringify(cacheData));
 
       await cache.initialize();
 
-      expect(mockFs.mkdir).toHaveBeenCalledWith(cacheDir, { recursive: true });
-      expect(mockFs.readFile).toHaveBeenCalledWith(cachePath, "utf8");
+      expect(mockMkdir).toHaveBeenCalledWith(cacheDir, { recursive: true });
+      expect(mockReadFile).toHaveBeenCalledWith(cachePath, "utf8");
       expect(cache.get("key1")).toEqual({ hash: "hash1", id: "id1" });
     });
 
     it("should handle missing cache file", async () => {
-      const cache = new CacheManager(cachePath);
-      const error = new Error("File not found") as any;
-      error.code = "ENOENT";
+      const cache = new CacheManager(cachePath, { fs: mockFs, path: mockPath });
+      const error = Object.assign(new Error("File not found"), {
+        code: "ENOENT",
+      });
 
-      mockFs.readFile.mockRejectedValue(error);
+      mockReadFile.mockRejectedValue(error);
 
       await cache.initialize();
 
@@ -76,9 +95,9 @@ describe("CacheManager", () => {
     });
 
     it("should handle corrupted cache file", async () => {
-      const cache = new CacheManager(cachePath);
+      const cache = new CacheManager(cachePath, { fs: mockFs, path: mockPath });
 
-      mockFs.readFile.mockResolvedValue("invalid json");
+      mockReadFile.mockResolvedValue("invalid json");
 
       await cache.initialize();
 
@@ -86,10 +105,10 @@ describe("CacheManager", () => {
     });
 
     it("should handle object format cache data", async () => {
-      const cache = new CacheManager(cachePath);
+      const cache = new CacheManager(cachePath, { fs: mockFs, path: mockPath });
       const cacheData = { key1: { hash: "hash1", id: "id1" } };
 
-      mockFs.readFile.mockResolvedValue(JSON.stringify(cacheData));
+      mockReadFile.mockResolvedValue(JSON.stringify(cacheData));
 
       await cache.initialize();
 
@@ -99,23 +118,27 @@ describe("CacheManager", () => {
 
   describe("get", () => {
     it("should return undefined when skipReads is true", async () => {
-      const cache = new CacheManager(cachePath, { skipReads: true });
+      const cache = new CacheManager(cachePath, {
+        skipReads: true,
+        fs: mockFs,
+        path: mockPath,
+      });
       expect(cache.get("key1")).toBeUndefined();
     });
 
     it("should return cached item", async () => {
-      const cache = new CacheManager(cachePath);
+      const cache = new CacheManager(cachePath, { fs: mockFs, path: mockPath });
       const cacheData = [["key1", { hash: "hash1", id: "id1" }]];
 
-      mockFs.readFile.mockResolvedValue(JSON.stringify(cacheData));
+      mockReadFile.mockResolvedValue(JSON.stringify(cacheData));
       await cache.initialize();
 
       expect(cache.get("key1")).toEqual({ hash: "hash1", id: "id1" });
     });
 
     it("should return undefined for non-existent key", async () => {
-      const cache = new CacheManager(cachePath);
-      mockFs.readFile.mockResolvedValue(JSON.stringify([]));
+      const cache = new CacheManager(cachePath, { fs: mockFs, path: mockPath });
+      mockReadFile.mockResolvedValue(JSON.stringify([]));
       await cache.initialize();
 
       expect(cache.get("nonexistent")).toBeUndefined();
@@ -124,22 +147,28 @@ describe("CacheManager", () => {
 
   describe("set", () => {
     it("should be op when skipReads is true", async () => {
-      const cache = new CacheManager(cachePath, { skipReads: true });
+      const cache = new CacheManager(cachePath, {
+        skipReads: true,
+        fs: mockFs,
+        path: mockPath,
+      });
+
       await cache.set("key1", { hash: "hash1", id: "id1" });
 
-      expect(mockFs.writeFile).toHaveBeenCalled();
+      expect(mockWriteFile).toHaveBeenCalled();
       expect(cache.get("key1")).toEqual({ hash: "hash1", id: "id1" });
     });
 
     it("should set item and persist to file", async () => {
-      const cache = new CacheManager(cachePath);
-      mockFs.readFile.mockResolvedValue(JSON.stringify([]));
+      const cache = new CacheManager(cachePath, { fs: mockFs, path: mockPath });
+      mockReadFile.mockResolvedValue(JSON.stringify([]));
+
       await cache.initialize();
 
       await cache.set("key1", { hash: "hash1", id: "id1" });
 
       expect(cache.get("key1")).toEqual({ hash: "hash1", id: "id1" });
-      expect(mockFs.writeFile).toHaveBeenCalledWith(
+      expect(mockWriteFile).toHaveBeenCalledWith(
         cachePath,
         JSON.stringify([["key1", { hash: "hash1", id: "id1" }]], null, 2),
         "utf8",
@@ -147,8 +176,9 @@ describe("CacheManager", () => {
     });
 
     it("should handle multiple concurrent writes", async () => {
-      const cache = new CacheManager(cachePath);
-      mockFs.readFile.mockResolvedValue(JSON.stringify([]));
+      const cache = new CacheManager(cachePath, { fs: mockFs, path: mockPath });
+      mockReadFile.mockResolvedValue(JSON.stringify([]));
+
       await cache.initialize();
 
       // Start multiple set operations concurrently
@@ -161,29 +191,33 @@ describe("CacheManager", () => {
       await Promise.all(promises);
 
       expect(cache.size()).toBe(3);
-      expect(mockFs.writeFile).toHaveBeenCalled();
+      expect(mockWriteFile).toHaveBeenCalled();
     });
   });
 
   describe("has", () => {
     it("should return false when skipReads is true", async () => {
-      const cache = new CacheManager(cachePath, { skipReads: true });
+      const cache = new CacheManager(cachePath, {
+        skipReads: true,
+        fs: mockFs,
+        path: mockPath,
+      });
       expect(cache.has("key1")).toBe(false);
     });
 
     it("should return true for existing key", async () => {
-      const cache = new CacheManager(cachePath);
+      const cache = new CacheManager(cachePath, { fs: mockFs, path: mockPath });
       const cacheData = [["key1", { hash: "hash1", id: "id1" }]];
 
-      mockFs.readFile.mockResolvedValue(JSON.stringify(cacheData));
+      mockReadFile.mockResolvedValue(JSON.stringify(cacheData));
       await cache.initialize();
 
       expect(cache.has("key1")).toBe(true);
     });
 
     it("should return false for non-existent key", async () => {
-      const cache = new CacheManager(cachePath);
-      mockFs.readFile.mockResolvedValue(JSON.stringify([]));
+      const cache = new CacheManager(cachePath, { fs: mockFs, path: mockPath });
+      mockReadFile.mockResolvedValue(JSON.stringify([]));
       await cache.initialize();
 
       expect(cache.has("nonexistent")).toBe(false);
@@ -192,23 +226,28 @@ describe("CacheManager", () => {
 
   describe("delete", () => {
     it("should return false when skipReads is true", async () => {
-      const cache = new CacheManager(cachePath, { skipReads: true });
+      const cache = new CacheManager(cachePath, {
+        skipReads: true,
+        fs: mockFs,
+        path: mockPath,
+      });
       const result = await cache.delete("key1");
       expect(result).toBe(false);
     });
 
     it("should delete existing key and persist", async () => {
-      const cache = new CacheManager(cachePath);
+      const cache = new CacheManager(cachePath, { fs: mockFs, path: mockPath });
       const cacheData = [["key1", { hash: "hash1", id: "id1" }]];
 
-      mockFs.readFile.mockResolvedValue(JSON.stringify(cacheData));
+      mockReadFile.mockResolvedValue(JSON.stringify(cacheData));
+
       await cache.initialize();
 
       const result = await cache.delete("key1");
 
       expect(result).toBe(true);
       expect(cache.has("key1")).toBe(false);
-      expect(mockFs.writeFile).toHaveBeenCalledWith(
+      expect(mockWriteFile).toHaveBeenCalledWith(
         cachePath,
         JSON.stringify([], null, 2),
         "utf8",
@@ -216,8 +255,8 @@ describe("CacheManager", () => {
     });
 
     it("should return false for non-existent key", async () => {
-      const cache = new CacheManager(cachePath);
-      mockFs.readFile.mockResolvedValue(JSON.stringify([]));
+      const cache = new CacheManager(cachePath, { fs: mockFs, path: mockPath });
+      mockReadFile.mockResolvedValue(JSON.stringify([]));
       await cache.initialize();
 
       const result = await cache.delete("nonexistent");
@@ -227,10 +266,15 @@ describe("CacheManager", () => {
 
   describe("clear", () => {
     it("should op when skipReads is true", async () => {
-      const cache = new CacheManager(cachePath, { skipReads: true });
+      const cache = new CacheManager(cachePath, {
+        skipReads: true,
+        fs: mockFs,
+        path: mockPath,
+      });
+
       await cache.clear();
 
-      expect(mockFs.writeFile).toHaveBeenCalledWith(
+      expect(mockWriteFile).toHaveBeenCalledWith(
         cachePath,
         JSON.stringify([], null, 2),
         "utf8",
@@ -239,19 +283,20 @@ describe("CacheManager", () => {
     });
 
     it("should clear all items and persist", async () => {
-      const cache = new CacheManager(cachePath);
+      const cache = new CacheManager(cachePath, { fs: mockFs, path: mockPath });
       const cacheData = [
         ["key1", { hash: "hash1", id: "id1" }],
         ["key2", { hash: "hash2", id: "id2" }],
       ];
 
-      mockFs.readFile.mockResolvedValue(JSON.stringify(cacheData));
+      mockReadFile.mockResolvedValue(JSON.stringify(cacheData));
+
       await cache.initialize();
 
       await cache.clear();
 
       expect(cache.size()).toBe(0);
-      expect(mockFs.writeFile).toHaveBeenCalledWith(
+      expect(mockWriteFile).toHaveBeenCalledWith(
         cachePath,
         JSON.stringify([], null, 2),
         "utf8",
@@ -261,18 +306,22 @@ describe("CacheManager", () => {
 
   describe("keys", () => {
     it("should return empty array when skipReads is true", () => {
-      const cache = new CacheManager(cachePath, { skipReads: true });
+      const cache = new CacheManager(cachePath, {
+        skipReads: true,
+        fs: mockFs,
+        path: mockPath,
+      });
       expect(cache.keys()).toEqual([]);
     });
 
     it("should return all keys", async () => {
-      const cache = new CacheManager(cachePath);
+      const cache = new CacheManager(cachePath, { fs: mockFs, path: mockPath });
       const cacheData = [
         ["key1", { hash: "hash1", id: "id1" }],
         ["key2", { hash: "hash2", id: "id2" }],
       ];
 
-      mockFs.readFile.mockResolvedValue(JSON.stringify(cacheData));
+      mockReadFile.mockResolvedValue(JSON.stringify(cacheData));
       await cache.initialize();
 
       expect(cache.keys()).toEqual(["key1", "key2"]);
@@ -281,18 +330,22 @@ describe("CacheManager", () => {
 
   describe("values", () => {
     it("should return empty array when skipReads is true", () => {
-      const cache = new CacheManager(cachePath, { skipReads: true });
+      const cache = new CacheManager(cachePath, {
+        skipReads: true,
+        fs: mockFs,
+        path: mockPath,
+      });
       expect(cache.values()).toEqual([]);
     });
 
     it("should return all values", async () => {
-      const cache = new CacheManager(cachePath);
+      const cache = new CacheManager(cachePath, { fs: mockFs, path: mockPath });
       const cacheData = [
         ["key1", { hash: "hash1", id: "id1" }],
         ["key2", { hash: "hash2", id: "id2" }],
       ];
 
-      mockFs.readFile.mockResolvedValue(JSON.stringify(cacheData));
+      mockReadFile.mockResolvedValue(JSON.stringify(cacheData));
       await cache.initialize();
 
       expect(cache.values()).toEqual([
@@ -304,18 +357,22 @@ describe("CacheManager", () => {
 
   describe("size", () => {
     it("should return 0 when skipReads is true", () => {
-      const cache = new CacheManager(cachePath, { skipReads: true });
+      const cache = new CacheManager(cachePath, {
+        skipReads: true,
+        fs: mockFs,
+        path: mockPath,
+      });
       expect(cache.size()).toBe(0);
     });
 
     it("should return correct size", async () => {
-      const cache = new CacheManager(cachePath);
+      const cache = new CacheManager(cachePath, { fs: mockFs, path: mockPath });
       const cacheData = [
         ["key1", { hash: "hash1", id: "id1" }],
         ["key2", { hash: "hash2", id: "id2" }],
       ];
 
-      mockFs.readFile.mockResolvedValue(JSON.stringify(cacheData));
+      mockReadFile.mockResolvedValue(JSON.stringify(cacheData));
       await cache.initialize();
 
       expect(cache.size()).toBe(2);
@@ -324,18 +381,22 @@ describe("CacheManager", () => {
 
   describe("entries", () => {
     it("should return empty array when skipReads is true", () => {
-      const cache = new CacheManager(cachePath, { skipReads: true });
+      const cache = new CacheManager(cachePath, {
+        skipReads: true,
+        fs: mockFs,
+        path: mockPath,
+      });
       expect(cache.entries()).toEqual([]);
     });
 
     it("should return all entries", async () => {
-      const cache = new CacheManager(cachePath);
+      const cache = new CacheManager(cachePath, { fs: mockFs, path: mockPath });
       const cacheData = [
         ["key1", { hash: "hash1", id: "id1" }],
         ["key2", { hash: "hash2", id: "id2" }],
       ];
 
-      mockFs.readFile.mockResolvedValue(JSON.stringify(cacheData));
+      mockReadFile.mockResolvedValue(JSON.stringify(cacheData));
       await cache.initialize();
 
       expect(cache.entries()).toEqual([
@@ -347,19 +408,23 @@ describe("CacheManager", () => {
 
   describe("findByHash", () => {
     it("should return empty array when skipReads is true", () => {
-      const cache = new CacheManager(cachePath, { skipReads: true });
+      const cache = new CacheManager(cachePath, {
+        skipReads: true,
+        fs: mockFs,
+        path: mockPath,
+      });
       expect(cache.findByHash("hash1")).toEqual([]);
     });
 
     it("should find items by hash", async () => {
-      const cache = new CacheManager(cachePath);
+      const cache = new CacheManager(cachePath, { fs: mockFs, path: mockPath });
       const cacheData = [
         ["key1", { hash: "hash1", id: "id1" }],
         ["key2", { hash: "hash1", id: "id2" }],
         ["key3", { hash: "hash2", id: "id3" }],
       ];
 
-      mockFs.readFile.mockResolvedValue(JSON.stringify(cacheData));
+      mockReadFile.mockResolvedValue(JSON.stringify(cacheData));
       await cache.initialize();
 
       const result = cache.findByHash("hash1");
@@ -372,26 +437,30 @@ describe("CacheManager", () => {
 
   describe("findById", () => {
     it("should return undefined when skipReads is true", () => {
-      const cache = new CacheManager(cachePath, { skipReads: true });
+      const cache = new CacheManager(cachePath, {
+        skipReads: true,
+        fs: mockFs,
+        path: mockPath,
+      });
       expect(cache.findById("id1")).toBeUndefined();
     });
 
     it("should find item by id", async () => {
-      const cache = new CacheManager(cachePath);
+      const cache = new CacheManager(cachePath, { fs: mockFs, path: mockPath });
       const cacheData = [
         ["key1", { hash: "hash1", id: "id1" }],
         ["key2", { hash: "hash2", id: "id2" }],
       ];
 
-      mockFs.readFile.mockResolvedValue(JSON.stringify(cacheData));
+      mockReadFile.mockResolvedValue(JSON.stringify(cacheData));
       await cache.initialize();
 
       expect(cache.findById("id2")).toEqual({ hash: "hash2", id: "id2" });
     });
 
     it("should return undefined for non-existent id", async () => {
-      const cache = new CacheManager(cachePath);
-      mockFs.readFile.mockResolvedValue(JSON.stringify([]));
+      const cache = new CacheManager(cachePath, { fs: mockFs, path: mockPath });
+      mockReadFile.mockResolvedValue(JSON.stringify([]));
       await cache.initialize();
 
       expect(cache.findById("nonexistent")).toBeUndefined();
@@ -400,18 +469,22 @@ describe("CacheManager", () => {
 
   describe("getActualSize", () => {
     it("should return 0 when skipReads is true", () => {
-      const cache = new CacheManager(cachePath, { skipReads: true });
+      const cache = new CacheManager(cachePath, {
+        skipReads: true,
+        fs: mockFs,
+        path: mockPath,
+      });
       expect(cache.getActualSize()).toBe(0);
     });
 
     it("should return actual size", async () => {
-      const cache = new CacheManager(cachePath);
+      const cache = new CacheManager(cachePath, { fs: mockFs, path: mockPath });
       const cacheData = [
         ["key1", { hash: "hash1", id: "id1" }],
         ["key2", { hash: "hash2", id: "id2" }],
       ];
 
-      mockFs.readFile.mockResolvedValue(JSON.stringify(cacheData));
+      mockReadFile.mockResolvedValue(JSON.stringify(cacheData));
       await cache.initialize();
 
       expect(cache.getActualSize()).toBe(2);
@@ -422,25 +495,28 @@ describe("CacheManager", () => {
     beforeEach(() => {
       // Reset mock implementations
       jest.clearAllMocks();
+      mockMkdir.mockResolvedValue(undefined);
+      mockWriteFile.mockResolvedValue(undefined);
+      mockDirname.mockReturnValue(cacheDir);
     });
 
     it("should prevent concurrent processWriteQueue executions", async () => {
-      const cache = new CacheManager(cachePath);
-      mockFs.readFile.mockResolvedValue(JSON.stringify([]));
+      const cache = new CacheManager(cachePath, { fs: mockFs, path: mockPath });
+      mockReadFile.mockResolvedValue(JSON.stringify([]));
       await cache.initialize();
 
       // Mock writeFile to track call count and add delay
       let writeCallCount = 0;
-      mockFs.writeFile.mockImplementation(() => {
+      mockWriteFile.mockImplementation(() => {
         writeCallCount++;
         return new Promise((resolve) => setTimeout(resolve, 100));
       });
 
       // Start multiple writes concurrently
       const promises = [
-        await cache.set("key1", { hash: "hash1", id: "id1" }),
-        await cache.set("key2", { hash: "hash2", id: "id2" }),
-        await cache.set("key3", { hash: "hash3", id: "id3" }),
+        cache.set("key1", { hash: "hash1", id: "id1" }),
+        cache.set("key2", { hash: "hash2", id: "id2" }),
+        cache.set("key3", { hash: "hash3", id: "id3" }),
       ];
 
       await Promise.all(promises);
@@ -452,8 +528,8 @@ describe("CacheManager", () => {
     });
 
     it("should process all queued items when new items added during write", async () => {
-      const cache = new CacheManager(cachePath);
-      mockFs.readFile.mockResolvedValue(JSON.stringify([]));
+      const cache = new CacheManager(cachePath, { fs: mockFs, path: mockPath });
+      mockReadFile.mockResolvedValue(JSON.stringify([]));
       await cache.initialize();
 
       let resolveFirstWrite: () => void;
@@ -462,7 +538,7 @@ describe("CacheManager", () => {
       });
 
       let writeCallCount = 0;
-      mockFs.writeFile.mockImplementation(() => {
+      mockWriteFile.mockImplementation(() => {
         writeCallCount++;
         if (writeCallCount === 1) {
           return firstWritePromise;
@@ -499,11 +575,11 @@ describe("CacheManager", () => {
       // All items should be written to file - either batched or separately
       expect(writeCallCount).toBeGreaterThanOrEqual(1);
 
-      expect(mockFs.writeFile.mock.calls.length).toBeGreaterThan(0);
+      expect(mockWriteFile.mock.calls.length).toBeGreaterThan(0);
 
       // Check if all items are in the final write or multiple writes
-      const allWrittenItems: any[] = [];
-      for (const call of mockFs.writeFile.mock.calls) {
+      const allWrittenItems: [string, { hash: string; id: string }][] = [];
+      for (const call of mockWriteFile.mock.calls) {
         const writeData = JSON.parse(call[1] as string);
         // Merge all written items (handling potential multiple writes)
         for (const item of writeData) {
@@ -526,8 +602,8 @@ describe("CacheManager", () => {
     });
 
     it("should properly resolve all promises when write succeeds", async () => {
-      const cache = new CacheManager(cachePath);
-      mockFs.readFile.mockResolvedValue(JSON.stringify([]));
+      const cache = new CacheManager(cachePath, { fs: mockFs, path: mockPath });
+      mockReadFile.mockResolvedValue(JSON.stringify([]));
       await cache.initialize();
 
       const promises = [
@@ -545,12 +621,12 @@ describe("CacheManager", () => {
     });
 
     it("should properly reject all promises when write fails", async () => {
-      const cache = new CacheManager(cachePath);
-      mockFs.readFile.mockResolvedValue(JSON.stringify([]));
+      const cache = new CacheManager(cachePath, { fs: mockFs, path: mockPath });
+      mockReadFile.mockResolvedValue(JSON.stringify([]));
       await cache.initialize();
 
       const writeError = new Error("Write failed");
-      mockFs.writeFile.mockRejectedValue(writeError);
+      mockWriteFile.mockRejectedValue(writeError);
 
       const promises = [
         cache.set("key1", { hash: "hash1", id: "id1" }),
@@ -563,14 +639,14 @@ describe("CacheManager", () => {
     });
 
     it("should ensure all queued items are eventually written to disk", async () => {
-      const cache = new CacheManager(cachePath);
-      mockFs.readFile.mockResolvedValue(JSON.stringify([]));
+      const cache = new CacheManager(cachePath, { fs: mockFs, path: mockPath });
+      mockReadFile.mockResolvedValue(JSON.stringify([]));
       await cache.initialize();
 
       let resolveFirstWrite: (() => void) | undefined;
       let writeCallCount = 0;
 
-      mockFs.writeFile.mockImplementation(() => {
+      mockWriteFile.mockImplementation(() => {
         writeCallCount++;
         if (writeCallCount === 1) {
           // First write takes time - we control when it completes
@@ -607,8 +683,8 @@ describe("CacheManager", () => {
       // Ensure recursive queue processing works properly - all items should be written
       expect(writeCallCount).toBeGreaterThanOrEqual(1);
 
-      const allWriteCalls = mockFs.writeFile.mock.calls;
-      const allPersistedItems: any[] = [];
+      const allWriteCalls = mockWriteFile.mock.calls;
+      const allPersistedItems: [string, { hash: string; id: string }][] = [];
 
       // Collect all items from all write operations
       for (const call of allWriteCalls) {
@@ -626,7 +702,7 @@ describe("CacheManager", () => {
 
       // Verify that at least the first item is present
       const persistedKeys = allPersistedItems.map(
-        (item: [string, any]) => item[0],
+        (item: [string, { hash: string; id: string }]) => item[0],
       );
       expect(persistedKeys).toContain("key1");
 
@@ -638,14 +714,14 @@ describe("CacheManager", () => {
     });
 
     it("should handle concurrent operations without losing data", async () => {
-      const cache = new CacheManager(cachePath);
-      mockFs.readFile.mockResolvedValue(JSON.stringify([]));
+      const cache = new CacheManager(cachePath, { fs: mockFs, path: mockPath });
+      mockReadFile.mockResolvedValue(JSON.stringify([]));
       await cache.initialize();
 
       let writeInProgress = false;
       let resolveFirstWrite: (() => void) | undefined;
 
-      mockFs.writeFile.mockImplementation(() => {
+      mockWriteFile.mockImplementation(() => {
         if (!writeInProgress) {
           writeInProgress = true;
           return new Promise<void>((resolve) => {
@@ -685,21 +761,21 @@ describe("CacheManager", () => {
       expect(cache.get("key3")).toEqual({ hash: "hash3", id: "id3" });
 
       // Verify data was written to disk (regression test for race condition)
-      expect(mockFs.writeFile).toHaveBeenCalled();
+      expect(mockWriteFile).toHaveBeenCalled();
     });
 
     it("should maintain queue state consistency during errors", async () => {
-      const cache = new CacheManager(cachePath);
-      mockFs.readFile.mockResolvedValue(JSON.stringify([]));
+      const cache = new CacheManager(cachePath, { fs: mockFs, path: mockPath });
+      mockReadFile.mockResolvedValue(JSON.stringify([]));
       await cache.initialize();
 
       // First write succeeds
-      mockFs.writeFile.mockResolvedValueOnce(undefined);
+      mockWriteFile.mockResolvedValueOnce(undefined);
       await cache.set("key1", { hash: "hash1", id: "id1" });
 
       // Second batch fails
       const writeError = new Error("Write failed");
-      mockFs.writeFile.mockRejectedValueOnce(writeError);
+      mockWriteFile.mockRejectedValueOnce(writeError);
 
       const failingPromises = [
         cache.set("key2", { hash: "hash2", id: "id2" }),
@@ -711,15 +787,15 @@ describe("CacheManager", () => {
       );
 
       // Third write should work again (queue should be cleared)
-      mockFs.writeFile.mockResolvedValueOnce(undefined);
+      mockWriteFile.mockResolvedValueOnce(undefined);
       await cache.set("key4", { hash: "hash4", id: "id4" });
 
       expect(cache.size()).toBe(4); // All items should be in memory
     });
 
     it("should handle isWriting flag correctly", async () => {
-      const cache = new CacheManager(cachePath);
-      mockFs.readFile.mockResolvedValue(JSON.stringify([]));
+      const cache = new CacheManager(cachePath, { fs: mockFs, path: mockPath });
+      mockReadFile.mockResolvedValue(JSON.stringify([]));
       await cache.initialize();
 
       let resolveFirstWrite: () => void;
@@ -728,7 +804,7 @@ describe("CacheManager", () => {
       });
 
       let writeCallCount = 0;
-      mockFs.writeFile.mockImplementation(() => {
+      mockWriteFile.mockImplementation(() => {
         writeCallCount++;
         if (writeCallCount === 1) {
           return firstWritePromise;
@@ -756,8 +832,8 @@ describe("CacheManager", () => {
     });
 
     it("should handle empty queue scenario correctly", async () => {
-      const cache = new CacheManager(cachePath);
-      mockFs.readFile.mockResolvedValue(JSON.stringify([]));
+      const cache = new CacheManager(cachePath, { fs: mockFs, path: mockPath });
+      mockReadFile.mockResolvedValue(JSON.stringify([]));
       await cache.initialize();
 
       // Call processWriteQueue directly when queue is empty (shouldn't crash)
@@ -765,28 +841,28 @@ describe("CacheManager", () => {
       // but we can verify the behavior by ensuring no writes happen when no items are queued
 
       // Initially no operations
-      expect(mockFs.writeFile).not.toHaveBeenCalled();
+      expect(mockWriteFile).not.toHaveBeenCalled();
 
       // Add and complete an operation
       await cache.set("key1", { hash: "hash1", id: "id1" });
 
       // Verify write happened
-      expect(mockFs.writeFile).toHaveBeenCalledTimes(1);
+      expect(mockWriteFile).toHaveBeenCalledTimes(1);
 
       // No additional writes should happen after queue is empty
       await new Promise((resolve) => setTimeout(resolve, 50));
-      expect(mockFs.writeFile).toHaveBeenCalledTimes(1);
+      expect(mockWriteFile).toHaveBeenCalledTimes(1);
     });
   });
 
   describe("error handling", () => {
     it("should handle write errors in queue", async () => {
-      const cache = new CacheManager(cachePath);
-      mockFs.readFile.mockResolvedValue(JSON.stringify([]));
+      const cache = new CacheManager(cachePath, { fs: mockFs, path: mockPath });
+      mockReadFile.mockResolvedValue(JSON.stringify([]));
       await cache.initialize();
 
       const writeError = new Error("Write failed");
-      mockFs.writeFile.mockRejectedValue(writeError);
+      mockWriteFile.mockRejectedValue(writeError);
 
       await expect(
         cache.set("key1", { hash: "hash1", id: "id1" }),
@@ -794,8 +870,8 @@ describe("CacheManager", () => {
     });
 
     it("should handle invalid cache file format", async () => {
-      const cache = new CacheManager(cachePath);
-      mockFs.readFile.mockResolvedValue(JSON.stringify("invalid"));
+      const cache = new CacheManager(cachePath, { fs: mockFs, path: mockPath });
+      mockReadFile.mockResolvedValue(JSON.stringify("invalid"));
 
       await cache.initialize();
 
