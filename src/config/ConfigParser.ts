@@ -5,9 +5,11 @@ import type { DatoBuilderConfig } from "../types/DatoBuilderConfig.js";
 
 export class ConfigParser {
   private readonly logger: ConsoleLogger;
+  private readonly configPath?: string;
 
-  constructor(logger: ConsoleLogger) {
+  constructor(logger: ConsoleLogger, configPath?: string) {
     this.logger = logger;
+    this.configPath = configPath;
   }
 
   public async loadConfig(): Promise<Required<DatoBuilderConfig>> {
@@ -43,6 +45,16 @@ export class ConfigParser {
   }
 
   private async getConfigFilePath(): Promise<string> {
+    // If a custom config path is provided, use it directly
+    if (this.configPath) {
+      if (!fs.existsSync(this.configPath)) {
+        throw new Error(`Config file not found: ${this.configPath}`);
+      }
+      await this.validateConfigPath(this.configPath);
+      return this.configPath;
+    }
+
+    // Default behavior: look for config files in current directory
     const possiblePaths = [
       path.resolve(process.cwd(), "dato-builder.config.js"),
       path.resolve(process.cwd(), "dato-builder.config.ts"),

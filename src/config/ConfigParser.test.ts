@@ -415,4 +415,116 @@ describe("ConfigParser", () => {
       );
     });
   });
+
+  describe("custom config path", () => {
+    it("should use custom config path when provided", async () => {
+      const customConfigPath = "/custom/path/config.js";
+      const mockConfig: DatoBuilderConfig = {
+        apiToken: "custom-token",
+        overwriteExistingFields: true,
+      };
+
+      // Create parser with custom config path
+      const customConfigParser = new ConfigParser(
+        createMockLogger(),
+        customConfigPath,
+      );
+
+      // Mock fs.existsSync to return true for custom path
+      mockFs.existsSync.mockImplementation((filePath) => {
+        return filePath === customConfigPath;
+      });
+
+      // Mock fs.promises.realpath to return valid path within project
+      (mockFs.promises.realpath as any).mockResolvedValueOnce(
+        "/mock/cwd/custom/path/config.js",
+      );
+
+      // Mock the importConfig method
+      jest.spyOn(customConfigParser as any, "importConfig").mockResolvedValue({
+        default: mockConfig,
+      });
+
+      const result = await customConfigParser.loadConfig();
+
+      expect(mockFs.existsSync).toHaveBeenCalledWith(customConfigPath);
+      expect(result.apiToken).toBe("custom-token");
+      expect(result.overwriteExistingFields).toBe(true);
+    });
+
+    it("should throw error when custom config path does not exist", async () => {
+      const customConfigPath = "/nonexistent/config.js";
+
+      // Create parser with custom config path
+      const customConfigParser = new ConfigParser(
+        createMockLogger(),
+        customConfigPath,
+      );
+
+      // Mock fs.existsSync to return false for custom path
+      mockFs.existsSync.mockImplementation((filePath) => {
+        return filePath !== customConfigPath;
+      });
+
+      await expect(customConfigParser.loadConfig()).rejects.toThrow(
+        `Config file not found: ${customConfigPath}`,
+      );
+
+      expect(mockFs.existsSync).toHaveBeenCalledWith(customConfigPath);
+      // Should not check default paths when custom path is provided
+      expect(mockFs.existsSync).not.toHaveBeenCalledWith(
+        "/mock/cwd/dato-builder.config.js",
+      );
+    });
+
+    it("should validate security of custom config path", async () => {
+      const customConfigPath = "/custom/path/config.js";
+
+      // Create parser with custom config path
+      const customConfigParser = new ConfigParser(
+        createMockLogger(),
+        customConfigPath,
+      );
+
+      // Mock fs.existsSync to return true for custom path
+      mockFs.existsSync.mockImplementation((filePath) => {
+        return filePath === customConfigPath;
+      });
+
+      // Mock fs.promises.realpath to return path outside project directory
+      (mockFs.promises.realpath as any).mockResolvedValueOnce("/etc/passwd");
+
+      await expect(customConfigParser.loadConfig()).rejects.toThrow(
+        "Configuration file path resolves outside project directory",
+      );
+
+      expect(mockFs.promises.realpath).toHaveBeenCalledWith(customConfigPath);
+    });
+
+    it("should use default behavior when no custom config path provided", async () => {
+      const mockConfig: DatoBuilderConfig = {
+        apiToken: "default-token",
+      };
+
+      // Create parser without custom config path (should use default behavior)
+      const defaultConfigParser = new ConfigParser(createMockLogger());
+
+      // Mock fs.existsSync to return true for default .js file
+      mockFs.existsSync.mockImplementation((filePath) => {
+        return filePath === "/mock/cwd/dato-builder.config.js";
+      });
+
+      // Mock the importConfig method
+      jest.spyOn(defaultConfigParser as any, "importConfig").mockResolvedValue({
+        default: mockConfig,
+      });
+
+      const result = await defaultConfigParser.loadConfig();
+
+      expect(mockFs.existsSync).toHaveBeenCalledWith(
+        "/mock/cwd/dato-builder.config.js",
+      );
+      expect(result.apiToken).toBe("default-token");
+    });
+  });
 });
