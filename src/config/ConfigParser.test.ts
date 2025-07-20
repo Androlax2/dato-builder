@@ -6,8 +6,15 @@ import { createMockLogger } from "../../tests/utils/mockLogger";
 import { ConfigParser } from "./ConfigParser";
 
 // Mock fs and path modules
-jest.mock("node:fs");
-jest.mock("node:path");
+jest.mock("node:fs", () => ({
+  existsSync: jest.fn(),
+  promises: {
+    realpath: jest.fn(),
+  },
+}));
+jest.mock("node:path", () => ({
+  resolve: jest.fn(),
+}));
 
 describe("ConfigParser", () => {
   let configParser: ConfigParser;
@@ -24,16 +31,16 @@ describe("ConfigParser", () => {
     mockPath = path as jest.Mocked<typeof path>;
 
     // Setup path.resolve mock to return predictable paths
-    mockPath.resolve.mockImplementation((...args) => args.join("/"));
+    mockPath.resolve = jest.fn((...args: string[]) => args.join("/"));
 
     // Mock process.cwd()
     jest.spyOn(process, "cwd").mockReturnValue("/mock/cwd");
 
-    // Setup default fs.promises.realpath mock for existing tests
-    const defaultRealPath = jest
-      .fn<(path: string) => Promise<string>>()
-      .mockImplementation((path) => Promise.resolve(path));
-    (mockFs as any).promises = { realpath: defaultRealPath };
+    // Setup fs mocks
+    mockFs.existsSync = jest.fn();
+    (mockFs.promises as any).realpath = jest
+      .fn()
+      .mockImplementation((path: unknown) => Promise.resolve(path as string));
 
     configParser = new ConfigParser(createMockLogger());
   });
@@ -51,9 +58,9 @@ describe("ConfigParser", () => {
         return filePath === "/mock/cwd/dato-builder.config.js";
       });
 
-      // Mock the module before the dynamic import
-      jest.doMock("/mock/cwd/dato-builder.config.js", () => mockConfig, {
-        virtual: true,
+      // Mock the importConfig method
+      jest.spyOn(configParser as any, "importConfig").mockResolvedValue({
+        default: mockConfig,
       });
 
       const result = await configParser.loadConfig();
@@ -70,9 +77,6 @@ describe("ConfigParser", () => {
         modelsPath: "/mock/cwd/datocms/models",
         logLevel: 2,
       });
-
-      // Clean up
-      jest.dontMock("/mock/cwd/dato-builder.config.js");
     });
 
     it("should load config from .ts file when .js doesn't exist", async () => {
@@ -86,9 +90,9 @@ describe("ConfigParser", () => {
         return filePath === "/mock/cwd/dato-builder.config.ts";
       });
 
-      // Mock the module before the dynamic import
-      jest.doMock("/mock/cwd/dato-builder.config.ts", () => mockConfig, {
-        virtual: true,
+      // Mock the importConfig method
+      jest.spyOn(configParser as any, "importConfig").mockResolvedValue({
+        default: mockConfig,
       });
 
       const result = await configParser.loadConfig();
@@ -105,9 +109,6 @@ describe("ConfigParser", () => {
         modelsPath: "/mock/cwd/datocms/models",
         logLevel: 3,
       });
-
-      // Clean up
-      jest.dontMock("/mock/cwd/dato-builder.config.ts");
     });
 
     it("should throw error when no config file exists", async () => {
@@ -124,9 +125,6 @@ describe("ConfigParser", () => {
       expect(mockFs.existsSync).toHaveBeenCalledWith(
         "/mock/cwd/dato-builder.config.ts",
       );
-
-      // Clean up
-      jest.dontMock("/mock/cwd/dato-builder.config.js");
     });
 
     it("should throw error when config file has no default export", async () => {
@@ -135,17 +133,10 @@ describe("ConfigParser", () => {
         return filePath === "/mock/cwd/dato-builder.config.js";
       });
 
-      jest.doMock(
-        "/mock/cwd/dato-builder.config.js",
-        () => {
-          return {
-            __esModule: true,
-          }; // No default export
-        },
-        {
-          virtual: true,
-        },
-      );
+      // Mock the importConfig method to return no default export
+      jest.spyOn(configParser as any, "importConfig").mockResolvedValue({
+        // No default export
+      });
 
       await expect(configParser.loadConfig()).rejects.toThrow(
         "Unable to load dato-builder config file",
@@ -154,13 +145,6 @@ describe("ConfigParser", () => {
       expect(mockFs.existsSync).toHaveBeenCalledWith(
         "/mock/cwd/dato-builder.config.js",
       );
-
-      await expect(configParser.loadConfig()).rejects.toThrow(
-        "Unable to load dato-builder config file",
-      );
-
-      // Clean up
-      jest.dontMock("/mock/cwd/dato-builder.config.js");
     });
 
     it("should throw error when config file has undefined default export", async () => {
@@ -169,18 +153,10 @@ describe("ConfigParser", () => {
         return filePath === "/mock/cwd/dato-builder.config.js";
       });
 
-      jest.doMock(
-        "/mock/cwd/dato-builder.config.js",
-        () => {
-          return {
-            __esModule: true,
-            default: undefined, // Explicitly undefined
-          };
-        },
-        {
-          virtual: true,
-        },
-      );
+      // Mock the importConfig method to return undefined default export
+      jest.spyOn(configParser as any, "importConfig").mockResolvedValue({
+        default: undefined,
+      });
 
       await expect(configParser.loadConfig()).rejects.toThrow(
         "Unable to load dato-builder config file",
@@ -189,9 +165,6 @@ describe("ConfigParser", () => {
       expect(mockFs.existsSync).toHaveBeenCalledWith(
         "/mock/cwd/dato-builder.config.js",
       );
-
-      // Clean up
-      jest.dontMock("/mock/cwd/dato-builder.config.js");
     });
 
     it("should throw error when apiToken is missing", async () => {
@@ -205,18 +178,10 @@ describe("ConfigParser", () => {
         return filePath === "/mock/cwd/dato-builder.config.js";
       });
 
-      // Mock the dynamic import
-      jest.doMock(
-        "/mock/cwd/dato-builder.config.js",
-        () => {
-          return {
-            default: mockConfig,
-          };
-        },
-        {
-          virtual: true,
-        },
-      );
+      // Mock the importConfig method
+      jest.spyOn(configParser as any, "importConfig").mockResolvedValue({
+        default: mockConfig,
+      });
 
       await expect(configParser.loadConfig()).rejects.toThrow(
         "Validation error: Missing apiToken",
@@ -225,9 +190,6 @@ describe("ConfigParser", () => {
       expect(mockFs.existsSync).toHaveBeenCalledWith(
         "/mock/cwd/dato-builder.config.js",
       );
-
-      // Clean up
-      jest.dontMock("/mock/cwd/dato-builder.config.js");
     });
 
     it("should throw error when apiToken is empty string", async () => {
@@ -241,18 +203,10 @@ describe("ConfigParser", () => {
         return filePath === "/mock/cwd/dato-builder.config.js";
       });
 
-      // Mock the dynamic import
-      jest.doMock(
-        "/mock/cwd/dato-builder.config.js",
-        () => {
-          return {
-            default: mockConfig,
-          };
-        },
-        {
-          virtual: true,
-        },
-      );
+      // Mock the importConfig method
+      jest.spyOn(configParser as any, "importConfig").mockResolvedValue({
+        default: mockConfig,
+      });
 
       await expect(configParser.loadConfig()).rejects.toThrow(
         "Validation error: Missing apiToken",
@@ -261,9 +215,6 @@ describe("ConfigParser", () => {
       expect(mockFs.existsSync).toHaveBeenCalledWith(
         "/mock/cwd/dato-builder.config.js",
       );
-
-      // Clean up
-      jest.dontMock("/mock/cwd/dato-builder.config.js");
     });
 
     it("should merge user config with defaults correctly", async () => {
@@ -278,9 +229,9 @@ describe("ConfigParser", () => {
         return filePath === "/mock/cwd/dato-builder.config.js";
       });
 
-      // Mock the module before the dynamic import
-      jest.doMock("/mock/cwd/dato-builder.config.js", () => mockConfig, {
-        virtual: true,
+      // Mock the importConfig method
+      jest.spyOn(configParser as any, "importConfig").mockResolvedValue({
+        default: mockConfig,
       });
 
       const result = await configParser.loadConfig();
@@ -294,9 +245,6 @@ describe("ConfigParser", () => {
         modelsPath: "/mock/cwd/datocms/models", // default
         logLevel: 2, // default
       });
-
-      // Clean up
-      jest.dontMock("/mock/cwd/dato-builder.config.js");
     });
 
     it("should handle all custom configuration options", async () => {
@@ -315,17 +263,14 @@ describe("ConfigParser", () => {
         return filePath === "/mock/cwd/dato-builder.config.js";
       });
 
-      // Mock the module before the dynamic import
-      jest.doMock("/mock/cwd/dato-builder.config.js", () => mockConfig, {
-        virtual: true,
+      // Mock the importConfig method
+      jest.spyOn(configParser as any, "importConfig").mockResolvedValue({
+        default: mockConfig,
       });
 
       const result = await configParser.loadConfig();
 
       expect(result).toEqual(mockConfig);
-
-      // Clean up
-      jest.dontMock("/mock/cwd/dato-builder.config.js");
     });
 
     it("should prefer .js file over .ts file when both exist", async () => {
@@ -336,14 +281,9 @@ describe("ConfigParser", () => {
       // Mock fs.existsSync to return true for both files
       mockFs.existsSync.mockReturnValue(true);
 
-      // Mock the module before the dynamic import
-      jest.doMock("/mock/cwd/dato-builder.config.ts", () => mockConfig, {
-        virtual: true,
-      });
-
-      // Mock the module before the dynamic import
-      jest.doMock("/mock/cwd/dato-builder.config.js", () => mockConfig, {
-        virtual: true,
+      // Mock the importConfig method
+      jest.spyOn(configParser as any, "importConfig").mockResolvedValue({
+        default: mockConfig,
       });
 
       await configParser.loadConfig();
@@ -354,10 +294,6 @@ describe("ConfigParser", () => {
       expect(mockFs.existsSync).not.toHaveBeenCalledWith(
         "/mock/cwd/dato-builder.config.ts",
       );
-
-      // Clean up
-      jest.dontMock("/mock/cwd/dato-builder.config.js");
-      jest.dontMock("/mock/cwd/dato-builder.config.ts");
     });
   });
 
@@ -378,24 +314,19 @@ describe("ConfigParser", () => {
     });
 
     it("should handle malformed config objects", async () => {
-      const mockConfig = null;
-
       // Mock fs.existsSync to return true for .js file
       mockFs.existsSync.mockImplementation((filePath) => {
         return filePath === "/mock/cwd/dato-builder.config.js";
       });
 
-      // Mock the dynamic import
-      jest.doMock("/mock/cwd/dato-builder.config.js", () => mockConfig, {
-        virtual: true,
+      // Mock the importConfig method to return malformed config
+      jest.spyOn(configParser as any, "importConfig").mockResolvedValue({
+        default: null,
       });
 
       await expect(configParser.loadConfig()).rejects.toThrow(
         "Unable to load dato-builder config file",
       );
-
-      // Clean up
-      jest.dontMock("/mock/cwd/dato-builder.config.js");
     });
   });
 
@@ -407,16 +338,13 @@ describe("ConfigParser", () => {
       });
 
       // Mock fs.promises.realpath to simulate a symlink pointing outside the project
-      const realPathMock = jest
-        .fn<(path: string) => Promise<string>>()
-        .mockResolvedValue("/etc/passwd");
-      (mockFs as any).promises = { realpath: realPathMock };
+      (mockFs.promises.realpath as any).mockResolvedValueOnce("/etc/passwd");
 
       await expect(configParser.loadConfig()).rejects.toThrow(
         "Configuration file path resolves outside project directory",
       );
 
-      expect(realPathMock).toHaveBeenCalledWith(
+      expect(mockFs.promises.realpath).toHaveBeenCalledWith(
         "/mock/cwd/dato-builder.config.js",
       );
     });
@@ -432,24 +360,21 @@ describe("ConfigParser", () => {
       });
 
       // Mock fs.promises.realpath to return a path within the project directory
-      const realPathMock = jest
-        .fn<(path: string) => Promise<string>>()
-        .mockResolvedValue("/mock/cwd/dato-builder.config.js");
-      (mockFs as any).promises = { realpath: realPathMock };
+      (mockFs.promises.realpath as any).mockResolvedValueOnce(
+        "/mock/cwd/dato-builder.config.js",
+      );
 
-      // Mock the config file import using the same pattern as working tests
-      jest.doMock("/mock/cwd/dato-builder.config.js", () => mockConfig, {
-        virtual: true,
+      // Mock the importConfig method
+      jest.spyOn(configParser as any, "importConfig").mockResolvedValue({
+        default: mockConfig,
       });
 
       const result = await configParser.loadConfig();
 
       expect(result.apiToken).toBe("valid-token");
-      expect(realPathMock).toHaveBeenCalledWith(
+      expect(mockFs.promises.realpath).toHaveBeenCalledWith(
         "/mock/cwd/dato-builder.config.js",
       );
-
-      jest.dontMock("/mock/cwd/dato-builder.config.js");
     });
 
     it("should reject paths with directory traversal patterns", async () => {
@@ -459,16 +384,13 @@ describe("ConfigParser", () => {
       });
 
       // Mock fs.promises.realpath to resolve to outside project directory
-      const realPathMock = jest
-        .fn<(path: string) => Promise<string>>()
-        .mockResolvedValue("/etc/passwd");
-      (mockFs as any).promises = { realpath: realPathMock };
+      (mockFs.promises.realpath as any).mockResolvedValueOnce("/etc/passwd");
 
       await expect(configParser.loadConfig()).rejects.toThrow(
         "Configuration file path resolves outside project directory",
       );
 
-      expect(realPathMock).toHaveBeenCalledWith(
+      expect(mockFs.promises.realpath).toHaveBeenCalledWith(
         "/mock/cwd/dato-builder.config.js",
       );
     });
@@ -480,16 +402,15 @@ describe("ConfigParser", () => {
       });
 
       // Mock fs.promises.realpath to return path outside project for .ts file
-      const realPathMock = jest
-        .fn<(path: string) => Promise<string>>()
-        .mockResolvedValue("/tmp/malicious.ts");
-      (mockFs as any).promises = { realpath: realPathMock };
+      (mockFs.promises.realpath as any).mockResolvedValueOnce(
+        "/tmp/malicious.ts",
+      );
 
       await expect(configParser.loadConfig()).rejects.toThrow(
         "Configuration file path resolves outside project directory",
       );
 
-      expect(realPathMock).toHaveBeenCalledWith(
+      expect(mockFs.promises.realpath).toHaveBeenCalledWith(
         "/mock/cwd/dato-builder.config.ts",
       );
     });

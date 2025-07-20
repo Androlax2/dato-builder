@@ -21,8 +21,6 @@
     "dev": "tsc -p tsconfig.build.json --watch",
     "build": "rimraf ./build && tsc -p tsconfig.build.json && cp -r src/plop-templates build/",
     "build:version": "node --input-type=module -e \"import fs from 'fs'; import pkg from './package.json' assert { type: 'json' }; const file='build/cli.js'; fs.writeFileSync(file, fs.readFileSync(file, 'utf8').replace('__PACKAGE_VERSION__', pkg.version));\"",
-    "build:watch": "tsc -p tsconfig.build.json --watch",
-    "start": "npm run build && node build/index.js",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --detectOpenHandles --passWithNoTests",
     "test:watch": "node --experimental-vm-modules node_modules/jest/bin/jest.js --watch --passWithNoTests",
     "test:coverage": "node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage --passWithNoTests",

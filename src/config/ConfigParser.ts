@@ -15,7 +15,7 @@ export class ConfigParser {
 
     this.logger.debug(`Loading config from ${configPath}`);
 
-    const userConfig = await import(configPath);
+    const userConfig = await this.importConfig(configPath);
 
     if (!userConfig.default) {
       throw new Error("Unable to load dato-builder config file");
@@ -25,6 +25,10 @@ export class ConfigParser {
       ...this.DEFAULTS,
       ...(userConfig.default as DatoBuilderConfig),
     });
+  }
+
+  protected async importConfig(configPath: string): Promise<any> {
+    return await import(configPath);
   }
 
   private get DEFAULTS(): Omit<Required<DatoBuilderConfig>, "apiToken"> {

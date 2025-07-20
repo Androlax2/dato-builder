@@ -13,12 +13,6 @@ export default {
   extensionsToTreatAsEsm: [".ts"],
   moduleFileExtensions: ["ts", "tsx", "js", "jsx", "json", "node"],
 
-  globals: {
-    "ts-jest": {
-      useESM: true,
-    },
-  },
-
   transform: {
     "^.+\\.tsx?$": [
       "ts-jest",
