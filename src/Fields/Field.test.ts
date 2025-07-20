@@ -1,19 +1,28 @@
+import type { FieldCreateSchema } from "@datocms/cma-client/src/generated/SimpleSchemaTypes";
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
-import Field, { type FieldBody } from "../../src/Fields/Field";
+import type { ValidatorConfig } from "../Validators/Validators";
+import Field, { type FieldBody } from "./Field";
 
-jest.mock("../../src/Validators/Validators", () => ({
+jest.mock("../Validators/Validators", () => ({
   __esModule: true,
   default: class MockValidators {
-    // biome-ignore lint/suspicious/noExplicitAny: It's a mock class
-    validators: any;
+    validators: ValidatorConfig;
 
-    // biome-ignore lint/suspicious/noExplicitAny: It's a mock class
-    constructor(validators: any) {
+    constructor(validators: ValidatorConfig = {}) {
       this.validators = validators;
     }
 
-    build() {
-      return this.validators ? { ...this.validators } : {};
+    build(): Record<string, object | undefined> {
+      // Convert boolean validators to objects for testing purposes
+      const result: Record<string, object | undefined> = {};
+      for (const [key, value] of Object.entries(this.validators)) {
+        if (typeof value === "boolean" && value === true) {
+          result[key] = {};
+        } else if (value !== undefined) {
+          result[key] = typeof value === "object" ? value : {};
+        }
+      }
+      return result;
     }
   },
 }));
@@ -21,8 +30,7 @@ jest.mock("../../src/Validators/Validators", () => ({
 // Create a test subclass of Field for testing the abstract base class
 class TestField extends Field {
   constructor(body: FieldBody) {
-    // biome-ignore lint/suspicious/noExplicitAny: It's a test
-    super("test_type" as any, body);
+    super("text" as FieldCreateSchema["field_type"], body);
   }
 }
 
@@ -38,7 +46,7 @@ describe("Field", () => {
 
     expect(testField.build()).toEqual({
       label: "Test Field",
-      field_type: "test_type",
+      field_type: "text",
       api_key: "test_field",
       validators: {},
     });
@@ -76,7 +84,7 @@ describe("Field", () => {
       validators,
     });
 
-    expect(testField.build().validators).toEqual(validators);
+    expect(testField.build().validators).toEqual({ required: {} });
   });
 
   it("should preserve additional properties from the body", () => {
@@ -94,7 +102,7 @@ describe("Field", () => {
 
     expect(testField.build()).toEqual({
       label: "Test Field",
-      field_type: "test_type",
+      field_type: "text",
       api_key: "test_field",
       hint: "This is a hint",
       appearance: { type: "custom", editor: "", parameters: {}, addons: [] },
