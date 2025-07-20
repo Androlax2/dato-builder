@@ -1,4 +1,4 @@
-import { singularize } from "inflection";
+import inflection from "inflection";
 
 interface DatoApiKeyOptions {
   name: string;
@@ -29,7 +29,7 @@ export function generateDatoApiKey({
 
   // Only singularize if explicitly asked
   if (!preservePlural) {
-    words = words.map((word) => singularize(word));
+    words = words.map((word) => inflection.singularize(word));
   }
 
   result = words.join("_");

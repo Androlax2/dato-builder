@@ -131,7 +131,7 @@ export default function buildTestBlock({ config }: BuilderContext) {
       }
 
       // Add a small delay to ensure file system operation completes
-      await new Promise((resolve) => setTimeout(resolve, 10));
+      await new Promise((resolve) => setTimeout(resolve, 50));
 
       expect(existsSync(generatedPath)).toBe(true);
 
@@ -201,7 +201,7 @@ export default function buildTestModel({ config }: BuilderContext) {
       }
 
       // Add a small delay to ensure file system operation completes
-      await new Promise((resolve) => setTimeout(resolve, 10));
+      await new Promise((resolve) => setTimeout(resolve, 50));
 
       expect(existsSync(generatedPath)).toBe(true);
 
