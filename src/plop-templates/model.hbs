@@ -2,7 +2,7 @@ import { ModelBuilder, type BuilderContext } from "dato-builder";
 
 export default function build{{name}}({ config }: BuilderContext) {
   return new ModelBuilder({
-    name: "{{name}}",
+    name: "{{humanize name}}",
     config,{{#if singleton}}
     body: {
       singleton: true,{{#if sortable}}

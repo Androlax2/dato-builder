@@ -2,7 +2,7 @@ import { BlockBuilder, type BuilderContext } from "dato-builder";
 
 export default function build{{name}}({ config }: BuilderContext) {
   return new BlockBuilder({
-    name: "{{name}}",
+    name: "{{humanize name}}",
     config,
   })
     // Add your fields here

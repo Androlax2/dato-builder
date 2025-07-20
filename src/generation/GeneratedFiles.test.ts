@@ -100,7 +100,7 @@ describe("Generated Files Quality", () => {
 
 export default function buildTestBlock({ config }: BuilderContext) {
   return new BlockBuilder({
-    name: "TestBlock",
+    name: "Test Block",
     config,
   })
     // Add your fields here
@@ -130,6 +130,9 @@ export default function buildTestBlock({ config }: BuilderContext) {
         throw new Error("No file path returned from generation");
       }
 
+      // Add a small delay to ensure file system operation completes
+      await new Promise((resolve) => setTimeout(resolve, 10));
+
       expect(existsSync(generatedPath)).toBe(true);
 
       const content = readFileSync(generatedPath, "utf-8");
@@ -141,7 +144,7 @@ export default function buildTestBlock({ config }: BuilderContext) {
       expect(content).toContain("export default function buildTestBlock");
       expect(content).toContain("({ config }: BuilderContext)");
       expect(content).toContain("return new BlockBuilder({");
-      expect(content).toContain('name: "TestBlock"');
+      expect(content).toContain('name: "Test Block"');
       expect(content).toContain("config,");
 
       // Validate no template artifacts
@@ -158,7 +161,7 @@ export default function buildTestBlock({ config }: BuilderContext) {
 
 export default function buildTestModel({ config }: BuilderContext) {
   return new ModelBuilder({
-    name: "TestModel",
+    name: "Test Model",
     config,
     body: {
       singleton: true,
@@ -197,6 +200,9 @@ export default function buildTestModel({ config }: BuilderContext) {
         throw new Error("No file path returned from generation");
       }
 
+      // Add a small delay to ensure file system operation completes
+      await new Promise((resolve) => setTimeout(resolve, 10));
+
       expect(existsSync(generatedPath)).toBe(true);
 
       const content = readFileSync(generatedPath, "utf-8");
@@ -208,7 +214,7 @@ export default function buildTestModel({ config }: BuilderContext) {
       expect(content).toContain("export default function buildTestModel");
       expect(content).toContain("({ config }: BuilderContext)");
       expect(content).toContain("return new ModelBuilder({");
-      expect(content).toContain('name: "TestModel"');
+      expect(content).toContain('name: "Test Model"');
       expect(content).toContain("config,");
       expect(content).toContain("singleton: true,");
 

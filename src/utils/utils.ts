@@ -52,3 +52,14 @@ export function generateDatoApiKey({
 
   return result;
 }
+
+/**
+ * Converts PascalCase to human-readable format with spaces
+ * @param pascalCase - String in PascalCase format (e.g., "MySuperBlock")
+ * @returns Human-readable string (e.g., "My Super Block")
+ */
+export function pascalToHumanReadable(pascalCase: string): string {
+  return pascalCase
+    .replace(/([A-Z])/g, " $1") // Add space before capital letters
+    .trim(); // Remove leading space
+}

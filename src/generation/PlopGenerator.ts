@@ -3,6 +3,7 @@ import { fileURLToPath } from "node:url";
 import type { NodePlopAPI } from "node-plop";
 import type { ConsoleLogger } from "../logger.js";
 import type { DatoBuilderConfig } from "../types/DatoBuilderConfig.js";
+import { pascalToHumanReadable } from "../utils/utils.js";
 
 interface ResultChange {
   type: string;
@@ -34,6 +35,9 @@ export class PlopGenerator {
   private async setupPlop(): Promise<NodePlopAPI> {
     const { default: nodePlop } = await import("node-plop");
     const plop = await nodePlop();
+
+    // Register Handlebars helper to convert PascalCase to human-readable
+    plop.setHelper("humanize", (text: string) => pascalToHumanReadable(text));
 
     const plopTemplatesPath = join(
       dirname(fileURLToPath(import.meta.url)),
