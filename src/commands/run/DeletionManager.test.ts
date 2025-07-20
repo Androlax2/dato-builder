@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
+import inquirer from "inquirer";
 import { createMockCache } from "../../../tests/utils/mockCache";
 import { createMockLogger } from "../../../tests/utils/mockLogger";
 import type DatoApi from "../../Api/DatoApi";
@@ -8,6 +9,9 @@ import { DeletionManager } from "./DeletionManager";
 // Mock inquirer
 jest.mock("inquirer", () => ({
   prompt: jest.fn(),
+  default: {
+    prompt: jest.fn(),
+  },
 }));
 
 // Mock dependencies
@@ -27,12 +31,18 @@ describe("DeletionManager", () => {
   let deletionManager: DeletionManager;
 
   beforeEach(() => {
+    // Reset all mocks
+    jest.clearAllMocks();
+
+    // Setup inquirer mock with proper typing
+    const mockPrompt = jest.fn();
+    (inquirer as any).prompt = mockPrompt;
+
     deletionManager = new DeletionManager(
       mockApi,
       mockCacheManager,
       mockLogger,
     );
-    jest.clearAllMocks();
   });
 
   describe("displayDeletionSummary", () => {
@@ -144,7 +154,6 @@ describe("DeletionManager", () => {
     });
 
     it("should prompt for confirmation when not skipping", async () => {
-      const inquirer = require("inquirer");
       const safe: DeletionCandidate[] = [
         {
           key: "block:block1",
@@ -155,7 +164,7 @@ describe("DeletionManager", () => {
         },
       ];
 
-      inquirer.prompt.mockResolvedValueOnce({
+      (inquirer as any).prompt.mockResolvedValueOnce({
         confirmedItems: safe,
       });
 
@@ -258,8 +267,7 @@ describe("DeletionManager", () => {
       const safe: DeletionCandidate[] = [summary.blocks[0]!];
       const unsafe: Array<DeletionCandidate & { usedBy: string[] }> = [];
 
-      const inquirer = require("inquirer");
-      inquirer.prompt.mockResolvedValueOnce({
+      (inquirer as any).prompt.mockResolvedValueOnce({
         confirmedItems: safe,
       });
 
@@ -316,8 +324,7 @@ describe("DeletionManager", () => {
       const safe: DeletionCandidate[] = [summary.blocks[0]!];
       const unsafe: Array<DeletionCandidate & { usedBy: string[] }> = [];
 
-      const inquirer = require("inquirer");
-      inquirer.prompt.mockResolvedValueOnce({
+      (inquirer as any).prompt.mockResolvedValueOnce({
         confirmedItems: [],
       });
 
