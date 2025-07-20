@@ -1,26 +1,84 @@
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 import type { DatoBuilderConfig } from "../src";
-import DatoApi from "../src/Api/DatoApi";
-import Field, { type FieldBody } from "../src/Fields/Field";
-import Integer from "../src/Fields/Integer";
-import Markdown from "../src/Fields/Markdown";
-import SingleLineString from "../src/Fields/SingleLineString";
-import StringRadioGroup from "../src/Fields/StringRadioGroup";
-import StringSelect from "../src/Fields/StringSelect";
-import ItemTypeBuilder, {
-  type ItemTypeBuilderType,
-} from "../src/ItemTypeBuilder";
+import type { FieldBody } from "../src/Fields/Field";
+import type { ItemTypeBuilderType } from "../src/ItemTypeBuilder";
 import { createMockConfig } from "../tests/utils/mockConfig";
 
-jest.mock("../src/Api/DatoApi");
-jest.mock("../src/Fields/Integer");
-jest.mock("../src/Fields/SingleLineString");
-jest.mock("../src/Fields/Markdown");
-jest.mock("../src/Fields/Wysiwyg");
-jest.mock("../src/Fields/Textarea");
-jest.mock("../src/Fields/StringRadioGroup");
-jest.mock("../src/Fields/StringSelect");
-jest.mock("../src/Fields/MultiLineText");
+// Create mock functions before mocking modules
+const MockDatoApi = jest.fn();
+const MockInteger = jest.fn();
+const MockSingleLineString = jest.fn();
+const MockMarkdown = jest.fn();
+const MockWysiwyg = jest.fn();
+const MockTextarea = jest.fn();
+const MockStringRadioGroup = jest.fn();
+const MockStringSelect = jest.fn();
+const MockMultiLineText = jest.fn();
+
+// Mock all modules using unstable_mockModule for ESM compatibility
+jest.unstable_mockModule("../src/Api/DatoApi", () => ({
+  default: MockDatoApi,
+}));
+
+jest.unstable_mockModule("../src/Fields/Integer", () => ({
+  default: MockInteger,
+}));
+
+jest.unstable_mockModule("../src/Fields/SingleLineString", () => ({
+  default: MockSingleLineString,
+}));
+
+jest.unstable_mockModule("../src/Fields/Markdown", () => ({
+  default: MockMarkdown,
+}));
+
+jest.unstable_mockModule("../src/Fields/Wysiwyg", () => ({
+  default: MockWysiwyg,
+}));
+
+jest.unstable_mockModule("../src/Fields/Textarea", () => ({
+  default: MockTextarea,
+}));
+
+jest.unstable_mockModule("../src/Fields/StringRadioGroup", () => ({
+  default: MockStringRadioGroup,
+}));
+
+jest.unstable_mockModule("../src/Fields/StringSelect", () => ({
+  default: MockStringSelect,
+}));
+
+jest.unstable_mockModule("../src/Fields/MultiLineText", () => ({
+  default: MockMultiLineText,
+}));
+
+jest.unstable_mockModule("../src/Fields/Field", () => ({
+  default: class MockField {
+    public fieldType: string;
+    public body: any;
+
+    constructor(fieldType: string, body: any) {
+      this.fieldType = fieldType;
+      this.body = body;
+    }
+
+    build() {
+      // Generate api_key from label if not provided
+      const api_key =
+        this.body.api_key ||
+        this.body.label?.toLowerCase().replace(/\s+/g, "_");
+      return {
+        ...this.body,
+        api_key,
+        field_type: this.fieldType,
+      };
+    }
+  },
+}));
+
+// Import after mocking
+const { default: Field } = await import("../src/Fields/Field");
+const { default: ItemTypeBuilder } = await import("../src/ItemTypeBuilder");
 
 // Same TestItemTypeBuilder class as in the original file
 class TestItemTypeBuilder extends ItemTypeBuilder {
@@ -68,8 +126,8 @@ describe("ItemTypeBuilder", () => {
     // biome-ignore lint/suspicious/noExplicitAny: It's a mock
     mockApiCall = jest.fn().mockImplementation(async (fn: any) => fn());
 
-    // @ts-ignore - Mocking the API
-    DatoApi.mockImplementation(() => ({
+    // Mock the API
+    MockDatoApi.mockImplementation(() => ({
       client: {
         itemTypes: mockClientItemTypes,
         fields: mockClientFields,
@@ -241,7 +299,7 @@ describe("ItemTypeBuilder", () => {
     it("should return the field by api_key", () => {
       const mockField = {
         build: jest.fn().mockReturnValue({ api_key: "test_field" }),
-      } as unknown as Field;
+      } as any;
 
       builder.addField(mockField);
 
@@ -261,7 +319,7 @@ describe("ItemTypeBuilder", () => {
     it("should add a field and return this", () => {
       const mockField = {
         build: jest.fn().mockReturnValue({ api_key: "test_field" }),
-      } as unknown as Field;
+      } as any;
 
       const result = builder.addField(mockField);
 
@@ -272,7 +330,7 @@ describe("ItemTypeBuilder", () => {
     it("should throw an error when a field with the same api_key already exists", () => {
       const mockField = {
         build: jest.fn().mockReturnValue({ api_key: "test_field" }),
-      } as unknown as Field;
+      } as any;
 
       builder.addField(mockField);
 
@@ -308,13 +366,13 @@ describe("ItemTypeBuilder", () => {
       const mockField = {
         build: jest.fn().mockReturnValue({ api_key: "age" }),
       };
-      (Integer as jest.Mock).mockImplementation(() => mockField);
+      MockInteger.mockImplementation(() => mockField);
 
       const spy = jest.spyOn(builder, "addField");
 
       builder.addInteger({ label: "Age" });
 
-      expect(Integer).toHaveBeenCalledWith({
+      expect(MockInteger).toHaveBeenCalledWith({
         label: "Age",
         body: {
           position: 1,
@@ -329,7 +387,7 @@ describe("ItemTypeBuilder", () => {
       const mockField = {
         build: jest.fn().mockReturnValue({ api_key: "age" }),
       };
-      (Integer as jest.Mock).mockImplementation(() => mockField);
+      MockInteger.mockImplementation(() => mockField);
 
       builder.addInteger({
         label: "Age",
@@ -338,7 +396,7 @@ describe("ItemTypeBuilder", () => {
         },
       });
 
-      expect(Integer).toHaveBeenCalledWith({
+      expect(MockInteger).toHaveBeenCalledWith({
         label: "Age",
         body: {
           position: 5,
@@ -353,7 +411,7 @@ describe("ItemTypeBuilder", () => {
         build: jest
           .fn()
           .mockReturnValue({ api_key: "test_field", label: "Test Field" }),
-      } as unknown as Field;
+      } as any;
 
       builder.addField(mockField);
 
@@ -376,7 +434,7 @@ describe("ItemTypeBuilder", () => {
         build: jest
           .fn()
           .mockReturnValue({ api_key: "test_field", label: "Test Field" }),
-      } as unknown as Field;
+      } as any;
 
       builder.addField(mockField);
 
@@ -410,7 +468,7 @@ describe("ItemTypeBuilder", () => {
         build: jest
           .fn()
           .mockReturnValue({ api_key: "test_field", label: "Test Field" }),
-      } as unknown as Field;
+      } as any;
 
       mockClientItemTypes.list.mockResolvedValueOnce([
         {
@@ -486,10 +544,10 @@ describe("ItemTypeBuilder", () => {
     it("should increment position for each field", () => {
       const mockField1 = {
         build: jest.fn().mockReturnValue({ api_key: "field1" }),
-      } as unknown as Field;
+      } as any;
       const mockField2 = {
         build: jest.fn().mockReturnValue({ api_key: "field2" }),
-      } as unknown as Field;
+      } as any;
 
       builder.addField(mockField1);
       expect(builder.getNewFieldPosition()).toBe(2);
@@ -504,13 +562,13 @@ describe("ItemTypeBuilder", () => {
       const mockField = {
         build: jest.fn().mockReturnValue({ api_key: "title" }),
       };
-      (SingleLineString as jest.Mock).mockImplementation(() => mockField);
+      MockSingleLineString.mockImplementation(() => mockField);
 
       const spy = jest.spyOn(builder, "addField");
 
       builder.addSingleLineString({ label: "Title" });
 
-      expect(SingleLineString).toHaveBeenCalledWith({
+      expect(MockSingleLineString).toHaveBeenCalledWith({
         label: "Title",
         body: {
           position: 1,
@@ -537,7 +595,7 @@ describe("ItemTypeBuilder", () => {
       const mockField = {
         build: jest.fn().mockReturnValue({ api_key: "title" }),
       };
-      (SingleLineString as jest.Mock).mockImplementation(() => mockField);
+      MockSingleLineString.mockImplementation(() => mockField);
 
       blockBuilder.addSingleLineString({
         label: "Title",
@@ -548,7 +606,7 @@ describe("ItemTypeBuilder", () => {
         },
       });
 
-      expect(SingleLineString).toHaveBeenCalledWith({
+      expect(MockSingleLineString).toHaveBeenCalledWith({
         label: "Title",
         body: {
           position: 1,
@@ -564,7 +622,7 @@ describe("ItemTypeBuilder", () => {
       const mockField = {
         build: jest.fn().mockReturnValue({ api_key: "title" }),
       };
-      (SingleLineString as jest.Mock).mockImplementation(() => mockField);
+      MockSingleLineString.mockImplementation(() => mockField);
 
       builder.addSingleLineString({
         label: "Title",
@@ -575,7 +633,7 @@ describe("ItemTypeBuilder", () => {
         },
       });
 
-      expect(SingleLineString).toHaveBeenCalledWith({
+      expect(MockSingleLineString).toHaveBeenCalledWith({
         label: "Title",
         body: {
           position: 1,
@@ -593,7 +651,7 @@ describe("ItemTypeBuilder", () => {
       const mockField = {
         build: jest.fn().mockReturnValue({ api_key: "content" }),
       };
-      (Markdown as jest.Mock).mockImplementation(() => mockField);
+      MockMarkdown.mockImplementation(() => mockField);
 
       const spy = jest.spyOn(builder, "addField");
 
@@ -602,7 +660,7 @@ describe("ItemTypeBuilder", () => {
         toolbar: ["bold", "italic", "code"],
       });
 
-      expect(Markdown).toHaveBeenCalledWith({
+      expect(MockMarkdown).toHaveBeenCalledWith({
         label: "Content",
         toolbar: ["bold", "italic", "code"],
         body: {
@@ -620,7 +678,7 @@ describe("ItemTypeBuilder", () => {
       const mockField = {
         build: jest.fn().mockReturnValue({ api_key: "section_title" }),
       };
-      (SingleLineString as jest.Mock).mockImplementation(() => mockField);
+      MockSingleLineString.mockImplementation(() => mockField);
 
       const spy = jest.spyOn(builder, "addSingleLineString");
 
@@ -641,7 +699,7 @@ describe("ItemTypeBuilder", () => {
       const mockField = {
         build: jest.fn().mockReturnValue({ api_key: "section_title" }),
       };
-      (SingleLineString as jest.Mock).mockImplementation(() => mockField);
+      MockSingleLineString.mockImplementation(() => mockField);
 
       const spy = jest.spyOn(builder, "addSingleLineString");
 
@@ -669,7 +727,7 @@ describe("ItemTypeBuilder", () => {
     it("should propagate API errors when creating fields", async () => {
       const mockField = {
         build: jest.fn().mockReturnValue({ api_key: "test_field" }),
-      } as unknown as Field;
+      } as any;
 
       builder.addField(mockField);
 
@@ -684,7 +742,7 @@ describe("ItemTypeBuilder", () => {
     it("should propagate API errors when updating fields", async () => {
       const mockField = {
         build: jest.fn().mockReturnValue({ api_key: "test_field" }),
-      } as unknown as Field;
+      } as any;
 
       builder.addField(mockField);
       builder.setOverrideExistingFields(true);
@@ -739,7 +797,7 @@ describe("ItemTypeBuilder", () => {
           api_key: "existing_field",
           label: "Updated Field",
         }),
-      } as unknown as Field;
+      } as any;
 
       builder.addField(mockField);
 
@@ -773,7 +831,7 @@ describe("ItemTypeBuilder", () => {
           api_key: "field1",
           label: "Field 1",
         }),
-      } as unknown as Field;
+      } as any;
 
       builder.addField(mockField);
 
@@ -804,7 +862,7 @@ describe("ItemTypeBuilder", () => {
           api_key: "field1",
           label: "Updated Field 1",
         }),
-      } as unknown as Field;
+      } as any;
 
       builder.addField(mockField);
 
@@ -828,7 +886,7 @@ describe("ItemTypeBuilder", () => {
           api_key: "new_field",
           label: "New Field",
         }),
-      } as unknown as Field;
+      } as any;
 
       builder.addField(mockField);
 
@@ -848,7 +906,7 @@ describe("ItemTypeBuilder", () => {
       const mockField = {
         build: jest.fn().mockReturnValue({ api_key: "status" }),
       };
-      (StringRadioGroup as jest.Mock).mockImplementation(() => mockField);
+      MockStringRadioGroup.mockImplementation(() => mockField);
 
       const spy = jest.spyOn(builder, "addField");
       const radios = [
@@ -861,7 +919,7 @@ describe("ItemTypeBuilder", () => {
         radios,
       });
 
-      expect(StringRadioGroup).toHaveBeenCalledWith({
+      expect(MockStringRadioGroup).toHaveBeenCalledWith({
         label: "Status",
         radios,
         body: {
@@ -877,7 +935,7 @@ describe("ItemTypeBuilder", () => {
       const mockField = {
         build: jest.fn().mockReturnValue({ api_key: "category" }),
       };
-      (StringSelect as jest.Mock).mockImplementation(() => mockField);
+      MockStringSelect.mockImplementation(() => mockField);
 
       const spy = jest.spyOn(builder, "addField");
       const options = [
@@ -890,7 +948,7 @@ describe("ItemTypeBuilder", () => {
         options,
       });
 
-      expect(StringSelect).toHaveBeenCalledWith({
+      expect(MockStringSelect).toHaveBeenCalledWith({
         label: "Category",
         options,
         body: {
@@ -932,9 +990,9 @@ describe("ItemTypeBuilder", () => {
       };
 
       // Mock the field constructors
-      (SingleLineString as jest.Mock).mockImplementation(() => titleField);
-      (Markdown as jest.Mock).mockImplementation(() => contentField);
-      (StringSelect as jest.Mock).mockImplementation(() => categoryField);
+      MockSingleLineString.mockImplementation(() => titleField);
+      MockMarkdown.mockImplementation(() => contentField);
+      MockStringSelect.mockImplementation(() => categoryField);
 
       // Add fields to the builder
       builder.addSingleLineString({ label: "Title" });
