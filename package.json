@@ -47,7 +47,6 @@
     "@semantic-release/npm": "^12.0.1",
     "@types/inquirer": "^9.0.8",
     "@types/node": "^24.0.8",
-    "@types/pluralize": "^0.0.33",
     "cspell": "^9.0.0",
     "jest": "^30.0.3",
     "lefthook": "^1.11.11",
@@ -61,8 +60,8 @@
     "@datocms/cma-client-node": "^4.0.1",
     "commander": "^14.0.0",
     "glob": "^11.0.3",
+    "inflection": "^3.0.2",
     "inquirer": "^12.7.0",
-    "node-plop": "^0.32.0",
-    "pluralize": "^8.0.0"
+    "node-plop": "^0.32.0"
   }
 }
