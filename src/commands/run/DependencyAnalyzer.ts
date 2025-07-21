@@ -89,6 +89,20 @@ export class DependencyAnalyzer {
     this.logger.traceJson("Loading module for dependency extraction", {
       filePath: fileInfo.filePath,
     });
+
+    if (process.env.NODE_ENV === "test") {
+      // 🧪 TEST ENVIRONMENT WORKAROUND
+      // Jest's ESM module loader (with --experimental-vm-modules) can fail to fully link
+      // modules when using dynamic `import()` — especially when there are transitive
+      // class-based imports or circular dependencies (e.g. `BlockBuilder -> ItemTypeBuilder`).
+      //
+      // To avoid the "not yet fulfilled" error, we wait a tick to allow Jest's internal
+      // `vm.SourceTextModule` to finish linking modules before we trigger the import.
+      //
+      // This is not needed in production or when running through Node CLI — only Jest.
+      await new Promise((resolve) => setTimeout(resolve, 10));
+    }
+
     const moduleExports = await import(fileInfo.filePath);
     const buildFunction = moduleExports.default;
 
