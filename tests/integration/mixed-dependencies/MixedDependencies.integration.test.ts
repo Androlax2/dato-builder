@@ -13,6 +13,7 @@ describe("MixedDependencies Integration Test", () => {
   let datoClient: Client;
 
   beforeAll(async () => {
+    console.log({ testConfigPath });
     // Ensure we have a DatoCMS API token for integration tests
     if (!API_TOKEN) {
       throw new Error(

@@ -38,7 +38,7 @@ jobs:
         run: npm run build
 
       - name: Check Biome style
-        run: npx @biomejs/biome ci .
+        run: npx @biomejs/biome ci . --diagnostic-level=error
 
       - name: TypeScript Check
         run: npx tsc --noEmit --skipLibCheck

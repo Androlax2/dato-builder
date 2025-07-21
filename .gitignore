@@ -13,3 +13,4 @@ TASKS.md
 temp-test-generated/
 .env
 !.env.example
+.claude/

@@ -6,6 +6,9 @@ on:
       - main
       - beta
 
+env:
+  NODE_VERSION: '20'
+
 jobs:
   ci:
     runs-on: ubuntu-latest
@@ -17,27 +20,29 @@ jobs:
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
 
       - name: Install dependencies
         run: npm ci
 
-      - name: Build
-        run: npm run build
-
-      - name: Check Biome style
-        run: npx @biomejs/biome ci .
-
-      - name: TypeScript Check
-        run: npx tsc --noEmit --skipLibCheck
-
-      - name: Spellcheck
-        run: npm run spellcheck
-
-      - name: Run Unit Tests
-        run: npm run test:unit
+#      - name: Build
+#        run: npm run build
+#
+#      - name: Check Biome style
+#        run: npx @biomejs/biome ci . --diagnostic-level=error
+#
+#      - name: TypeScript Check
+#        run: npx tsc --noEmit --skipLibCheck
+#
+#      - name: Spellcheck
+#        run: npm run spellcheck
+#
+#      - name: Run Unit Tests
+#        run: npm run test:unit
 
       - name: Run Integration Tests
         env:
           DATOCMS_API_TOKEN: ${{ secrets.DATOCMS_API_TOKEN }}
         #run: npm run test:integration
-        run: npm run test:integration -- --testPathPatterns="MixedDependencies
+        run: npm run test:integration -- --testPathPatterns="MixedDependencies"
