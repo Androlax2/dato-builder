@@ -520,16 +520,20 @@ npm run test:integration -- --testPathPatterns="ConfigLoading"
 - [x] **Phase 7: State Management & Updates** (COMPLETED ✅)
   - [x] **SubsequentBuilds**: First build creation, cached builds, forced rebuilds, no duplication verification
   - [x] **CacheManagement**: Cache behavior validation, cache performance testing, cache invalidation, cache consistency
+  - [x] **DeletionHandling**: Multi-block deletion, selective removal, orphaned resource detection, skip-deletion flag
+  - [x] **UpdateDetection**: Field addition, validator updates, label modifications, configuration consistency
   - [x] **State Consistency**: Multiple builds maintain consistent state, proper cache/no-cache alternation
   - [x] **Build Optimization**: Cache performance verification, forced rebuild validation
   - [x] **Type Safety**: All tests pass `npm run typecheck` with proper state management patterns
   - [x] **Real API**: All state management tests use actual DatoCMS API with field verification
-  - [x] **Comprehensive Coverage**: Both cached and non-cached scenarios tested thoroughly
+  - [x] **Comprehensive Coverage**: Full state lifecycle testing with file modifications and cleanup
 
 ### Completed Phase 7 Summary ✅
 **Phase 7: State Management & Updates** - Build state and caching tested and working:
 - ✅ **Subsequent Builds**: No duplication on rebuild, proper state maintenance, field consistency
 - ✅ **Cache Management**: Cache performance, invalidation, consistency between cached/non-cached builds
+- ✅ **Cache-Based Deletion**: Detection of missing files from cache, skip-deletion flag protection, forced deletion
+- ✅ **Update Detection**: Field addition, validator updates, label modifications, file-based change detection
 - ✅ **State Consistency**: Multiple build verification, alternating cache modes, proper cleanup
 - ✅ **Build Optimization**: Cache hit verification, forced rebuild validation, performance monitoring
 - ✅ **Type Safety**: All tests pass `npm run typecheck` with proper state management
