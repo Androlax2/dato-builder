@@ -1,10 +1,4 @@
-import {
-  existsSync,
-  mkdirSync,
-  readFileSync,
-  rmSync,
-  writeFileSync,
-} from "node:fs";
+import { existsSync, mkdirSync, readFileSync, rmSync } from "node:fs";
 import { join, resolve } from "node:path";
 import {
   afterEach,
@@ -14,29 +8,17 @@ import {
   it,
   jest,
 } from "@jest/globals";
-import type { NodePlopAPI } from "node-plop";
 import { createMockConfig } from "../../tests/utils/mockConfig";
 import { createMockLogger } from "../../tests/utils/mockLogger";
-import { createMockPlop } from "../../tests/utils/mockPlop";
-import { createMockPlopGenerator } from "../../tests/utils/mockPlopGenerator";
 import type { ConsoleLogger } from "../logger";
 import type { DatoBuilderConfig } from "../types/DatoBuilderConfig";
 import { PlopGenerator } from "./PlopGenerator";
 
-// Mock node-plop and inquirer using ESM approach
-const mockPlop = createMockPlop();
-const mockGenerator = createMockPlopGenerator();
-
+// Mock inquirer to provide automatic answers for prompts
 const mockInquirer = {
   prompt: jest.fn(),
 };
 
-jest.mock("node-plop", () => ({
-  __esModule: true,
-  default: jest.fn<() => Promise<NodePlopAPI>>().mockResolvedValue(mockPlop),
-}));
-
-// Mock inquirer using unstable_mockModule for ESM compatibility
 jest.unstable_mockModule("inquirer", () => ({
   default: mockInquirer,
 }));
@@ -59,8 +41,8 @@ describe("Generated Files Quality", () => {
 
     mockLogger = createMockLogger();
     mockConfig = createMockConfig({
-      blocksPath: join(tempDir, "blocks"),
-      modelsPath: join(tempDir, "models"),
+      blocksPath: resolve(tempDir, "blocks"),
+      modelsPath: resolve(tempDir, "models"),
       logLevel: 2,
     });
 
@@ -69,20 +51,6 @@ describe("Generated Files Quality", () => {
     mkdirSync(mockConfig.modelsPath, { recursive: true });
 
     plopGenerator = new PlopGenerator(mockConfig, mockLogger);
-
-    // Mock the private setupPlop method to avoid ESM issues
-    jest
-      .spyOn(plopGenerator as any, "setupPlop")
-      .mockImplementation(async () => {
-        return mockPlop;
-      });
-
-    // Setup plop mocks
-    mockPlop.getGenerator.mockReturnValue(mockGenerator);
-    mockPlop.getGeneratorList.mockReturnValue([
-      { name: "block", description: "Generate a new DatoCMS block" },
-      { name: "model", description: "Generate a new DatoCMS model" },
-    ]);
   });
 
   afterEach(() => {
@@ -93,32 +61,20 @@ describe("Generated Files Quality", () => {
   });
 
   describe("Block File Generation", () => {
-    it("should generate valid TypeScript block files using Plop", async () => {
-      // Setup mock to generate actual file
-      const blockPath = join(mockConfig.blocksPath, "TestBlock.ts");
-      const blockContent = `import { BlockBuilder, type BuilderContext } from "dato-builder";
+    it("should generate valid TypeScript block files using real Plop", async () => {
+      // Use the real plop generator by accessing it directly
+      const plop = await (plopGenerator as any).setupPlop();
+      const blockGenerator = plop.getGenerator("block");
 
-export default function buildTestBlock({ config }: BuilderContext) {
-  return new BlockBuilder({
-    name: "Test Block",
-    config,
-  })
-    // Add your fields here
-    // Example: .addText({ label: "Title" });
-}`;
+      // Run actions with predefined answers (bypass prompts)
+      const answers = { name: "TestBlock" };
+      const actionResult = await blockGenerator.runActions(answers);
 
-      mockGenerator.runPrompts.mockResolvedValue({ name: "TestBlock" });
-      mockGenerator.runActions.mockImplementation(async () => {
-        // Actually create the file to simulate plop behavior
-        writeFileSync(blockPath, blockContent);
-        return {
-          changes: [{ type: "add", path: blockPath }],
-          failures: [],
-        };
-      });
-
-      // Generate actual block file using PlopGenerator
-      const result = await plopGenerator.generateSpecific("block");
+      // Process the result manually
+      const result = (plopGenerator as any).processResult(
+        actionResult,
+        "block",
+      );
 
       expect(result.success).toBe(true);
       expect(result.type).toBe("block");
@@ -130,12 +86,13 @@ export default function buildTestBlock({ config }: BuilderContext) {
         throw new Error("No file path returned from generation");
       }
 
-      // Add a small delay to ensure file system operation completes
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      // Check if file was created in the expected location (config path)
+      const expectedPath = join(mockConfig.blocksPath, "TestBlock.ts");
 
-      expect(existsSync(generatedPath)).toBe(true);
+      // The file should have been created by the real Plop generator
+      expect(existsSync(expectedPath)).toBe(true);
 
-      const content = readFileSync(generatedPath, "utf-8");
+      const content = readFileSync(expectedPath, "utf-8");
 
       // Validate file structure
       expect(content).toContain(
@@ -154,41 +111,25 @@ export default function buildTestBlock({ config }: BuilderContext) {
   });
 
   describe("Model File Generation", () => {
-    it("should generate valid TypeScript model files using Plop", async () => {
-      // Setup mock to generate actual file
-      const modelPath = join(mockConfig.modelsPath, "TestModel.ts");
-      const modelContent = `import { ModelBuilder, type BuilderContext } from "dato-builder";
+    it("should generate valid TypeScript model files using real Plop", async () => {
+      // Use the real plop generator by accessing it directly
+      const plop = await (plopGenerator as any).setupPlop();
+      const modelGenerator = plop.getGenerator("model");
 
-export default function buildTestModel({ config }: BuilderContext) {
-  return new ModelBuilder({
-    name: "Test Model",
-    config,
-    body: {
-      singleton: true,
-      sortable: false,
-    },
-  })
-    // Add your fields here
-    // Example: .addText({ label: "Title" });
-}`;
-
-      mockGenerator.runPrompts.mockResolvedValue({
+      // Run actions with predefined answers (bypass prompts)
+      const answers = {
         name: "TestModel",
         singleton: true,
         sortable: false,
         tree: false,
-      });
-      mockGenerator.runActions.mockImplementation(async () => {
-        // Actually create the file to simulate plop behavior
-        writeFileSync(modelPath, modelContent);
-        return {
-          changes: [{ type: "add", path: modelPath }],
-          failures: [],
-        };
-      });
+      };
+      const actionResult = await modelGenerator.runActions(answers);
 
-      // Generate actual model file using PlopGenerator
-      const result = await plopGenerator.generateSpecific("model");
+      // Process the result manually
+      const result = (plopGenerator as any).processResult(
+        actionResult,
+        "model",
+      );
 
       expect(result.success).toBe(true);
       expect(result.type).toBe("model");
@@ -200,12 +141,13 @@ export default function buildTestModel({ config }: BuilderContext) {
         throw new Error("No file path returned from generation");
       }
 
-      // Add a small delay to ensure file system operation completes
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      // Check if file was created in the expected location (config path)
+      const expectedPath = join(mockConfig.modelsPath, "TestModel.ts");
 
-      expect(existsSync(generatedPath)).toBe(true);
+      // The file should have been created by the real Plop generator
+      expect(existsSync(expectedPath)).toBe(true);
 
-      const content = readFileSync(generatedPath, "utf-8");
+      const content = readFileSync(expectedPath, "utf-8");
 
       // Validate file structure
       expect(content).toContain(

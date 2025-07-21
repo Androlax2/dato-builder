@@ -1,45 +1,47 @@
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
-import inquirer from "inquirer";
-import { createMockCache } from "../../../tests/utils/mockCache";
-import { createMockLogger } from "../../../tests/utils/mockLogger";
-import type DatoApi from "../../Api/DatoApi";
-import type { DeletionCandidate, DeletionSummary } from "./DeletionDetector";
-import { DeletionManager } from "./DeletionManager";
 
-// Mock inquirer
-jest.mock("inquirer", () => ({
-  prompt: jest.fn(),
-  default: {
-    prompt: jest.fn(),
-  },
+// Mock inquirer using unstable_mockModule for ESM compatibility BEFORE any imports
+const mockInquirer = {
+  prompt: jest.fn() as any,
+};
+
+jest.unstable_mockModule("inquirer", () => ({
+  default: mockInquirer,
 }));
+
+// Import after mocking
+const { createMockCache } = await import("../../../tests/utils/mockCache");
+const { createMockLogger } = await import("../../../tests/utils/mockLogger");
+const { DeletionManager } = await import("./DeletionManager");
+
+import type { DeletionCandidate, DeletionSummary } from "./DeletionDetector";
 
 // Mock dependencies
 const mockApi = {
-  call: jest.fn(),
+  call: jest.fn() as any,
   client: {
     itemTypes: {
-      destroy: jest.fn(),
+      destroy: jest.fn() as any,
     },
   },
-} as unknown as jest.Mocked<DatoApi>;
+} as any;
 
 const mockCacheManager = createMockCache();
 const mockLogger = createMockLogger();
 
 describe("DeletionManager", () => {
-  let deletionManager: DeletionManager;
+  let deletionManager: InstanceType<typeof DeletionManager>;
 
   beforeEach(() => {
     // Reset all mocks
     jest.clearAllMocks();
 
     // Setup inquirer mock with proper typing
-    const mockPrompt = jest.fn();
-    (inquirer as any).prompt = mockPrompt;
+    const mockPrompt = jest.fn() as any;
+    mockInquirer.prompt = mockPrompt;
 
     deletionManager = new DeletionManager(
-      mockApi,
+      mockApi as any,
       mockCacheManager,
       mockLogger,
     );
@@ -164,14 +166,14 @@ describe("DeletionManager", () => {
         },
       ];
 
-      (inquirer as any).prompt.mockResolvedValueOnce({
+      mockInquirer.prompt.mockResolvedValueOnce({
         confirmedItems: safe,
       });
 
       const result = await deletionManager.confirmDeletions(safe);
 
       expect(result).toBe(safe);
-      expect(inquirer.prompt).toHaveBeenCalledWith([
+      expect(mockInquirer.prompt).toHaveBeenCalledWith([
         {
           type: "checkbox",
           name: "confirmedItems",
@@ -267,7 +269,7 @@ describe("DeletionManager", () => {
       const safe: DeletionCandidate[] = [summary.blocks[0]!];
       const unsafe: Array<DeletionCandidate & { usedBy: string[] }> = [];
 
-      (inquirer as any).prompt.mockResolvedValueOnce({
+      mockInquirer.prompt.mockResolvedValueOnce({
         confirmedItems: safe,
       });
 
@@ -324,7 +326,7 @@ describe("DeletionManager", () => {
       const safe: DeletionCandidate[] = [summary.blocks[0]!];
       const unsafe: Array<DeletionCandidate & { usedBy: string[] }> = [];
 
-      (inquirer as any).prompt.mockResolvedValueOnce({
+      mockInquirer.prompt.mockResolvedValueOnce({
         confirmedItems: [],
       });
 
