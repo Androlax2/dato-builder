@@ -7,7 +7,7 @@ const config = {
   modelsPath: "./tests/integration/performance/fixtures/models",
   overwriteExistingFields: true,
   // Enable debugging for integration tests
-  logLevel: 2, // INFO level
+  logLevel: 0, // ERROR level
 };
 
 export default config;
