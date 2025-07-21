@@ -1,12 +1,15 @@
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { buildClient, type Client } from "@datocms/cma-client-node";
 import { afterEach, beforeAll, describe, expect, it } from "@jest/globals";
 import { CLI } from "../../../src/cli.js";
 
 describe("BlockDependencies Integration Test", () => {
+  const __dirname = path.dirname(fileURLToPath(import.meta.url));
   const testConfigPath = path.resolve(
-    process.cwd(),
-    "tests/integration/block-dependencies/fixtures/block-dependencies.config.js",
+    __dirname,
+    "fixtures",
+    "block-dependencies.config.js",
   );
   const API_TOKEN = process.env.DATOCMS_API_TOKEN;
   const createdBlockIds: string[] = [];

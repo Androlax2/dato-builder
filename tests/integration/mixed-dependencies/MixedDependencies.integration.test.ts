@@ -1,13 +1,12 @@
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { buildClient, type Client } from "@datocms/cma-client-node";
 import { afterEach, beforeAll, describe, expect, it } from "@jest/globals";
 import { CLI } from "../../../src/cli.js";
 
 describe("MixedDependencies Integration Test", () => {
-  const testConfigPath = path.resolve(
-    process.cwd(),
-    "tests/integration/mixed-dependencies/dato-builder.config.js",
-  );
+  const __dirname = path.dirname(fileURLToPath(import.meta.url));
+  const testConfigPath = path.resolve(__dirname, "dato-builder.config.js");
   const API_TOKEN = process.env.DATOCMS_API_TOKEN;
   let createdItemTypeIds: string[] = [];
   let datoClient: Client;

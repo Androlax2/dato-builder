@@ -1,4 +1,5 @@
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { buildClient, type Client } from "@datocms/cma-client-node";
 import {
   afterAll,
@@ -11,9 +12,11 @@ import {
 import { CLI } from "../../../src/cli.js";
 
 describe("SubsequentBuilds Integration Tests", () => {
+  const __dirname = path.dirname(fileURLToPath(import.meta.url));
   const testConfigPath = path.resolve(
-    process.cwd(),
-    "tests/integration/subsequent-builds/fixtures/subsequent-builds.config.js",
+    __dirname,
+    "fixtures",
+    "subsequent-builds.config.js",
   );
   const API_TOKEN = process.env.DATOCMS_API_TOKEN;
   let originalArgv: string[];

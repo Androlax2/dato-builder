@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { buildClient, type Client } from "@datocms/cma-client-node";
 import {
   afterAll,
@@ -12,9 +13,11 @@ import {
 import { CLI } from "../../../src/cli.js";
 
 describe("DeletionHandling Integration Tests", () => {
+  const __dirname = path.dirname(fileURLToPath(import.meta.url));
   const testConfigPath = path.resolve(
-    process.cwd(),
-    "tests/integration/deletion-handling/fixtures/deletion-handling.config.js",
+    __dirname,
+    "fixtures",
+    "deletion-handling.config.js",
   );
   const API_TOKEN = process.env.DATOCMS_API_TOKEN;
   let originalArgv: string[];

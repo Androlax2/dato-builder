@@ -1,12 +1,15 @@
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { buildClient, type Client } from "@datocms/cma-client-node";
 import { afterAll, beforeAll, describe, expect, it } from "@jest/globals";
 import { CLI } from "../../../src/cli.js";
 
 describe("SimpleModels Integration Test", () => {
+  const __dirname = path.dirname(fileURLToPath(import.meta.url));
   const testConfigPath = path.resolve(
-    process.cwd(),
-    "tests/integration/simple-models/fixtures/simple-models.config.js",
+    __dirname,
+    "fixtures",
+    "simple-models.config.js",
   );
   const API_TOKEN = process.env.DATOCMS_API_TOKEN;
   let createdModelId: string | null = null;
