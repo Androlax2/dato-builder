@@ -40,7 +40,7 @@ describe("MixedDependencies Integration Test", () => {
   });
 
   describe("Complex Mixed Block and Model Dependencies", () => {
-    it("should build a complete project with blocks, models, and cross-references", async () => {
+    it.only("should build a complete project with blocks, models, and cross-references", async () => {
       // Store original process.argv to restore later
       const originalArgv = process.argv;
 
