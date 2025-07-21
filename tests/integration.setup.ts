@@ -6,6 +6,9 @@ import dotenv from "dotenv";
 // Load environment variables from .env file
 dotenv.config({ path: path.resolve(process.cwd(), ".env") });
 
+// Set TEST_TYPE for integration tests
+process.env.TEST_TYPE = "integration";
+
 // Verify API token is available
 const apiToken = process.env.DATOCMS_API_TOKEN;
 if (!apiToken) {

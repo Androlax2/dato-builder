@@ -239,6 +239,16 @@ export class CommandBuilder {
   private handleError(message: string, error: unknown): never {
     const logger = new ConsoleLogger(LogLevel.ERROR);
     logger.error(`${message}: ${(error as Error).message}`);
+
+    // In integration test environment, throw the error instead of exiting
+    // This allows Jest to properly handle integration test failures
+    if (
+      process.env.JEST_WORKER_ID !== undefined &&
+      process.env.TEST_TYPE === "integration"
+    ) {
+      throw error;
+    }
+
     process.exit(1);
   }
 }
