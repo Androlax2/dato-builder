@@ -346,18 +346,25 @@ npm run test:integration -- --testPathPatterns="ConfigLoading"
   - [x] Updated CLIInitializer.ts to pass custom config to ConfigParser
   - [x] All changes verified with `npm run typecheck` - no breaking changes
   - [x] Backward compatibility maintained for normal CLI usage
-- [x] **Unit Tests for CLI Custom Config** (NEW)
+- [x] **Unit Tests for CLI Custom Config**
   - [x] Added comprehensive unit tests for CLI.ts constructor with custom config paths
   - [x] Added unit tests for CommandBuilder.ts custom config propagation through all commands
   - [x] Added unit tests for CLIInitializer.ts custom config integration with ConfigParser
   - [x] Added end-to-end unit tests validating complete CLI → CommandBuilder → initializeCLI chain
   - [x] All tests pass with no regressions (265 tests passing)
+- [x] **First Integration Test - SimpleBlocks** (NEW)
+  - [x] Created per-test fixture isolation structure: `tests/integration/simple-blocks/`
+  - [x] Implemented TestSimpleBlock.ts fixture with basic text and boolean fields
+  - [x] Created test-specific config: `simple-blocks.config.js` pointing only to test fixtures
+  - [x] Built working integration test using CLI custom config infrastructure
+  - [x] Verified actual DatoCMS API integration - block successfully built to DatoCMS
+  - [x] All 4 integration tests pass: config validation, fixture validation, CLI integration, actual build
 
 ### In Progress 🔄
-- [ ] Per-test fixture structure design and implementation
+- [ ] Build out additional integration tests following established patterns
 
 ### Next Steps 📋
-- [ ] **NEXT PRIORITY: Create test-specific fixture structure for SimpleBlocks integration test**
-- [ ] Implement first integration test: SimpleBlocks.integration.test.ts
+- [ ] **READY: Expand integration test suite using established patterns**
+- [ ] Create additional integration tests: Models, Dependencies, CLI Options, Error Handling
 - [ ] Establish testing patterns and utilities
 - [ ] Build out core integration test suite
