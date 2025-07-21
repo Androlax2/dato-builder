@@ -1,6 +1,6 @@
 import path from "node:path";
 import { buildClient, type Client } from "@datocms/cma-client-node";
-import { afterAll, beforeAll, describe, expect, it } from "@jest/globals";
+import { afterEach, beforeAll, describe, expect, it } from "@jest/globals";
 import { CLI } from "../../../src/cli.js";
 
 describe("BlockDependencies Integration Test", () => {
@@ -24,7 +24,7 @@ describe("BlockDependencies Integration Test", () => {
     datoClient = buildClient({ apiToken: API_TOKEN });
   });
 
-  afterAll(async () => {
+  afterEach(async () => {
     // Cleanup created blocks after tests
     if (createdBlockIds.length > 0) {
       try {
