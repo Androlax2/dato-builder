@@ -232,7 +232,8 @@ describe("CommandBuilder", () => {
     });
 
     it("should handle build command with auto-concurrency", async () => {
-      mockCpus.mockReturnValue(new Array(8));
+      const cpuCount = 8;
+      mockCpus.mockReturnValue(new Array(cpuCount));
       commandBuilder.addBuildCommand(mockInitializeCLI);
 
       if (!mockCommand.action?.mock?.calls?.[0]) {
@@ -253,7 +254,7 @@ describe("CommandBuilder", () => {
       expect(mockCLI.build).toHaveBeenCalledWith({
         enableDeletion: true,
         skipDeletionConfirmation: false,
-        concurrency: 7, // 8 CPUs - 1
+        concurrency: Math.max(1, cpuCount - 1), // CPU count - 1, minimum 1
       });
     });
 
