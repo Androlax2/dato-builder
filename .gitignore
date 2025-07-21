@@ -14,3 +14,4 @@ temp-test-generated/
 .env
 !.env.example
 .claude/
+.secrets

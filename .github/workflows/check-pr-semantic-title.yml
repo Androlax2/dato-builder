@@ -1,6 +1,6 @@
-# This workflow will ensure that PR is titled according to semantic commits convention, so we can later create releases
+# Validates PR titles follow semantic commit convention for automated releases
 
-name: Check PR semantic title
+name: PR Title Validation
 
 on:
   pull_request_target:
@@ -8,17 +8,51 @@ on:
       - opened
       - edited
       - synchronize
+      - reopened
 
 permissions:
   pull-requests: read
+  statuses: write
 
 jobs:
-  check-pr-semantic-title:
+  validate-title:
+    name: Validate Semantic Title
     runs-on: ubuntu-latest
+    timeout-minutes: 5
+    
     steps:
       - name: Validate PR title
         uses: amannn/action-semantic-pull-request@v5
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
+          # Configuration
           requireScope: false
+          disallowScopes: ~
+          subjectPattern: ^(?![A-Z]).+$
+          subjectPatternError: |
+            The subject "{subject}" found in the pull request title "{title}"
+            didn't match the configured pattern. Please ensure that the subject
+            doesn't start with an uppercase character.
+          # Allowed types
+          types: |
+            feat
+            fix
+            docs
+            style
+            refactor
+            perf
+            test
+            build
+            ci
+            chore
+            revert
+          # Custom scopes (optional)
+          scopes: |
+            cli
+            core
+            api
+            ui
+            deps
+            config
+            release
