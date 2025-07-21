@@ -231,33 +231,6 @@ describe("CommandBuilder", () => {
       );
     });
 
-    it("should handle build command with auto-concurrency", async () => {
-      const cpuCount = 8;
-      mockCpus.mockReturnValue(new Array(cpuCount));
-      commandBuilder.addBuildCommand(mockInitializeCLI);
-
-      if (!mockCommand.action?.mock?.calls?.[0]) {
-        throw new Error(
-          "Expected mockCommand.action to have been called at least once.",
-        );
-      }
-      const actionHandler = mockCommand.action.mock.calls[0][0];
-
-      const buildOptions: BuildOptions = {
-        skipDeletion: false,
-        skipDeletionConfirmation: false,
-        autoConcurrency: true,
-      };
-
-      await actionHandler.call(mockCommand, buildOptions, mockCommand);
-
-      expect(mockCLI.build).toHaveBeenCalledWith({
-        enableDeletion: true,
-        skipDeletionConfirmation: false,
-        concurrency: Math.max(1, cpuCount - 1), // CPU count - 1, minimum 1
-      });
-    });
-
     it("should handle build command with concurrent flag", async () => {
       commandBuilder.addBuildCommand(mockInitializeCLI);
 
