@@ -6,7 +6,11 @@ import { CLI } from "../../../src/cli.js";
 
 describe("MixedDependencies Integration Test", () => {
   const __dirname = path.dirname(fileURLToPath(import.meta.url));
-  const testConfigPath = path.resolve(__dirname, "dato-builder.config.js");
+  const testConfigPath = path.resolve(
+    __dirname,
+    "fixtures",
+    "model-dependencies.config.js",
+  );
   const API_TOKEN = process.env.DATOCMS_API_TOKEN;
   let createdItemTypeIds: string[] = [];
   let datoClient: Client;
