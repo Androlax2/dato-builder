@@ -430,7 +430,27 @@ npm run test:integration -- --testPathPatterns="ConfigLoading"
 - ✅ **Real API**: Both tests use actual DatoCMS API with field verification and automatic cleanup
 - ✅ **Infrastructure Enhancement**: DependencyAnalyzer and ItemBuilder enhanced for test environment compatibility
 
+- [x] **Phase 5: Advanced Workflows - MixedDependencies** (COMPLETED ✅)
+  - [x] Created MixedDependencies integration test structure
+  - [x] Implemented ContentBlock and MediaBlock with block-to-block dependencies (MediaBlock refs ContentBlock)
+  - [x] Implemented Author and Article models with model-to-model dependencies (Article refs Author)  
+  - [x] Implemented cross-references: Article model uses both ContentBlock and MediaBlock via modular content
+  - [x] Test passes: real API integration, complex dependency order verification, cross-reference validation
+  - [x] Verified advanced field types: addSingleAsset, addSlug, wysiwyg editor with proper appearance configuration
+  - [x] Demonstrated real-world blog/CMS scenario with proper content relationships
+
+### Completed Phase 5 Summary ✅
+**Phase 5: Advanced Workflows** - Complex mixed dependencies tested and working:
+- ✅ **MixedDependencies**: Complex real-world scenario with blocks, models, and cross-references
+- ✅ **Multi-Level Dependencies**: 4-way dependency chain (ContentBlock → MediaBlock → Article, Author → Article)
+- ✅ **Cross-Reference Validation**: Models using blocks and blocks using other blocks
+- ✅ **Advanced Field Types**: Single assets, slug fields, wysiwyg editors, modular content
+- ✅ **Type Safety**: All tests pass `npm run typecheck` with complex field configurations
+- ✅ **Real API**: Complete project built to DatoCMS with field relationship verification
+- ✅ **Complete Suite**: All 3 dependency tests pass together (42.643s total runtime)
+
 ### Next Steps 📋
-- [ ] **READY: Phase 5 - Advanced Workflows** (complex scenarios, mixed block/model projects)
-- [ ] Create additional integration tests: Error Handling, State Management
+- [ ] **READY: Phase 6 - Error Handling & Edge Cases** (API errors, network failures, invalid configs)
+- [ ] **READY: Phase 7 - Performance Testing** (large projects, concurrency, caching)
+- [ ] Create additional integration tests: State Management, Real-World Scenarios
 - [ ] Build out comprehensive integration test suite following established patterns
