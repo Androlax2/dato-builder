@@ -72,7 +72,7 @@ export default async function buildTestPerfModelFifth({
           rich_text_blocks: {
             item_types: [
               await getBlock("TestPerfBlockAlpha"),
-              await getBlock("TestPerfBlockBeta"),
+              await getBlock("TestPerfBlockSecond"),
             ],
           },
         },

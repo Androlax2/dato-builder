@@ -1,13 +1,15 @@
 import type { BuilderContext } from "../../../../../src";
 import BlockBuilder from "../../../../../src/BlockBuilder.js";
 
-export default function buildTestPerfBlockIota({ config }: BuilderContext) {
+export default function buildTestPerfBlockThirteenth({
+  config,
+}: BuilderContext) {
   return new BlockBuilder({
-    name: "Performance Test Block Iota",
+    name: "Performance Test Block Thirteenth",
     config,
     options: {
-      api_key: "test_perf_block_iota",
-      hint: "Performance test block Iota",
+      api_key: "test_perf_block_thirteenth",
+      hint: "Performance test block Thirteenth",
     },
   })
     .addText({

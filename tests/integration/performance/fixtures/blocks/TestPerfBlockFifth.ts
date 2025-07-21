@@ -1,13 +1,13 @@
 import type { BuilderContext } from "../../../../../src";
 import BlockBuilder from "../../../../../src/BlockBuilder.js";
 
-export default function buildTestPerfBlockXi({ config }: BuilderContext) {
+export default function buildTestPerfBlockFifth({ config }: BuilderContext) {
   return new BlockBuilder({
-    name: "Performance Test Block Xi",
+    name: "Performance Test Block Fifth",
     config,
     options: {
-      api_key: "test_perf_block_xi",
-      hint: "Performance test block Xi",
+      api_key: "test_perf_block_fifth",
+      hint: "Performance test block Fifth",
     },
   })
     .addText({

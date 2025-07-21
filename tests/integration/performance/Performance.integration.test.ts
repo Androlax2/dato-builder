@@ -84,14 +84,46 @@ describe("Performance Integration Tests", () => {
       // Verify all items were created
       const itemTypes = await datoClient.itemTypes.list();
 
-      // Find our test blocks (3 blocks)
-      const testBlocks = itemTypes.filter((item) =>
-        item.api_key?.startsWith("test_perf_block_"),
+      // Filter for our test blocks and models using the exact API keys we expect
+      const expectedBlockApiKeys = [
+        "test_perf_block_alpha",
+        "test_perf_block_second",
+        "test_perf_block_third",
+        "test_perf_block_fourth",
+        "test_perf_block_fifth",
+        "test_perf_block_sixth",
+        "test_perf_block_seventh",
+        "test_perf_block_eighth",
+        "test_perf_block_ninth",
+        "test_perf_block_tenth",
+        "test_perf_block_eleventh",
+        "test_perf_block_twelfth",
+        "test_perf_block_thirteenth",
+        "test_perf_block_fourteenth",
+        "test_perf_block_fifteenth",
+      ];
+      const expectedModelApiKeys = [
+        "test_perf_model_alpha",
+        "test_perf_model_second",
+        "test_perf_model_third",
+        "test_perf_model_fourth",
+        "test_perf_model_fifth",
+        "test_perf_model_sixth",
+        "test_perf_model_seventh",
+        "test_perf_model_eighth",
+        "test_perf_model_ninth",
+        "test_perf_model_tenth",
+      ];
+
+      const testBlocks = itemTypes.filter((itemType) =>
+        expectedBlockApiKeys.includes(itemType.api_key!),
+      );
+      const testModels = itemTypes.filter((itemType) =>
+        expectedModelApiKeys.includes(itemType.api_key!),
       );
 
-      // Find our test models (2 models)
-      const testModels = itemTypes.filter((item) =>
-        item.api_key?.startsWith("test_perf_model_"),
+      console.log(
+        `Found ${testBlocks.length} test blocks and ${testModels.length} test models`,
       );
 
       expect(testBlocks).toHaveLength(15);
@@ -153,11 +185,41 @@ describe("Performance Integration Tests", () => {
 
       // Verify data integrity - no duplicate items should be created
       const itemTypes = await datoClient.itemTypes.list();
-      const perfBlocks = itemTypes.filter((item) =>
-        item.api_key?.startsWith("test_perf_block_"),
+      const expectedBlockApiKeys = [
+        "test_perf_block_alpha",
+        "test_perf_block_second",
+        "test_perf_block_third",
+        "test_perf_block_fourth",
+        "test_perf_block_fifth",
+        "test_perf_block_sixth",
+        "test_perf_block_seventh",
+        "test_perf_block_eighth",
+        "test_perf_block_ninth",
+        "test_perf_block_tenth",
+        "test_perf_block_eleventh",
+        "test_perf_block_twelfth",
+        "test_perf_block_thirteenth",
+        "test_perf_block_fourteenth",
+        "test_perf_block_fifteenth",
+      ];
+      const expectedModelApiKeys = [
+        "test_perf_model_alpha",
+        "test_perf_model_second",
+        "test_perf_model_third",
+        "test_perf_model_fourth",
+        "test_perf_model_fifth",
+        "test_perf_model_sixth",
+        "test_perf_model_seventh",
+        "test_perf_model_eighth",
+        "test_perf_model_ninth",
+        "test_perf_model_tenth",
+      ];
+
+      const perfBlocks = itemTypes.filter((itemType) =>
+        expectedBlockApiKeys.includes(itemType.api_key!),
       );
-      const perfModels = itemTypes.filter((item) =>
-        item.api_key?.startsWith("test_perf_model_"),
+      const perfModels = itemTypes.filter((itemType) =>
+        expectedModelApiKeys.includes(itemType.api_key!),
       );
 
       // Should still have exactly 15 blocks and 10 models
@@ -268,12 +330,40 @@ describe("Performance Integration Tests", () => {
 
       // Verify data integrity after rapid operations
       const itemTypes = await datoClient.itemTypes.list();
-      const perfItems = itemTypes.filter((item) =>
-        item.api_key?.startsWith("test_perf_"),
+      const expectedApiKeys = [
+        "test_perf_block_alpha",
+        "test_perf_block_second",
+        "test_perf_block_third",
+        "test_perf_block_fourth",
+        "test_perf_block_fifth",
+        "test_perf_block_sixth",
+        "test_perf_block_seventh",
+        "test_perf_block_eighth",
+        "test_perf_block_ninth",
+        "test_perf_block_tenth",
+        "test_perf_block_eleventh",
+        "test_perf_block_twelfth",
+        "test_perf_block_thirteenth",
+        "test_perf_block_fourteenth",
+        "test_perf_block_fifteenth",
+        "test_perf_model_alpha",
+        "test_perf_model_second",
+        "test_perf_model_third",
+        "test_perf_model_fourth",
+        "test_perf_model_fifth",
+        "test_perf_model_sixth",
+        "test_perf_model_seventh",
+        "test_perf_model_eighth",
+        "test_perf_model_ninth",
+        "test_perf_model_tenth",
+      ];
+
+      const perfItems = itemTypes.filter((itemType) =>
+        expectedApiKeys.includes(itemType.api_key!),
       );
 
       // Should still have our expected items
-      expect(perfItems.length).toBeGreaterThanOrEqual(25); // At least our 25 items
+      expect(perfItems.length).toBe(25); // Exactly our 25 items
     }, 300000); // 5 minute timeout for rate limiting scenarios
   });
 });

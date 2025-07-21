@@ -71,8 +71,8 @@ export default async function buildTestPerfModelSeventh({
         validators: {
           rich_text_blocks: {
             item_types: [
-              await getBlock("TestPerfBlockGamma"),
-              await getBlock("TestPerfBlockDelta"),
+              await getBlock("TestPerfBlockThird"),
+              await getBlock("TestPerfBlockFourth"),
             ],
           },
         },
