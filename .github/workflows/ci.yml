@@ -5,16 +5,27 @@ on:
     branches:
       - main
       - beta
+  push:
+    branches:
+      - main
+      - beta
 
 env:
   NODE_VERSION: '20'
+  CI: true
+  LOG_LEVEL: 'ERROR'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  ci:
+  quality:
+    name: Code Quality
     runs-on: ubuntu-latest
-
+    timeout-minutes: 10
+    
     steps:
-      # Check out the repository
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -22,27 +33,66 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
 
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --prefer-offline --no-audit
 
-#      - name: Build
-#        run: npm run build
-#
-#      - name: Check Biome style
-#        run: npx @biomejs/biome ci . --diagnostic-level=error
-#
-#      - name: TypeScript Check
-#        run: npx tsc --noEmit --skipLibCheck
-#
-#      - name: Spellcheck
-#        run: npm run spellcheck
-#
-#      - name: Run Unit Tests
-#        run: npm run test:unit
+      - name: Build
+        run: npm run build
+
+      - name: Check Biome style
+        run: npx @biomejs/biome ci . --diagnostic-level=error
+
+      - name: TypeScript Check
+        run: npx tsc --noEmit --skipLibCheck
+
+      - name: Spellcheck
+        run: npm run spellcheck
+
+  test-unit:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --prefer-offline --no-audit
+
+      - name: Run Unit Tests
+        run: npm run test:unit
+
+  test-integration:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    if: github.event_name == 'pull_request'
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --prefer-offline --no-audit
 
       - name: Run Integration Tests
         env:
           DATOCMS_API_TOKEN: ${{ secrets.DATOCMS_API_TOKEN }}
-        #run: npm run test:integration
-        run: npm run test:integration -- --testPathPatterns="MixedDependencies"
+          NODE_ENV: test
+          LOG_LEVEL: ERROR
+        run: npm run test:integration
