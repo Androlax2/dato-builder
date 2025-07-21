@@ -15,3 +15,4 @@ temp-test-generated/
 !.env.example
 .claude/
 .secrets
+.actrc

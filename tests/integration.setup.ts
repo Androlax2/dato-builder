@@ -77,9 +77,14 @@ beforeAll(async () => {
 
 // Clean up after all tests
 afterAll(async () => {
-  // Add any global cleanup here if needed
-  // For example, delete test items created during integration tests
-});
+  console.log("Cleaning up after integration tests...");
+  try {
+    await eraseAllItems();
+  } catch (error) {
+    console.error("Error during cleanup:", error);
+  }
+  console.log("Integration tests cleanup complete.");
+}, 120000); // 2 minute timeout for cleanup
 
 // Increase default timeout for integration tests
 jest.setTimeout(30000); // 30 seconds
