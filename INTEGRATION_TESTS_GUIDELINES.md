@@ -359,12 +359,24 @@ npm run test:integration -- --testPathPatterns="ConfigLoading"
   - [x] Built working integration test using CLI custom config infrastructure
   - [x] Verified actual DatoCMS API integration - block successfully built to DatoCMS
   - [x] All 4 integration tests pass: config validation, fixture validation, CLI integration, actual build
+- [x] **Phase 2: Core Integration Tests - SimpleModels** (NEW)
+  - [x] Created SimpleModels integration test following SimpleBlocks pattern
+  - [x] Implemented TestSimpleModel.ts fixture with heading and text fields
+  - [x] Created test-specific config: `simple-models.config.js` with per-test isolation
+  - [x] Verified model building to DatoCMS API with field validation
+  - [x] Test passes: real API integration, field verification, automatic cleanup
+  - [x] Established proven pattern for model testing
 
 ### In Progress 🔄
-- [ ] Build out additional integration tests following established patterns
+- [x] **Phase 2: Core Integration Tests - FieldValidation** (CREATED, NOT TESTED)
+  - [x] Created FieldValidation integration test structure
+  - [x] Implemented TestFieldValidationBlock.ts with 5 field types (text, boolean, integer, date, datetime)
+  - [x] Added comprehensive validator testing (required, number_range)
+  - [ ] **PENDING: Run test to verify functionality**
 
 ### Next Steps 📋
-- [ ] **READY: Expand integration test suite using established patterns**
-- [ ] Create additional integration tests: Models, Dependencies, CLI Options, Error Handling
-- [ ] Establish testing patterns and utilities
-- [ ] Build out core integration test suite
+- [ ] **IMMEDIATE: Test FieldValidation integration test**
+- [ ] **READY: Continue Phase 2 with established patterns**
+- [ ] Create additional integration tests: Dependencies, CLI Options, Error Handling
+- [ ] Move to Phase 3: CLI Options Testing
+- [ ] Build out comprehensive integration test suite
