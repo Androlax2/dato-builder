@@ -384,8 +384,29 @@ npm run test:integration -- --testPathPatterns="ConfigLoading"
 - ✅ **Real API**: All tests use actual DatoCMS API with automatic cleanup
 - ✅ **Isolation**: Per-test fixture isolation prevents test pollution
 
+- [x] **Phase 3: CLI Options Testing - BuildFlags** (COMPLETED ✅)
+  - [x] Created BuildFlags integration test structure
+  - [x] Implemented TestBuildFlagsBlock.ts with basic text and boolean fields
+  - [x] Created comprehensive CLI flag testing for:
+    - [x] `--skip-deletion` flag (prevents accidental deletions)
+    - [x] `--no-cache` flag (forces rebuild without cache)
+    - [x] `--auto-concurrency` flag (enables automatic concurrency - "Auto-determined concurrency level: 7")
+    - [x] Combined flags (all three together)
+  - [x] All 4 flag tests pass: real API integration, proper flag behavior verification
+  - [x] Verified caching behavior: "SUCCESS: block (from cache)" vs "SUCCESS: block (built)"
+  - [x] Automatic cleanup functioning properly
+
+### Completed Phase 3 Summary ✅
+**Phase 3: CLI Options Testing** - Essential CLI flags tested and working:
+- ✅ **BuildFlags**: CLI flag functionality verified with real DatoCMS integration
+- ✅ **Flag Combinations**: Multiple flags work together correctly
+- ✅ **Cache Behavior**: `--no-cache` forces rebuild, default behavior uses cache
+- ✅ **Concurrency**: `--auto-concurrency` enables auto-determination ("Auto-determined concurrency level: 7")
+- ✅ **Type Safety**: All tests pass `npm run typecheck`
+- ✅ **Real API**: All flag tests use actual DatoCMS API with proper verification
+
 ### Next Steps 📋
-- [ ] **READY: Phase 3 - CLI Options Testing**
-- [ ] **READY: Phase 4 - Dependency Testing**  
-- [ ] Create additional integration tests: Dependencies, CLI Options, Error Handling
+- [ ] **READY: Phase 4 - Dependency Testing** (async getBlock(), getModel() functionality)
+- [ ] **READY: Phase 5 - Advanced Workflows** (complex scenarios)
+- [ ] Create additional integration tests: Error Handling, State Management
 - [ ] Build out comprehensive integration test suite following established patterns
