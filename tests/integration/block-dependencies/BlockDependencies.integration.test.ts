@@ -25,15 +25,15 @@ describe("BlockDependencies Integration Test", () => {
   });
 
   afterAll(async () => {
-    // Cleanup: Delete all test blocks from DatoCMS in reverse order (dependencies first)
-    for (let i = createdBlockIds.length - 1; i >= 0; i--) {
+    // Cleanup created blocks after tests
+    if (createdBlockIds.length > 0) {
       try {
-        await datoClient.itemTypes.destroy(createdBlockIds[i] as string);
-        console.log(
-          `Successfully cleaned up test block: ${createdBlockIds[i]}`,
-        );
+        for (const blockId of createdBlockIds) {
+          await datoClient.itemTypes.destroy(blockId);
+          console.log(`Successfully cleaned up test block: ${blockId}`);
+        }
       } catch (error) {
-        console.warn("Error during cleanup:", error);
+        console.error("Failed to clean up created blocks:", error);
       }
     }
   });
