@@ -1,3 +1,10 @@
+# [4.0.0-beta.7](https://github.com/Androlax2/dato-builder/compare/v4.0.0-beta.6...v4.0.0-beta.7) (2025-07-22)
+
+
+### Bug Fixes
+
+* optimize npm install performance in release workflow ([48532e5](https://github.com/Androlax2/dato-builder/commit/48532e500acff25a0ae132e257a70f768c3216d5))
+
 # [4.0.0-beta.6](https://github.com/Androlax2/dato-builder/compare/v4.0.0-beta.5...v4.0.0-beta.6) (2025-07-22)
 
 
