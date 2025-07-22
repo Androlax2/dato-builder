@@ -50,8 +50,11 @@ export async function initializeCLI(
     },
   );
 
-  // Load configuration
-  const config = await configParser.loadConfig();
+  // Load configuration with environment override
+  const config = await configParser.loadConfig(globalOptions.env);
+
+  // Log final environment
+  logger.info(`Environment: ${config.environment}`);
 
   // Override log level from config if CLI options are provided
   if (globalOptions.debug || globalOptions.verbose || globalOptions.quiet) {
