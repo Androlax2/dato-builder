@@ -43,15 +43,20 @@ export default class BlockBuilder extends ItemTypeBuilder {
   constructor({ name, options, config }: BlockBuilderOptions) {
     // Extract field resolvers and clean body before super() call
     const fieldResolvers: FieldReferenceConfig<string> = {};
-    const cleanOptions: any = {};
+    const cleanOptions: Omit<
+      BlockBuilderBody,
+      (typeof BlockBuilder.FIELD_REFERENCE_NAMES)[number]
+    > = {
+      api_key: options?.api_key,
+      hint: options?.hint,
+    };
 
     if (options) {
-      // Copy all properties except field references
-      for (const [key, value] of Object.entries(options)) {
-        if (BlockBuilder.FIELD_REFERENCE_NAMES.includes(key as any)) {
-          fieldResolvers[key] = value as any;
-        } else {
-          cleanOptions[key] = value;
+      // Extract field references
+      for (const fieldName of BlockBuilder.FIELD_REFERENCE_NAMES) {
+        const fieldValue = options[fieldName];
+        if (fieldValue !== undefined) {
+          fieldResolvers[fieldName] = fieldValue;
         }
       }
     }

@@ -106,15 +106,32 @@ export default class ModelBuilder extends ItemTypeBuilder {
 
     // Extract field resolvers and clean body before super() call
     const fieldResolvers: FieldReferenceConfig<string> = {};
-    const cleanOptions: any = {};
+    const cleanOptions: Omit<
+      ModelBuilderBody,
+      (typeof ModelBuilder.FIELD_REFERENCE_NAMES)[number]
+    > = {
+      api_key: modelOptions?.api_key,
+      hint: modelOptions?.hint,
+      tree: modelOptions?.tree,
+      sortable: modelOptions?.sortable,
+      singleton: modelOptions?.singleton,
+      draft_mode_active: modelOptions?.draft_mode_active,
+      draft_saving_active: modelOptions?.draft_saving_active,
+      all_locales_required: modelOptions?.all_locales_required,
+      workflow: modelOptions?.workflow,
+      inverse_relationships_enabled:
+        modelOptions?.inverse_relationships_enabled,
+      collection_appearance: modelOptions?.collection_appearance,
+      ordering_meta: modelOptions?.ordering_meta,
+      ordering_direction: modelOptions?.ordering_direction,
+    };
 
     if (modelOptions) {
-      // Copy all properties except field references
-      for (const [key, value] of Object.entries(modelOptions)) {
-        if (ModelBuilder.FIELD_REFERENCE_NAMES.includes(key as any)) {
-          fieldResolvers[key] = value as any;
-        } else {
-          cleanOptions[key] = value;
+      // Extract field references
+      for (const fieldName of ModelBuilder.FIELD_REFERENCE_NAMES) {
+        const fieldValue = modelOptions[fieldName];
+        if (fieldValue !== undefined) {
+          fieldResolvers[fieldName] = fieldValue;
         }
       }
     }
