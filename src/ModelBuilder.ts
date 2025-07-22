@@ -26,7 +26,7 @@ type ModelBuilderBody = Pick<
   | "excerpt_field"
 > & {
   /**
-   * API key of the block.
+   * API key of the model.
    *
    * If not provided, it will be generated from the name.
    */
@@ -35,17 +35,42 @@ type ModelBuilderBody = Pick<
 
 type ModelBuilderOptions = {
   name: string;
+  options?: ModelBuilderBody;
+  config: ResolvedDatoBuilderConfig;
+};
+
+/**
+ * @deprecated Use ModelBuilderOptions with 'options' property instead of 'body'
+ */
+type LegacyModelBuilderOptions = {
+  name: string;
+  /** @deprecated Use 'options' instead */
   body?: ModelBuilderBody;
   config: ResolvedDatoBuilderConfig;
 };
 
+// Union type to support both current and legacy options
+type AllModelBuilderOptions = ModelBuilderOptions | LegacyModelBuilderOptions;
+
 export default class ModelBuilder extends ItemTypeBuilder {
   public override type: ItemTypeBuilderType = "model";
 
-  constructor({ name, body, config }: ModelBuilderOptions) {
+  constructor(params: AllModelBuilderOptions) {
+    const { name, config } = params;
+
+    // Handle both new 'options' and legacy 'body' properties
+    let modelOptions: ModelBuilderBody | undefined;
+
+    if ("options" in params) {
+      modelOptions = params.options;
+    } else if ("body" in params) {
+      // Legacy support
+      modelOptions = params.body;
+    }
+
     super({
       type: "model",
-      body: { ...body, name },
+      body: { ...modelOptions, name },
       config,
     });
   }
