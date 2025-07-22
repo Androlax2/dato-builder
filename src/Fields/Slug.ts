@@ -4,7 +4,7 @@ import Field, { type FieldBody } from "./Field";
 export type SlugBody = Omit<FieldBody, "label" | "validators"> & {
   validators?: Pick<
     ValidatorConfig,
-    "required" | "length" | "slug_format" | "slug_title_field"
+    "required" | "length" | "slug_format" | "slug_title_field" | "unique"
   >;
 };
 
