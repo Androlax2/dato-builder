@@ -86,6 +86,9 @@ jobs:
     name: Run Integration Tests
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    concurrency:
+      group: integration-tests
+      cancel-in-progress: true
     needs: [trigger-integration]
     if: needs.trigger-integration.outputs.should-run == 'true'
     
