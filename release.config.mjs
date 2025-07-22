@@ -21,7 +21,7 @@ export default {
     [
       "@semantic-release/exec",
       {
-        prepareCmd: "npm run build:version",
+        prepareCmd: "npm run build && npm run build:version",
       },
     ],
     [

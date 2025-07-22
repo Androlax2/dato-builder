@@ -54,9 +54,6 @@ jobs:
         run: npm audit signatures
         continue-on-error: true
 
-      - name: Build
-        run: npm run build
-
       - name: Lint
         run: npx @biomejs/biome ci . --diagnostic-level=error
 
