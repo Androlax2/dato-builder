@@ -37,7 +37,6 @@
   },
   "devDependencies": {
     "@biomejs/biome": "2.1.2",
-    "@commander-js/extra-typings": "^14.0.0",
     "@commitlint/cli": "^19.8.0",
     "@commitlint/config-conventional": "^19.8.0",
     "@cspell/dict-software-terms": "^5.0.7",
@@ -58,6 +57,7 @@
     "typescript": "^5.8.3"
   },
   "dependencies": {
+    "@commander-js/extra-typings": "^14.0.0",
     "@datocms/cma-client-node": "^4.0.1",
     "commander": "^14.0.0",
     "glob": "^11.0.3",
