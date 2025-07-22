@@ -1,10 +1,10 @@
 import type * as SimpleSchemaTypes from "@datocms/cma-client/src/generated/SimpleSchemaTypes";
 import ItemTypeBuilder, {
-  type FieldReferenceConfig,
   type ItemTypeBuilderType,
 } from "./ItemTypeBuilder.js";
 import type { ResolvedDatoBuilderConfig } from "./types/DatoBuilderConfig.js";
 import type { FieldIdOrResolver } from "./types/FieldResolver.js";
+import { FieldReferenceHandler } from "./utils/FieldReferenceHandler.js";
 
 type ModelBuilderBody = Pick<
   SimpleSchemaTypes.ItemTypeCreateSchema,
@@ -95,50 +95,23 @@ export default class ModelBuilder extends ItemTypeBuilder {
     const { name, config } = params;
 
     // Handle both new 'options' and legacy 'body' properties
-    let modelOptions: ModelBuilderBody | undefined;
+    const modelOptions: ModelBuilderBody | undefined =
+      "options" in params
+        ? params.options
+        : "body" in params
+          ? params.body
+          : undefined;
 
-    if ("options" in params) {
-      modelOptions = params.options;
-    } else if ("body" in params) {
-      // Legacy support
-      modelOptions = params.body;
-    }
-
-    // Extract field resolvers and clean body before super() call
-    const fieldResolvers: FieldReferenceConfig<string> = {};
-    const cleanOptions: Omit<
-      ModelBuilderBody,
-      (typeof ModelBuilder.FIELD_REFERENCE_NAMES)[number]
-    > = {
-      api_key: modelOptions?.api_key,
-      hint: modelOptions?.hint,
-      tree: modelOptions?.tree,
-      sortable: modelOptions?.sortable,
-      singleton: modelOptions?.singleton,
-      draft_mode_active: modelOptions?.draft_mode_active,
-      draft_saving_active: modelOptions?.draft_saving_active,
-      all_locales_required: modelOptions?.all_locales_required,
-      workflow: modelOptions?.workflow,
-      inverse_relationships_enabled:
-        modelOptions?.inverse_relationships_enabled,
-      collection_appearance: modelOptions?.collection_appearance,
-      ordering_meta: modelOptions?.ordering_meta,
-      ordering_direction: modelOptions?.ordering_direction,
-    };
-
-    if (modelOptions) {
-      // Extract field references
-      for (const fieldName of ModelBuilder.FIELD_REFERENCE_NAMES) {
-        const fieldValue = modelOptions[fieldName];
-        if (fieldValue !== undefined) {
-          fieldResolvers[fieldName] = fieldValue;
-        }
-      }
-    }
+    // Extract field resolvers and clean body using shared handler
+    const { fieldResolvers, cleanBody } =
+      FieldReferenceHandler.extractFieldReferences(
+        modelOptions,
+        ModelBuilder.FIELD_REFERENCE_NAMES,
+      );
 
     super({
       type: "model",
-      body: { ...cleanOptions, name },
+      body: { ...cleanBody, name },
       config,
     });
 
