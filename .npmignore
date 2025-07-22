@@ -8,12 +8,14 @@ __tests__/
 # Configuration files
 tsconfig.json
 tsconfig.build.json
-jest.config.ts
+jest.config.integration.ts
+jest.config.unit.ts
 .env
 .env.*
 *.config.js
 *.config.mjs
 *.config.ts
+.lefthook/
 
 # Development files
 .vscode/
@@ -24,6 +26,8 @@ jest.config.ts
 coverage/
 .nyc_output/
 .cache/
+biome.jsonc
+cspell.json
 
 # Git and CI
 .git/
@@ -39,6 +43,7 @@ README.md
 CHANGELOG.md
 docs/
 *.md
+project-words.txt
 
 # Build artifacts
 build/.tsbuildinfo
