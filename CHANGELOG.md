@@ -1,3 +1,10 @@
+# [4.0.0-beta.10](https://github.com/Androlax2/dato-builder/compare/v4.0.0-beta.9...v4.0.0-beta.10) (2025-07-22)
+
+
+### Bug Fixes
+
+* add 'unique' validator option to SlugBody type ([c1d1d5d](https://github.com/Androlax2/dato-builder/commit/c1d1d5dc0321c9aecfebb010571bfbdd838ee4b8))
+
 # [4.0.0-beta.9](https://github.com/Androlax2/dato-builder/compare/v4.0.0-beta.8...v4.0.0-beta.9) (2025-07-22)
 
 
