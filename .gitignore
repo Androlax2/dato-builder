@@ -4,7 +4,7 @@ build/
 node_modules/
 dato-builder.config.*
 coverage/
-src/datocms/
+#src/datocms/
 src/.itemTypeBuilderCache.json
 .dato-builder-cache
 .datocms-test-cache
