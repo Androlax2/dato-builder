@@ -60,7 +60,26 @@ import type {
   DatoBuilderConfig,
   ResolvedDatoBuilderConfig,
 } from "./types/DatoBuilderConfig.js";
-import { isFieldResolver, resolveFieldId } from "./types/FieldResolver.js";
+import {
+  type FieldIdOrResolver,
+  isFieldResolver,
+  resolveFieldId,
+} from "./types/FieldResolver.js";
+
+/**
+ * Configuration for field references that need to be resolved
+ */
+export type FieldReferenceConfig<TFields extends string> = {
+  [K in TFields]?: FieldIdOrResolver | null;
+};
+
+/**
+ * Result of field resolution matching DatoCMS FieldData format
+ */
+export type ResolvedFieldReferences<TFields extends string> = {
+  [K in TFields]?: SimpleSchemaTypes.FieldData | null;
+};
+
 import { executeWithErrorHandling } from "./utils/errors.js";
 import { generateDatoApiKey } from "./utils/utils.js";
 
@@ -927,6 +946,170 @@ export default abstract class ItemTypeBuilder {
     return obj;
   }
 
+  /**
+   * Field references storage for subclasses
+   */
+  private fieldReferences: Map<string, FieldIdOrResolver | null> = new Map();
+  private fieldsCache: SimpleSchemaTypes.Field[] | null = null;
+
+  /**
+   * Store field references for later resolution
+   * @protected For use by subclasses
+   */
+  protected setFieldReference(
+    fieldName: string,
+    resolver: FieldIdOrResolver | null,
+  ): void {
+    if (resolver === undefined) {
+      this.fieldReferences.delete(fieldName);
+    } else {
+      this.fieldReferences.set(fieldName, resolver);
+    }
+  }
+
+  /**
+   * Store multiple field references from configuration object
+   * @protected For use by subclasses
+   */
+  protected setFieldReferences<TFields extends string>(
+    config: FieldReferenceConfig<TFields>,
+  ): void {
+    for (const [fieldName, resolver] of Object.entries(config)) {
+      if (resolver !== undefined) {
+        this.setFieldReference(fieldName, resolver as FieldIdOrResolver | null);
+      }
+    }
+  }
+
+  /**
+   * Check if any field references are configured
+   * @protected For use by subclasses
+   */
+  protected hasFieldReferences(): boolean {
+    return this.fieldReferences.size > 0;
+  }
+
+  /**
+   * Extract field resolvers from configuration, returning clean body
+   * @protected For use by subclasses
+   */
+  protected extractFieldReferences<TBody extends Record<string, any>>(
+    body: TBody,
+    fieldNames: readonly string[],
+  ): [FieldReferenceConfig<string>, Omit<TBody, string>] {
+    const resolvers: FieldReferenceConfig<string> = {};
+    const cleanBody = { ...body };
+
+    for (const fieldName of fieldNames) {
+      if (body[fieldName] !== undefined) {
+        resolvers[fieldName] = body[fieldName];
+        delete cleanBody[fieldName];
+      }
+    }
+
+    return [resolvers, cleanBody];
+  }
+
+  /**
+   * Resolve all field references to FieldData format
+   * @protected For use by subclasses
+   */
+  protected async resolveFieldReferences(
+    itemTypeId: string,
+  ): Promise<Record<string, SimpleSchemaTypes.FieldData | null>> {
+    if (!this.hasFieldReferences()) {
+      return {};
+    }
+
+    const resolved: Record<string, SimpleSchemaTypes.FieldData | null> = {};
+    const fields = await this.getCachedFields(itemTypeId);
+
+    for (const [fieldName, resolver] of this.fieldReferences) {
+      resolved[fieldName] = await this.resolveSingleFieldReference(
+        resolver,
+        fields,
+        fieldName,
+      );
+    }
+
+    return resolved;
+  }
+
+  /**
+   * Update item type with resolved field references
+   * @protected For use by subclasses
+   */
+  protected async updateWithFieldReferences(itemTypeId: string): Promise<void> {
+    if (!this.hasFieldReferences()) {
+      return;
+    }
+
+    const fieldReferences = await this.resolveFieldReferences(itemTypeId);
+
+    if (Object.keys(fieldReferences).length > 0) {
+      await this.api.call(() =>
+        this.api.client.itemTypes.update(itemTypeId, fieldReferences),
+      );
+      this.logger.traceJson("Field references updated successfully", {
+        itemTypeId,
+        fieldCount: Object.keys(fieldReferences).length,
+      });
+    }
+  }
+
+  /**
+   * Get fields for item type (cached)
+   */
+  private async getCachedFields(
+    itemTypeId: string,
+  ): Promise<SimpleSchemaTypes.Field[]> {
+    if (!this.fieldsCache) {
+      this.fieldsCache = await this.api.call(() =>
+        this.api.client.fields.list(itemTypeId),
+      );
+    }
+    return this.fieldsCache;
+  }
+
+  /**
+   * Resolve individual field reference to FieldData format
+   */
+  private async resolveSingleFieldReference(
+    resolver: FieldIdOrResolver | null,
+    fields: SimpleSchemaTypes.Field[],
+    fieldName: string,
+  ): Promise<SimpleSchemaTypes.FieldData | null> {
+    if (resolver === null) return null;
+
+    try {
+      const fieldId = isFieldResolver(resolver)
+        ? resolveFieldId(resolver, fields)
+        : resolver;
+
+      return {
+        type: "field" as SimpleSchemaTypes.FieldType,
+        id: fieldId,
+      };
+    } catch (error) {
+      this.logger.errorJson("Failed to resolve field reference", {
+        fieldName,
+        error: (error as Error).message,
+        availableFields: fields.map((f) => `${f.label}(${f.id})`).join(", "),
+      });
+      throw new Error(
+        `Failed to resolve ${fieldName}: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
+  }
+
+  /**
+   * Clear field cache (useful for testing or when fields change)
+   * @protected For use by subclasses
+   */
+  protected clearFieldCache(): void {
+    this.fieldsCache = null;
+  }
+
   private async syncFields(itemTypeId: string): Promise<void> {
     this.logger.traceJson("Starting field synchronization", {
       itemTypeId,
@@ -1172,6 +1355,9 @@ export default abstract class ItemTypeBuilder {
       );
       await this.syncFields(item.id);
 
+      // Apply field references after fields are created
+      await this.updateWithFieldReferences(item.id);
+
       this.logger.traceJson("Item type creation completed", {
         id: item.id,
         apiKey: item.api_key,
@@ -1251,6 +1437,9 @@ export default abstract class ItemTypeBuilder {
 
     this.logger.trace("Starting field synchronization for updated item type");
     await this.syncFields(item.id);
+
+    // Apply field references after fields are synced
+    await this.updateWithFieldReferences(item.id);
 
     return item.id;
   }
