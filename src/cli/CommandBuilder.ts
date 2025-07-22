@@ -8,7 +8,6 @@ export interface GlobalOptions {
   verbose: boolean;
   quiet: boolean;
   cache: boolean;
-  env?: string;
 }
 
 export interface BuildOptions {
@@ -32,8 +31,7 @@ export class CommandBuilder {
       .option("-n, --no-cache", "Disable cache usage")
       .option("-d, --debug", "Output information useful for debugging.", false)
       .option("-v, --verbose", "Display even finer-grained trace logs.", false)
-      .option("-q, --quiet", "Only display errors.", false)
-      .option("-e, --env <environment>", "Specify the environment to use");
+      .option("-q, --quiet", "Only display errors.", false);
   }
 
   /**
