@@ -58,4 +58,12 @@ export interface DatoBuilderConfig {
    * @default LogLevel.INFO
    */
   logLevel?: LogLevel;
+
+  /**
+   * Environment name for DatoCMS operations.
+   * Used for logging and environment-specific behavior.
+   *
+   * @default "main"
+   */
+  environment?: string;
 }
