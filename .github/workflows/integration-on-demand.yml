@@ -1,0 +1,142 @@
+name: Integration Tests On Demand
+
+on:
+  issue_comment:
+    types: [created]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'PR number to run tests against'
+        required: true
+        type: string
+
+env:
+  NODE_VERSION: '20'
+  CI: true
+  LOG_LEVEL: 'ERROR'
+
+permissions:
+  contents: read
+  pull-requests: write
+  checks: write
+
+jobs:
+  trigger-integration:
+    name: Parse Comment & Trigger
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'workflow_dispatch' || 
+      (
+        github.event.issue.pull_request &&
+        (
+          contains(github.event.comment.body, '/run-integration') ||
+          contains(github.event.comment.body, '/test-integration') ||
+          contains(github.event.comment.body, '/integration-tests')
+        ) &&
+        (
+          github.event.comment.author_association == 'OWNER' ||
+          github.event.comment.author_association == 'MEMBER' ||
+          github.event.comment.author_association == 'COLLABORATOR'
+        )
+      )
+
+    outputs:
+      pr-number: ${{ steps.get-pr.outputs.pr-number }}
+      pr-sha: ${{ steps.get-pr.outputs.pr-sha }}
+      should-run: ${{ steps.get-pr.outputs.should-run }}
+
+    steps:
+      - name: Get PR Information
+        id: get-pr
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            PR_NUMBER="${{ github.event.inputs.pr_number }}"
+          else
+            PR_NUMBER="${{ github.event.issue.number }}"
+          fi
+          
+          echo "pr-number=$PR_NUMBER" >> $GITHUB_OUTPUT
+          echo "should-run=true" >> $GITHUB_OUTPUT
+          
+          # Get PR details
+          PR_DATA=$(gh api "/repos/${{ github.repository }}/pulls/$PR_NUMBER" --jq '{sha: .head.sha, ref: .head.ref}')
+          PR_SHA=$(echo "$PR_DATA" | jq -r '.sha')
+          
+          echo "pr-sha=$PR_SHA" >> $GITHUB_OUTPUT
+          echo "Found PR #$PR_NUMBER at SHA: $PR_SHA"
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: React to Comment
+        if: github.event_name == 'issue_comment'
+        run: |
+          gh api \
+            --method POST \
+            "/repos/${{ github.repository }}/issues/comments/${{ github.event.comment.id }}/reactions" \
+            --field content='+1'
+          
+          gh api \
+            --method POST \
+            "/repos/${{ github.repository }}/issues/${{ steps.get-pr.outputs.pr-number }}/comments" \
+            --field body="🧪 Integration tests triggered by @${{ github.event.comment.user.login }}. [View workflow run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+  run-integration:
+    name: Run Integration Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    concurrency:
+      group: integration-tests
+      cancel-in-progress: true
+    needs: [trigger-integration]
+    if: needs.trigger-integration.outputs.should-run == 'true'
+
+    steps:
+      - name: Checkout PR
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.trigger-integration.outputs.pr-sha }}
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --prefer-offline --no-audit
+
+      - name: Integration Test Status
+        run: |
+          echo "🧪 Running integration tests for PR #${{ needs.trigger-integration.outputs.pr-number }}"
+          echo "Triggered by: ${{ github.event.comment.user.login || github.actor }}"
+          echo "SHA: ${{ needs.trigger-integration.outputs.pr-sha }}"
+
+      - name: Run Integration Tests
+        env:
+          DATOCMS_API_TOKEN: ${{ secrets.DATOCMS_API_TOKEN }}
+          NODE_ENV: test
+          LOG_LEVEL: ERROR
+        run: npm run test:integration
+
+      - name: Update PR Comment (Success)
+        if: success()
+        run: |
+          gh api \
+            --method POST \
+            "/repos/${{ github.repository }}/issues/${{ needs.trigger-integration.outputs.pr-number }}/comments" \
+            --field body="✅ Integration tests passed! All tests completed successfully."
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Update PR Comment (Failure)
+        if: failure()
+        run: |
+          gh api \
+            --method POST \
+            "/repos/${{ github.repository }}/issues/${{ needs.trigger-integration.outputs.pr-number }}/comments" \
+            --field body="❌ Integration tests failed. Check the [workflow run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) for details."
+        env:
+          GH_TOKEN: ${{ github.token }}
