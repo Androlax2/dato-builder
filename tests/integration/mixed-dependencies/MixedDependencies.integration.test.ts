@@ -9,7 +9,7 @@ describe("MixedDependencies Integration Test", () => {
   const testConfigPath = path.resolve(
     __dirname,
     "fixtures",
-    "model-dependencies.config.js",
+    "mixed-dependencies.config.js",
   );
   const API_TOKEN = process.env.DATOCMS_API_TOKEN;
   let createdItemTypeIds: string[] = [];
