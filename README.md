@@ -94,6 +94,7 @@ const config = {
   apiToken: process.env.DATO_CMA_TOKEN,
   overwriteExistingFields: false,
   blockApiKeySuffix: "block",
+  environment: undefined, // Uses default environment
 };
 
 export default config;
@@ -117,6 +118,7 @@ export default config;
 | `modelsPath`              | `string`         | `"./datocms/models"` | Path where CLI searches for model definitions                                        |
 | `blocksPath`              | `string`         | `"./datocms/blocks"` | Path where CLI searches for block definitions                                        |
 | `logLevel`                | `LogLevel`       | `LogLevel.INFO`      | Minimum logging level (see [Logging Configuration](#logging-configuration))          |
+| `environment`             | `string`         | `undefined`          | Target DatoCMS environment (see [Environment Configuration](#environment-configuration)) |
 
 ### Field Update Behavior
 
@@ -172,6 +174,22 @@ import type { DatoBuilderConfig } from "dato-builder";
 const config: DatoBuilderConfig = {
   apiToken: process.env.DATO_CMA_TOKEN!,
   overwriteExistingFields: false,
+  environment: "production", // Target specific environment
+  // ... other options
+};
+
+export default config;
+```
+
+### Environment Configuration
+
+Target specific DatoCMS environments by setting the `environment` option:
+
+```javascript
+/** @type {import("dato-builder").DatoBuilderConfig} */
+const config = {
+  apiToken: process.env.DATO_CMA_TOKEN,
+  environment: "staging", // Target staging environment
   // ... other options
 };
 
@@ -271,6 +289,17 @@ npx dato-builder build --auto-concurrency
 # Solution: Clear cache and rebuild
 npx dato-builder clear-cache
 npx dato-builder build --no-cache
+```
+
+**Environment Issues**
+```bash
+# Problem: Changes appear in wrong environment
+# Solution: Verify config file environment setting
+# Check: dato-builder.config.js environment property
+
+# Problem: "Environment not found" error
+# Solution: Ensure environment exists in DatoCMS project
+# Verify: DatoCMS dashboard > Settings > Environments
 ```
 
 **Generation Errors**
