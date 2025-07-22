@@ -5,33 +5,150 @@ on:
     branches:
       - main
       - beta
+  push:
+    branches:
+      - main
+      - beta
+  workflow_dispatch:
+    inputs:
+      run_integration_tests:
+        description: 'Force run integration tests'
+        required: false
+        default: false
+        type: boolean
+
+env:
+  NODE_VERSION: '20'
+  CI: true
+  LOG_LEVEL: 'ERROR'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  ci:
+
+  quality:
+    name: Code Quality
     runs-on: ubuntu-latest
+    timeout-minutes: 10
 
     steps:
-      # Check out the repository
       - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
 
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --prefer-offline --no-audit
 
       - name: Build
         run: npm run build
 
       - name: Check Biome style
-        run: npx @biomejs/biome ci .
+        run: npx @biomejs/biome ci . --diagnostic-level=error
 
       - name: TypeScript Check
         run: npx tsc --noEmit --skipLibCheck
 
       - name: Spellcheck
-        run: npm run spellcheck
+        run: npm run spellcheck -- --no-progress --no-summary
 
-      - name: Test
-        run: npm run test
+  test-unit:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --prefer-offline --no-audit
+
+      - name: Run Unit Tests
+        run: npm run test:unit
+
+  test-integration:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    concurrency:
+      group: integration-tests
+      cancel-in-progress: true
+    if: |
+      github.event.inputs.run_integration_tests == 'true' ||
+      (
+        github.event_name == 'pull_request' && (
+          contains(github.event.pull_request.labels.*.name, 'run-integration-tests') ||
+          contains(github.event.pull_request.labels.*.name, 'integration') ||
+          contains(github.event.pull_request.title, '[integration]')
+        )
+      )
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --prefer-offline --no-audit
+
+      - name: Integration Test Status
+        run: |
+          echo "🧪 Integration tests triggered by:"
+          if [ "${{ github.event.inputs.run_integration_tests }}" == "true" ]; then
+            echo "  - Manual workflow dispatch"
+          fi
+          if [ "${{ contains(github.event.pull_request.labels.*.name, 'run-integration-tests') }}" == "true" ]; then
+            echo "  - Label: run-integration-tests"
+          fi
+          if [ "${{ contains(github.event.pull_request.labels.*.name, 'integration') }}" == "true" ]; then
+            echo "  - Label: integration"
+          fi
+          if [ "${{ contains(github.event.pull_request.title, '[integration]') }}" == "true" ]; then
+            echo "  - Title tag: [integration]"
+          fi
+
+      - name: Run Integration Tests
+        env:
+          DATOCMS_API_TOKEN: ${{ secrets.DATOCMS_API_TOKEN }}
+          NODE_ENV: test
+          LOG_LEVEL: ERROR
+        run: npm run test:integration
+
+  integration-tests-skipped:
+    name: Integration Tests (Skipped)
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'pull_request' && 
+      github.event.inputs.run_integration_tests != 'true' &&
+      !contains(github.event.pull_request.labels.*.name, 'run-integration-tests') &&
+      !contains(github.event.pull_request.labels.*.name, 'integration') &&
+      !contains(github.event.pull_request.title, '[integration]')
+
+    steps:
+      - name: Integration Tests Status
+        run: |
+          echo "⏭️  Integration tests skipped - opt-in required"
+          echo ""
+          echo "To run integration tests, you can:"
+          echo "  - Add label 'run-integration-tests' or 'integration' to this PR"
+          echo "  - Add '[integration]' to the PR title"
+          echo "  - Use 'Run workflow' button with 'Force run integration tests' enabled"
+          echo "  - Comment '/run-integration' on this PR"
