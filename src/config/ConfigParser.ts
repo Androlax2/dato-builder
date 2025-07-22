@@ -41,6 +41,7 @@ export class ConfigParser {
       blocksPath: path.resolve(process.cwd(), "datocms", "blocks"),
       modelsPath: path.resolve(process.cwd(), "datocms", "models"),
       logLevel: LogLevel.INFO,
+      environment: "main",
     };
   }
 
