@@ -1,10 +1,10 @@
 import type * as SimpleSchemaTypes from "@datocms/cma-client/src/generated/SimpleSchemaTypes";
 import ItemTypeBuilder, {
-  type FieldReferenceConfig,
   type ItemTypeBuilderType,
 } from "./ItemTypeBuilder.js";
 import type { ResolvedDatoBuilderConfig } from "./types/DatoBuilderConfig.js";
 import type { FieldIdOrResolver } from "./types/FieldResolver.js";
+import { FieldReferenceHandler } from "./utils/FieldReferenceHandler.js";
 
 type BlockBuilderBody = Pick<SimpleSchemaTypes.ItemTypeCreateSchema, "hint"> & {
   /**
@@ -41,30 +41,17 @@ export default class BlockBuilder extends ItemTypeBuilder {
   ] as const;
 
   constructor({ name, options, config }: BlockBuilderOptions) {
-    // Extract field resolvers and clean body before super() call
-    const fieldResolvers: FieldReferenceConfig<string> = {};
-    const cleanOptions: Omit<
-      BlockBuilderBody,
-      (typeof BlockBuilder.FIELD_REFERENCE_NAMES)[number]
-    > = {
-      api_key: options?.api_key,
-      hint: options?.hint,
-    };
-
-    if (options) {
-      // Extract field references
-      for (const fieldName of BlockBuilder.FIELD_REFERENCE_NAMES) {
-        const fieldValue = options[fieldName];
-        if (fieldValue !== undefined) {
-          fieldResolvers[fieldName] = fieldValue;
-        }
-      }
-    }
+    // Extract field resolvers and clean body using shared handler
+    const { fieldResolvers, cleanBody } =
+      FieldReferenceHandler.extractFieldReferences(
+        options,
+        BlockBuilder.FIELD_REFERENCE_NAMES,
+      );
 
     super({
       type: "block",
       body: {
-        ...cleanOptions,
+        ...cleanBody,
         name,
       },
       config,
