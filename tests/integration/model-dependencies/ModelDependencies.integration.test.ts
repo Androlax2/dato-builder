@@ -9,7 +9,7 @@ describe("ModelDependencies Integration Test", () => {
   const testConfigPath = path.resolve(
     __dirname,
     "fixtures",
-    "block-dependencies.config.js",
+    "model-dependencies.config.js",
   );
   const API_TOKEN = process.env.DATOCMS_API_TOKEN;
   const createdModels: string[] = [];
