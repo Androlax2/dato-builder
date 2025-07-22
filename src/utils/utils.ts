@@ -1,4 +1,4 @@
-import inflection from "inflection";
+import * as inflection from "inflection";
 
 interface DatoApiKeyOptions {
   name: string;
