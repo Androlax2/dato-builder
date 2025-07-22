@@ -204,46 +204,6 @@ export default config;
 | `LogLevel.DEBUG` | `3`   | Detailed debugging  | Development        |
 | `LogLevel.TRACE` | `4`   | Maximum verbosity   | Troubleshooting    |
 
-### Troubleshooting Configuration
-
-#### Common Issues
-
-**Missing API Token**
-```bash
-# Error: Validation error: Missing apiToken
-# Solution: Set environment variable
-export DATO_CMA_TOKEN=your_token_here
-```
-
-**Invalid Paths**
-```bash
-# Error: No dato-builder config file found
-# Solution: Ensure config file exists in project root
-touch dato-builder.config.js
-```
-
-**Permission Errors**
-```bash
-# Error: API token lacks sufficient permissions
-# Solution: Use Content Management API token with write permissions
-```
-
-#### Configuration Debugging
-```javascript
-/** @type {import("dato-builder").DatoBuilderConfig} */
-const config = {
-  logLevel: 3, // Enable DEBUG logging
-  // ... other config
-};
-
-export default config;
-```
-
-```bash
-# Run with debug output
-npx dato-builder build --debug
-```
-
 ## CLI Commands
 
 ### Build Commands
