@@ -4,7 +4,7 @@ import ItemTypeBuilder, {
 } from "./ItemTypeBuilder.js";
 import type { ResolvedDatoBuilderConfig } from "./types/DatoBuilderConfig.js";
 import type { FieldIdOrResolver } from "./types/FieldResolver.js";
-import { FieldReferenceHandler } from "./utils/FieldReferenceHandler.js";
+import { extractFieldReferences } from "./utils/FieldReferenceHandler.js";
 
 type BlockBuilderBody = Pick<SimpleSchemaTypes.ItemTypeCreateSchema, "hint"> & {
   /**
@@ -42,11 +42,10 @@ export default class BlockBuilder extends ItemTypeBuilder {
 
   constructor({ name, options, config }: BlockBuilderOptions) {
     // Extract field resolvers and clean body using shared handler
-    const { fieldResolvers, cleanBody } =
-      FieldReferenceHandler.extractFieldReferences(
-        options,
-        BlockBuilder.FIELD_REFERENCE_NAMES,
-      );
+    const { fieldResolvers, cleanBody } = extractFieldReferences(
+      options,
+      BlockBuilder.FIELD_REFERENCE_NAMES,
+    );
 
     super({
       type: "block",

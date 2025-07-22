@@ -4,7 +4,7 @@ import ItemTypeBuilder, {
 } from "./ItemTypeBuilder.js";
 import type { ResolvedDatoBuilderConfig } from "./types/DatoBuilderConfig.js";
 import type { FieldIdOrResolver } from "./types/FieldResolver.js";
-import { FieldReferenceHandler } from "./utils/FieldReferenceHandler.js";
+import { extractFieldReferences } from "./utils/FieldReferenceHandler.js";
 
 type ModelBuilderBody = Pick<
   SimpleSchemaTypes.ItemTypeCreateSchema,
@@ -103,11 +103,10 @@ export default class ModelBuilder extends ItemTypeBuilder {
           : undefined;
 
     // Extract field resolvers and clean body using shared handler
-    const { fieldResolvers, cleanBody } =
-      FieldReferenceHandler.extractFieldReferences(
-        modelOptions,
-        ModelBuilder.FIELD_REFERENCE_NAMES,
-      );
+    const { fieldResolvers, cleanBody } = extractFieldReferences(
+      modelOptions,
+      ModelBuilder.FIELD_REFERENCE_NAMES,
+    );
 
     super({
       type: "model",
