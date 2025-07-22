@@ -1,3 +1,23 @@
+# [4.0.0-beta.3](https://github.com/Androlax2/dato-builder/compare/v4.0.0-beta.2...v4.0.0-beta.3) (2025-07-22)
+
+
+### Bug Fixes
+
+* enhance release workflow to check and run integration tests based on changes ([d88a8d8](https://github.com/Androlax2/dato-builder/commit/d88a8d8d5c40e93b4de814c186048fabf36400dd))
+* remove detect-changes job from integration tests workflow and simplify triggers ([acf55db](https://github.com/Androlax2/dato-builder/commit/acf55db5f6351dc45f32ea6d849ef5e1865f2607))
+* remove integration test requirement check from release workflow ([7d1b78e](https://github.com/Androlax2/dato-builder/commit/7d1b78e597c4cf09044b816899dbf22734bc192a))
+* remove outdated troubleshooting section from README.md ([89ed42a](https://github.com/Androlax2/dato-builder/commit/89ed42ad2c49955fc4e81b7778b945abcb3d55d8))
+* update .npmignore to include additional configuration and development files ([3f52d9e](https://github.com/Androlax2/dato-builder/commit/3f52d9e5b9d82f699afeea3d5af4c7a8e586c7f0))
+* update package.json and package-lock.json to include @commander-js/extra-typings dependency ([1116d2e](https://github.com/Androlax2/dato-builder/commit/1116d2e09696a726abf3cd0a537e2b3fbbd1da4d))
+* update tsconfig.build.json to retain comments and adjust internal stripping ([189cf47](https://github.com/Androlax2/dato-builder/commit/189cf472f8fb35e7f82ac7e16188543035b1fe98))
+
+
+### Features
+
+* add concurrency control to integration tests job in on-demand workflow ([683365d](https://github.com/Androlax2/dato-builder/commit/683365dc1f90942b1764ccbfff63c61627feab1f))
+* add integration tests on demand workflow triggered by comments and manual dispatch ([9a063e8](https://github.com/Androlax2/dato-builder/commit/9a063e8757ecaecb5c53993b0d506aab1822f1e2))
+* enhance CI workflow with manual dispatch and integration change detection ([89b718b](https://github.com/Androlax2/dato-builder/commit/89b718bf8687c25aac76636ac2aa121434694979))
+
 # [4.0.0-beta.2](https://github.com/Androlax2/dato-builder/compare/v4.0.0-beta.1...v4.0.0-beta.2) (2025-07-22)
 
 
