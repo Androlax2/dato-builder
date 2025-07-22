@@ -27,31 +27,6 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  detect-changes:
-    name: Detect Changes
-    runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
-    outputs:
-      integration-relevant: ${{ steps.changes.outputs.integration }}
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-      
-      - name: Detect integration-relevant changes
-        id: changes
-        uses: dorny/paths-filter@v3
-        with:
-          filters: |
-            integration:
-              - 'src/Api/**'
-              - 'src/DatoCmsSync.ts'
-              - 'src/cli/**'
-              - 'src/cli.ts'
-              - 'src/DatoBuilderCLI.ts'
-              - 'src/config/**'
-              - 'tests/integration/**'
-              - 'package.json'
-              - 'jest.config.integration.ts'
 
   quality:
     name: Code Quality
@@ -108,17 +83,16 @@ jobs:
     name: Integration Tests
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    needs: [detect-changes]
+    concurrency:
+      group: integration-tests
+      cancel-in-progress: true
     if: |
-      always() && (
-        github.event.inputs.run_integration_tests == 'true' ||
-        (
-          github.event_name == 'pull_request' && (
-            contains(github.event.pull_request.labels.*.name, 'run-integration-tests') ||
-            contains(github.event.pull_request.labels.*.name, 'integration') ||
-            contains(github.event.pull_request.title, '[integration]') ||
-            needs.detect-changes.outputs.integration-relevant == 'true'
-          )
+      github.event.inputs.run_integration_tests == 'true' ||
+      (
+        github.event_name == 'pull_request' && (
+          contains(github.event.pull_request.labels.*.name, 'run-integration-tests') ||
+          contains(github.event.pull_request.labels.*.name, 'integration') ||
+          contains(github.event.pull_request.title, '[integration]')
         )
       )
     
@@ -150,9 +124,6 @@ jobs:
           if [ "${{ contains(github.event.pull_request.title, '[integration]') }}" == "true" ]; then
             echo "  - Title tag: [integration]"
           fi
-          if [ "${{ needs.detect-changes.outputs.integration-relevant }}" == "true" ]; then
-            echo "  - Integration-relevant file changes detected"
-          fi
 
       - name: Run Integration Tests
         env:
@@ -164,22 +135,20 @@ jobs:
   integration-tests-skipped:
     name: Integration Tests (Skipped)
     runs-on: ubuntu-latest
-    needs: [detect-changes]
     if: |
       github.event_name == 'pull_request' && 
       github.event.inputs.run_integration_tests != 'true' &&
       !contains(github.event.pull_request.labels.*.name, 'run-integration-tests') &&
       !contains(github.event.pull_request.labels.*.name, 'integration') &&
-      !contains(github.event.pull_request.title, '[integration]') &&
-      needs.detect-changes.outputs.integration-relevant != 'true'
+      !contains(github.event.pull_request.title, '[integration]')
     
     steps:
       - name: Integration Tests Status
         run: |
-          echo "⏭️  Integration tests skipped - no triggers detected"
+          echo "⏭️  Integration tests skipped - opt-in required"
           echo ""
           echo "To run integration tests, you can:"
           echo "  - Add label 'run-integration-tests' or 'integration' to this PR"
           echo "  - Add '[integration]' to the PR title"
           echo "  - Use 'Run workflow' button with 'Force run integration tests' enabled"
-          echo "  - Modify integration-relevant files (API, sync, CLI, config, tests)"
+          echo "  - Comment '/run-integration' on this PR"
