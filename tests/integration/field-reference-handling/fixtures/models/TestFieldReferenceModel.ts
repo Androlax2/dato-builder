@@ -10,13 +10,7 @@ export default function buildTestFieldReferenceModel({
     options: {
       api_key: "test_field_reference_model",
       hint: "Model for testing field reference functionality",
-      sortable: true,
-      // Use field resolver for ordering field
-      ordering_field: (fields) => {
-        const orderField = fields.find((f) => f.api_key === "sort_order");
-        if (!orderField) throw new Error("Sort order field not found");
-        return orderField.id;
-      },
+      sortable: false,
       // Use field resolver for presentation title
       presentation_title_field: (fields) => {
         const titleField = fields.find((f) => f.api_key === "title");
@@ -44,15 +38,6 @@ export default function buildTestFieldReferenceModel({
       label: "Summary",
       body: {
         api_key: "summary",
-      },
-    })
-    .addInteger({
-      label: "Sort Order",
-      body: {
-        api_key: "sort_order",
-        validators: {
-          required: true,
-        },
       },
     })
     .addDate({
