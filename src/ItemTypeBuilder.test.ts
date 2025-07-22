@@ -1125,11 +1125,16 @@ describe("ItemTypeBuilder", () => {
         typeof buildClient
       >;
 
-      const config = createMockConfig({
-        environment: "sandbox",
-      });
+      // Clear any previous calls to the mock
+      mockBuildClient.mockClear();
 
-      new TestItemTypeBuilder("model", { name: "Test" }, config);
+      new TestItemTypeBuilder(
+        "model",
+        { name: "Test" },
+        {
+          environment: "sandbox",
+        },
+      );
 
       // Verify the call matches DatoCMS client expected interface
       const expectedCall = {
@@ -1142,8 +1147,8 @@ describe("ItemTypeBuilder", () => {
       // Verify actual values - note that config.environment should be "sandbox"
       const actualCall = mockBuildClient.mock.calls[0]?.[0];
       expect(actualCall).toEqual({
-        apiToken: config.apiToken,
-        environment: config.environment, // Use actual config environment
+        apiToken: "custom-token", // From createMockConfig defaults
+        environment: "sandbox", // From the partial config passed to constructor
       });
     });
 
