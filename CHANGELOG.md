@@ -1,3 +1,10 @@
+# [4.0.0-beta.6](https://github.com/Androlax2/dato-builder/compare/v4.0.0-beta.5...v4.0.0-beta.6) (2025-07-22)
+
+
+### Bug Fixes
+
+* remove problematic npm ci flags in release workflow ([3ff2a94](https://github.com/Androlax2/dato-builder/commit/3ff2a94dc9fa558fc9e7d74c90d3bac8f831c679))
+
 # [4.0.0-beta.5](https://github.com/Androlax2/dato-builder/compare/v4.0.0-beta.4...v4.0.0-beta.5) (2025-07-22)
 
 
