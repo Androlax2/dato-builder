@@ -1,3 +1,16 @@
+# [4.0.0-beta.2](https://github.com/Androlax2/dato-builder/compare/v4.0.0-beta.1...v4.0.0-beta.2) (2025-07-22)
+
+
+### Bug Fixes
+
+* update .gitignore to include src/datocms directory ([a0a6492](https://github.com/Androlax2/dato-builder/commit/a0a6492be265d7c59a97b06f40ae7af2cf8eb060))
+* update spellcheck command to suppress progress and summary output ([f201708](https://github.com/Androlax2/dato-builder/commit/f201708f473cc623579cc1e30899199c2ddb9f2b))
+
+
+### Features
+
+* add new blocks for accessibility features, fare management, and event tracking ([d9f8090](https://github.com/Androlax2/dato-builder/commit/d9f8090a626df52ec9523d5a7cc6638f04166c75))
+
 # [4.0.0-beta.1](https://github.com/Androlax2/dato-builder/compare/v3.8.0...v4.0.0-beta.1) (2025-07-22)
 
 
