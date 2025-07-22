@@ -6,7 +6,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-Ready-blue.svg)](https://www.typescriptlang.org/)
 
-Quickly create Models, Blocks, and content structures in DatoCMS from your TypeScript source code with concurrent builds, interactive generation, and comprehensive validation.
+Quickly create Models, Blocks, and content structures in DatoCMS from your TypeScript source code with concurrent builds, interactive generation, comprehensive validation, and dynamic field reference resolution.
 
 ## Table of Contents
 
@@ -324,8 +324,18 @@ export default async function buildTestBlock({ config }: BuilderContext) {
   return new BlockBuilder({
       name: "Test Block",
       config,
+      options: {
+        // Dynamic field reference - finds title field automatically
+        presentation_title_field: (fields) => {
+          const titleField = fields.find(f => f.api_key === "title");
+          return titleField?.id || null;
+        },
+      },
   })
-    .addHeading({ label: "Title" })
+    .addHeading({ 
+      label: "Title",
+      body: { api_key: "title" },
+    })
     .addTextarea({ label: "Description" })
     .addImage({
       label: "Image",
