@@ -4,6 +4,24 @@ import type { FieldBody } from "../src/Fields/Field";
 import type { ItemTypeBuilderType } from "../src/ItemTypeBuilder";
 import { createMockConfig } from "../tests/utils/mockConfig";
 
+// Mock @datocms/cma-client-node buildClient
+jest.unstable_mockModule("@datocms/cma-client-node", () => ({
+  buildClient: jest.fn().mockReturnValue({
+    itemTypes: {
+      create: jest.fn(),
+      update: jest.fn(),
+      find: jest.fn(),
+      list: jest.fn(),
+    },
+    fields: {
+      list: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+      destroy: jest.fn(),
+    },
+  }),
+}));
+
 // Create mock functions before mocking modules
 const MockDatoApi = jest.fn();
 const MockInteger = jest.fn();
@@ -1022,6 +1040,137 @@ describe("ItemTypeBuilder", () => {
         "item-123",
         mockFieldBuilds.category,
       );
+    });
+  });
+
+  describe("environment handling", () => {
+    it("should pass environment to buildClient when specified", async () => {
+      const { buildClient } = await import("@datocms/cma-client-node");
+      const mockBuildClient = buildClient as jest.MockedFunction<
+        typeof buildClient
+      >;
+
+      const config = createMockConfig({
+        environment: "staging",
+      });
+
+      new TestItemTypeBuilder("model", { name: "Test" }, config);
+
+      expect(mockBuildClient).toHaveBeenCalledWith({
+        apiToken: config.apiToken,
+        environment: "staging",
+      });
+    });
+
+    it("should pass undefined environment to buildClient when not specified", async () => {
+      const { buildClient } = await import("@datocms/cma-client-node");
+      const mockBuildClient = buildClient as jest.MockedFunction<
+        typeof buildClient
+      >;
+
+      const config = createMockConfig({
+        environment: undefined,
+      });
+
+      new TestItemTypeBuilder("model", { name: "Test" }, config);
+
+      expect(mockBuildClient).toHaveBeenCalledWith({
+        apiToken: config.apiToken,
+        environment: undefined,
+      });
+    });
+
+    it("should handle empty string environment", async () => {
+      const { buildClient } = await import("@datocms/cma-client-node");
+      const mockBuildClient = buildClient as jest.MockedFunction<
+        typeof buildClient
+      >;
+
+      const config = createMockConfig({
+        environment: "",
+      });
+
+      new TestItemTypeBuilder("model", { name: "Test" }, config);
+
+      expect(mockBuildClient).toHaveBeenCalledWith({
+        apiToken: config.apiToken,
+        environment: "",
+      });
+    });
+
+    it("should work with various DatoCMS environment names", async () => {
+      const { buildClient } = await import("@datocms/cma-client-node");
+      const mockBuildClient = buildClient as jest.MockedFunction<
+        typeof buildClient
+      >;
+
+      const environments = ["main", "sandbox", "staging", "production", "dev"];
+
+      for (const environment of environments) {
+        mockBuildClient.mockClear();
+
+        const config = createMockConfig({ environment });
+        new TestItemTypeBuilder("model", { name: "Test" }, config);
+
+        expect(mockBuildClient).toHaveBeenCalledWith({
+          apiToken: config.apiToken,
+          environment: environment,
+        });
+      }
+    });
+
+    it("should maintain type compatibility with DatoCMS buildClient", async () => {
+      const { buildClient } = await import("@datocms/cma-client-node");
+      const mockBuildClient = buildClient as jest.MockedFunction<
+        typeof buildClient
+      >;
+
+      const config = createMockConfig({
+        environment: "sandbox",
+      });
+
+      new TestItemTypeBuilder("model", { name: "Test" }, config);
+
+      // Verify the call matches DatoCMS client expected interface
+      const expectedCall = {
+        apiToken: expect.any(String),
+        environment: expect.any(String),
+      };
+
+      expect(mockBuildClient).toHaveBeenCalledWith(expectedCall);
+
+      // Verify actual values - note that config.environment should be "sandbox"
+      const actualCall = mockBuildClient.mock.calls[0]?.[0];
+      expect(actualCall).toEqual({
+        apiToken: config.apiToken,
+        environment: config.environment, // Use actual config environment
+      });
+    });
+
+    it("should handle config changes after initialization", async () => {
+      const { buildClient } = await import("@datocms/cma-client-node");
+      const mockBuildClient = buildClient as jest.MockedFunction<
+        typeof buildClient
+      >;
+
+      const config = createMockConfig({
+        environment: "staging",
+      });
+
+      const builder = new TestItemTypeBuilder(
+        "model",
+        { name: "Test" },
+        config,
+      );
+
+      // Verify initial environment was used
+      expect(mockBuildClient).toHaveBeenCalledWith({
+        apiToken: config.apiToken,
+        environment: "staging",
+      });
+
+      // Verify that config is stored and accessible
+      expect(builder.config.environment).toBe("staging");
     });
   });
 });

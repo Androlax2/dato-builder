@@ -76,6 +76,7 @@ describe("ConfigParser", () => {
         blocksPath: "/mock/cwd/datocms/blocks",
         modelsPath: "/mock/cwd/datocms/models",
         logLevel: 2,
+        environment: undefined,
       });
     });
 
@@ -108,6 +109,7 @@ describe("ConfigParser", () => {
         blocksPath: "/mock/cwd/datocms/blocks",
         modelsPath: "/mock/cwd/datocms/models",
         logLevel: 3,
+        environment: undefined,
       });
     });
 
@@ -244,6 +246,7 @@ describe("ConfigParser", () => {
         blocksPath: "/custom/blocks/path", // user override
         modelsPath: "/mock/cwd/datocms/models", // default
         logLevel: 2, // default
+        environment: undefined, // default
       });
     });
 
@@ -256,6 +259,7 @@ describe("ConfigParser", () => {
         blocksPath: "/custom/blocks",
         modelsPath: "/custom/models",
         logLevel: 0,
+        environment: "sandbox",
       };
 
       // Mock fs.existsSync to return true for .js file
@@ -525,6 +529,95 @@ describe("ConfigParser", () => {
         "/mock/cwd/dato-builder.config.js",
       );
       expect(result.apiToken).toBe("default-token");
+    });
+  });
+
+  describe("environment configuration", () => {
+    it("should use undefined as default environment", async () => {
+      const mockConfig: DatoBuilderConfig = {
+        apiToken: "test-token",
+        // No environment specified
+      };
+
+      mockFs.existsSync.mockImplementation((filePath) => {
+        return filePath === "/mock/cwd/dato-builder.config.js";
+      });
+
+      jest.spyOn(configParser as any, "importConfig").mockResolvedValue({
+        default: mockConfig,
+      });
+
+      const result = await configParser.loadConfig();
+
+      expect(result.environment).toBeUndefined();
+      expect(result).toEqual({
+        apiToken: "test-token",
+        overwriteExistingFields: false,
+        modelApiKeySuffix: "model",
+        blockApiKeySuffix: "block",
+        blocksPath: "/mock/cwd/datocms/blocks",
+        modelsPath: "/mock/cwd/datocms/models",
+        logLevel: 2,
+        environment: undefined,
+      });
+    });
+
+    it("should preserve explicit environment setting", async () => {
+      const mockConfig: DatoBuilderConfig = {
+        apiToken: "test-token",
+        environment: "staging",
+      };
+
+      mockFs.existsSync.mockImplementation((filePath) => {
+        return filePath === "/mock/cwd/dato-builder.config.js";
+      });
+
+      jest.spyOn(configParser as any, "importConfig").mockResolvedValue({
+        default: mockConfig,
+      });
+
+      const result = await configParser.loadConfig();
+
+      expect(result.environment).toBe("staging");
+      expect(result).toEqual({
+        apiToken: "test-token",
+        overwriteExistingFields: false,
+        modelApiKeySuffix: "model",
+        blockApiKeySuffix: "block",
+        blocksPath: "/mock/cwd/datocms/blocks",
+        modelsPath: "/mock/cwd/datocms/models",
+        logLevel: 2,
+        environment: "staging",
+      });
+    });
+
+    it("should handle empty string environment", async () => {
+      const mockConfig: DatoBuilderConfig = {
+        apiToken: "test-token",
+        environment: "",
+      };
+
+      mockFs.existsSync.mockImplementation((filePath) => {
+        return filePath === "/mock/cwd/dato-builder.config.js";
+      });
+
+      jest.spyOn(configParser as any, "importConfig").mockResolvedValue({
+        default: mockConfig,
+      });
+
+      const result = await configParser.loadConfig();
+
+      expect(result.environment).toBe("");
+      expect(result).toEqual({
+        apiToken: "test-token",
+        overwriteExistingFields: false,
+        modelApiKeySuffix: "model",
+        blockApiKeySuffix: "block",
+        blocksPath: "/mock/cwd/datocms/blocks",
+        modelsPath: "/mock/cwd/datocms/models",
+        logLevel: 2,
+        environment: "",
+      });
     });
   });
 });
