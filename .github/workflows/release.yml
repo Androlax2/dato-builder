@@ -65,7 +65,7 @@ jobs:
         run: npx tsc --noEmit --skipLibCheck
 
       - name: Spellcheck
-        run: npm run spellcheck
+        run: npm run spellcheck -- --no-progress --no-summary
 
       - name: Test
         env:

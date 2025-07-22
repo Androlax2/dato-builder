@@ -25,3 +25,4 @@ realpath
 TOC
 cpus
 actrc
+itemtypebuilder
