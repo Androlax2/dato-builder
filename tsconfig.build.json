@@ -36,10 +36,11 @@
     "forceConsistentCasingInFileNames": true,
     "incremental": true,
     "tsBuildInfoFile": "./build/.tsbuildinfo",
-    "removeComments": true,
+    "removeComments": false,
     "sourceMap": false,
     "noEmit": false,
-    "allowImportingTsExtensions": false
+    "allowImportingTsExtensions": false,
+    "stripInternal": false
   },
   "include": ["src/**/*"]
 }
