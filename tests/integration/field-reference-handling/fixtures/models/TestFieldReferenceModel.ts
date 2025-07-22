@@ -34,7 +34,7 @@ export default function buildTestFieldReferenceModel({
         },
       },
     })
-    .addText({
+    .addMultiLineText({
       label: "Summary",
       body: {
         api_key: "summary",

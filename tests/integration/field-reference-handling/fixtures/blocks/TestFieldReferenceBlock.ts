@@ -38,7 +38,7 @@ export default function buildTestFieldReferenceBlock({
         },
       },
     })
-    .addText({
+    .addMultiLineText({
       label: "Description",
       body: {
         api_key: "description",
