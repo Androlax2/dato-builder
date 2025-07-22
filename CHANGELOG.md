@@ -1,3 +1,11 @@
+# [4.0.0-beta.9](https://github.com/Androlax2/dato-builder/compare/v4.0.0-beta.8...v4.0.0-beta.9) (2025-07-22)
+
+
+### Bug Fixes
+
+* ensure version replacement runs after package.json version update ([cdc59a8](https://github.com/Androlax2/dato-builder/commit/cdc59a84f9739ac5d21971e6b1e9e7635549844b))
+* use namespace import for inflection to resolve ES module ([01a61a9](https://github.com/Androlax2/dato-builder/commit/01a61a9fa43fc844d6302c1c1f4557414be4a474))
+
 # [4.0.0-beta.8](https://github.com/Androlax2/dato-builder/compare/v4.0.0-beta.7...v4.0.0-beta.8) (2025-07-22)
 
 
