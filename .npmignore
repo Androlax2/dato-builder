@@ -1,3 +1,47 @@
-src
-tests
+# Source files
+src/
+tests/
+*.test.ts
+*.test.js
+__tests__/
+
+# Configuration files
 tsconfig.json
+tsconfig.build.json
+jest.config.ts
+.env
+.env.*
+*.config.js
+*.config.mjs
+*.config.ts
+
+# Development files
+.vscode/
+.idea/
+*.log
+*.tmp
+*.temp
+coverage/
+.nyc_output/
+.cache/
+
+# Git and CI
+.git/
+.github/
+.gitignore
+.gitattributes
+lefthook.yml
+commitlint.config.js
+release.config.mjs
+
+# Documentation
+README.md
+CHANGELOG.md
+docs/
+*.md
+
+# Build artifacts
+build/.tsbuildinfo
+node_modules/
+.DS_Store
+Thumbs.db

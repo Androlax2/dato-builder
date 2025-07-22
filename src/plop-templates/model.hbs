@@ -1,0 +1,22 @@
+import { ModelBuilder, type BuilderContext } from "dato-builder";
+
+export default function build{{name}}({ config }: BuilderContext) {
+  return new ModelBuilder({
+    name: "{{humanize name}}",
+    config,{{#if singleton}}
+    body: {
+      singleton: true,{{#if sortable}}
+      sortable: true,{{/if}}{{#if tree}}
+      tree: true,{{/if}}
+    },{{else}}{{#if sortable}}
+    body: {
+      sortable: true,{{#if tree}}
+      tree: true,{{/if}}
+    },{{else}}{{#if tree}}
+    body: {
+      tree: true,
+    },{{/if}}{{/if}}{{/if}}
+  })
+    // Add your fields here
+    // Example: .addText({ label: "Title" });
+}

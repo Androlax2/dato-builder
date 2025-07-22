@@ -1,14 +1,16 @@
-import pluralize from "pluralize";
+import inflection from "inflection";
+
+interface DatoApiKeyOptions {
+  name: string;
+  suffix?: string | null;
+  preservePlural?: boolean;
+}
 
 export function generateDatoApiKey({
   name,
   suffix,
   preservePlural = true,
-}: {
-  name: string;
-  suffix?: string;
-  preservePlural?: boolean;
-}): string {
+}: DatoApiKeyOptions): string {
   let result = name.toLowerCase();
 
   // Remove apostrophes (for possessive forms)
@@ -27,7 +29,7 @@ export function generateDatoApiKey({
 
   // Only singularize if explicitly asked
   if (!preservePlural) {
-    words = words.map(pluralize.singular);
+    words = words.map((word) => inflection.singularize(word));
   }
 
   result = words.join("_");
@@ -49,4 +51,15 @@ export function generateDatoApiKey({
   }
 
   return result;
+}
+
+/**
+ * Converts PascalCase to human-readable format with spaces
+ * @param pascalCase - String in PascalCase format (e.g., "MySuperBlock")
+ * @returns Human-readable string (e.g., "My Super Block")
+ */
+export function pascalToHumanReadable(pascalCase: string): string {
+  return pascalCase
+    .replace(/([A-Z])/g, " $1") // Add space before capital letters
+    .trim(); // Remove leading space
 }

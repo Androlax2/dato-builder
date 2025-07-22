@@ -1,4 +1,4 @@
-import type { ParsedError } from "../ParsedError";
+import type { ParsedError } from "../ParsedError.js";
 
 export default class GenericDatoError extends Error {
   public readonly info: ParsedError;
