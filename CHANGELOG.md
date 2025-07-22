@@ -1,3 +1,10 @@
+# [4.0.0-beta.5](https://github.com/Androlax2/dato-builder/compare/v4.0.0-beta.4...v4.0.0-beta.5) (2025-07-22)
+
+
+### Bug Fixes
+
+* ensure inflection dependency is properly bundled ([4572c97](https://github.com/Androlax2/dato-builder/commit/4572c976e3f2c885b2bf7d303137d0178e802043))
+
 # [4.0.0-beta.4](https://github.com/Androlax2/dato-builder/compare/v4.0.0-beta.3...v4.0.0-beta.4) (2025-07-22)
 
 

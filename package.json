@@ -1,7 +1,7 @@
 {
   "name": "dato-builder",
   "type": "module",
-  "version": "4.0.0-beta.4",
+  "version": "4.0.0-beta.5",
   "description": "A DatoCMS configuration builder",
   "license": "MIT",
   "author": "Théo Benoit <theo.benoit16@gmail.com>",
