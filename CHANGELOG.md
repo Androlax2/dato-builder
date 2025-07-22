@@ -1,3 +1,18 @@
+# [4.0.0-beta.4](https://github.com/Androlax2/dato-builder/compare/v4.0.0-beta.3...v4.0.0-beta.4) (2025-07-22)
+
+
+### Features
+
+* add environment configuration options to README and update examples ([81e5eb1](https://github.com/Androlax2/dato-builder/commit/81e5eb1ede6eeb78225e6a7ead1b98a748fb5fcc))
+* add environment handling in configuration and tests for DatoBuilderConfig ([bb01716](https://github.com/Androlax2/dato-builder/commit/bb0171627c7532e1c15320adb8a4b696ff179a42))
+* add environment option to CommandBuilder for environment specification ([87f7cc9](https://github.com/Androlax2/dato-builder/commit/87f7cc9d548746e697d51719692e8e889da512e2))
+* add environment property to DatoBuilderConfig for logging and behavior customization ([efb7663](https://github.com/Androlax2/dato-builder/commit/efb766320b3bbe2aa88feb87ef9e975a9d259e3f))
+* add integration tests and configuration for environment-specific builds ([062cb64](https://github.com/Androlax2/dato-builder/commit/062cb6473c8945f7efd5e73c0afec713ea0afed4))
+* enhance configuration loading with environment override and logging ([a701d39](https://github.com/Androlax2/dato-builder/commit/a701d3913eb7e0fce911dc983bd15510c5f154a1))
+* include environment in DatoApi client initialization for ItemTypeBuilder and RunCommand ([1b2e3dd](https://github.com/Androlax2/dato-builder/commit/1b2e3dd7cc0ace19f1cdc0f6c95e645598cc8a42))
+* replace DatoBuilderConfig with ResolvedDatoBuilderConfig across multiple files ([255f4b4](https://github.com/Androlax2/dato-builder/commit/255f4b466285d8132145e6b55b0cd08f7220cf4a))
+* set default environment to 'main' in configuration loading ([fcfd22b](https://github.com/Androlax2/dato-builder/commit/fcfd22b366b92696be6ebf6203a716f23afc810d))
+
 # [4.0.0-beta.3](https://github.com/Androlax2/dato-builder/compare/v4.0.0-beta.2...v4.0.0-beta.3) (2025-07-22)
 
 
