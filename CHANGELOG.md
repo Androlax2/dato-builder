@@ -1,3 +1,11 @@
+# [4.0.0-beta.8](https://github.com/Androlax2/dato-builder/compare/v4.0.0-beta.7...v4.0.0-beta.8) (2025-07-22)
+
+
+### Bug Fixes
+
+* rebuild package with correct version during release ([6e84ba2](https://github.com/Androlax2/dato-builder/commit/6e84ba2cbcd8662732b009ba7f01f59ba99c5892))
+* update dependencies to version 30.0.5 and remove npm cache from release workflow ([61986dc](https://github.com/Androlax2/dato-builder/commit/61986dcbd684896352356603e207303a7ac570ee))
+
 # [4.0.0-beta.7](https://github.com/Androlax2/dato-builder/compare/v4.0.0-beta.6...v4.0.0-beta.7) (2025-07-22)
 
 
