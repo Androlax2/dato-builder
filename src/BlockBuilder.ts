@@ -1,19 +1,19 @@
+import type * as SimpleSchemaTypes from "@datocms/cma-client/src/generated/SimpleSchemaTypes";
 import ItemTypeBuilder, {
   type ItemTypeBuilderType,
 } from "./ItemTypeBuilder.js";
 import type { ResolvedDatoBuilderConfig } from "./types/DatoBuilderConfig.js";
 
-type BlockBuilderBody = {
+type BlockBuilderBody = Pick<
+  SimpleSchemaTypes.ItemTypeCreateSchema,
+  "hint" | "presentation_title_field" | "presentation_image_field"
+> & {
   /**
    * API key of the block.
    *
    * If not provided, it will be generated from the name.
    */
   api_key?: string;
-  /**
-   * A hint shown to editors to help them understand the purpose of this block.
-   */
-  hint?: string | null;
 };
 
 type BlockBuilderOptions = {

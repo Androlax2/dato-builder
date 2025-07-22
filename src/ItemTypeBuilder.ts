@@ -60,6 +60,7 @@ import type {
   DatoBuilderConfig,
   ResolvedDatoBuilderConfig,
 } from "./types/DatoBuilderConfig.js";
+import { isFieldResolver, resolveFieldId } from "./types/FieldResolver.js";
 import { executeWithErrorHandling } from "./utils/errors.js";
 import { generateDatoApiKey } from "./utils/utils.js";
 
@@ -92,6 +93,7 @@ export default abstract class ItemTypeBuilder {
   readonly type: ItemTypeBuilderType;
   readonly fields: Field[] = [];
   readonly config: ResolvedDatoBuilderConfig;
+  private fieldResolverCache: Map<string, string> = new Map();
 
   protected constructor({ type, body, config }: ItemTypeBuilderOptions) {
     this.logger = new ConsoleLogger(config.logLevel);
@@ -785,6 +787,146 @@ export default abstract class ItemTypeBuilder {
     );
   }
 
+  /**
+   * Detects circular field references by tracking resolution paths
+   */
+  private detectCircularReferences(
+    obj: any,
+    existingFields: SimpleSchemaTypes.Field[],
+    resolutionStack: string[] = [],
+    path: string = "root",
+  ): void {
+    if (isFieldResolver(obj)) {
+      if (resolutionStack.includes(path)) {
+        throw new Error(
+          `Circular field reference detected in resolution path: ${resolutionStack.join(" -> ")} -> ${path}`,
+        );
+      }
+      // Simulate the resolver to check what field it would resolve to
+      try {
+        const resolvedId = obj(existingFields);
+        const resolvedField = existingFields.find((f) => f.id === resolvedId);
+        if (
+          resolvedField &&
+          resolutionStack.some((stackPath) =>
+            stackPath.includes(resolvedField.api_key),
+          )
+        ) {
+          throw new Error(
+            `Potential circular field reference: field "${resolvedField.api_key}" appears in resolution chain`,
+          );
+        }
+      } catch {
+        // Don't fail here, let the actual resolution handle the error
+      }
+    }
+
+    if (Array.isArray(obj)) {
+      obj.forEach((item, index) =>
+        this.detectCircularReferences(
+          item,
+          existingFields,
+          [...resolutionStack, path],
+          `${path}[${index}]`,
+        ),
+      );
+    } else if (obj && typeof obj === "object") {
+      for (const [key, value] of Object.entries(obj)) {
+        this.detectCircularReferences(
+          value,
+          existingFields,
+          [...resolutionStack, path],
+          `${path}.${key}`,
+        );
+      }
+    }
+  }
+
+  /**
+   * Recursively processes an object to resolve any FieldResolver callbacks to actual field IDs
+   */
+  private resolveFieldResolvers(
+    obj: any,
+    existingFields: SimpleSchemaTypes.Field[],
+    path: string = "root",
+  ): any {
+    if (isFieldResolver(obj)) {
+      // Create cache key based on resolver function and available fields
+      const fieldsHash = existingFields
+        .map((f) => f.id)
+        .sort()
+        .join(",");
+      const cacheKey = `${path}:${fieldsHash}`;
+
+      if (this.fieldResolverCache.has(cacheKey)) {
+        const cachedId = this.fieldResolverCache.get(cacheKey)!;
+        this.logger.traceJson("Using cached field resolver result", {
+          path,
+          cachedId,
+        });
+        return cachedId;
+      }
+
+      try {
+        this.logger.traceJson("Resolving field resolver callback", {
+          path,
+          availableFieldCount: existingFields.length,
+          availableFields: existingFields.map((f) => ({
+            label: f.label,
+            api_key: f.api_key,
+            id: f.id,
+          })),
+        });
+
+        const resolvedId = resolveFieldId(obj, existingFields);
+
+        // Cache the result
+        this.fieldResolverCache.set(cacheKey, resolvedId);
+
+        this.logger.traceJson("Field resolver resolved successfully", {
+          path,
+          resolvedId,
+          cached: true,
+        });
+
+        return resolvedId;
+      } catch (error) {
+        this.logger.errorJson("Field resolver failed", {
+          path,
+          error: (error as Error).message,
+          availableFields: existingFields.map((f) => ({
+            label: f.label,
+            api_key: f.api_key,
+            id: f.id,
+          })),
+        });
+        throw new Error(
+          `Field resolution failed at path '${path}': ${(error as Error).message}`,
+        );
+      }
+    }
+
+    if (Array.isArray(obj)) {
+      return obj.map((item, index) =>
+        this.resolveFieldResolvers(item, existingFields, `${path}[${index}]`),
+      );
+    }
+
+    if (obj && typeof obj === "object") {
+      const resolved: any = {};
+      for (const [key, value] of Object.entries(obj)) {
+        resolved[key] = this.resolveFieldResolvers(
+          value,
+          existingFields,
+          `${path}.${key}`,
+        );
+      }
+      return resolved;
+    }
+
+    return obj;
+  }
+
   private async syncFields(itemTypeId: string): Promise<void> {
     this.logger.traceJson("Starting field synchronization", {
       itemTypeId,
@@ -831,33 +973,54 @@ export default abstract class ItemTypeBuilder {
         .join(", ")}]`,
     );
 
-    this.logger.traceJson("Creating new fields", {});
-    await Promise.all(
-      toCreate.map(async (fieldDef) => {
-        const fieldLogger = contextLogger.child({
-          field: fieldDef.api_key,
-          operation: "create",
-        });
+    // Create fields sequentially to ensure proper ordering when using field resolvers
+    this.logger.traceJson("Creating new fields sequentially", {});
+    for (const fieldDef of toCreate) {
+      const fieldLogger = contextLogger.child({
+        field: fieldDef.api_key,
+        operation: "create",
+      });
 
-        this.logger.traceJson("Creating field", {
+      this.logger.traceJson("Creating field", {
+        fieldKey: fieldDef.api_key,
+        fieldType: fieldDef.field_type,
+      });
+
+      // Check for circular references before resolving
+      try {
+        this.detectCircularReferences(fieldDef, existing);
+      } catch (error) {
+        this.logger.errorJson("Circular reference detected", {
           fieldKey: fieldDef.api_key,
-          fieldType: fieldDef.field_type,
+          error: (error as Error).message,
         });
+        throw error;
+      }
 
-        await executeWithErrorHandling(
-          "create",
-          () => {
-            fieldLogger.debugJson("Creating field with definition: ", fieldDef);
+      // Resolve any field resolver callbacks in the field definition
+      const resolvedFieldDef = this.resolveFieldResolvers(fieldDef, existing);
 
-            return this.api.call(() =>
-              this.api.client.fields.create(itemTypeId, fieldDef),
-            );
-          },
-          "field",
-          fieldDef,
-        );
-      }),
-    );
+      await executeWithErrorHandling(
+        "create",
+        async () => {
+          fieldLogger.debugJson(
+            "Creating field with definition: ",
+            resolvedFieldDef,
+          );
+
+          const createdField = await this.api.call(() =>
+            this.api.client.fields.create(itemTypeId, resolvedFieldDef),
+          );
+
+          // Add the created field to existing fields so subsequent fields can reference it
+          existing.push(createdField);
+
+          return createdField;
+        },
+        "field",
+        resolvedFieldDef,
+      );
+    }
 
     if (!this.config.overwriteExistingFields) {
       this.logger.traceJson("Skipping field updates", {
@@ -895,10 +1058,19 @@ export default abstract class ItemTypeBuilder {
               operation: "update",
             });
 
-            fieldLogger.debugJson("Updating field with definition: ", fieldDef);
+            // Resolve any field resolver callbacks in the field definition
+            const resolvedFieldDef = this.resolveFieldResolvers(
+              fieldDef,
+              existing,
+            );
+
+            fieldLogger.debugJson(
+              "Updating field with definition: ",
+              resolvedFieldDef,
+            );
 
             return this.api.call(() =>
-              this.api.client.fields.update(existingField.id, fieldDef),
+              this.api.client.fields.update(existingField.id, resolvedFieldDef),
             );
           },
           "field",
