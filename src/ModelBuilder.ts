@@ -1,10 +1,10 @@
 import type * as SimpleSchemaTypes from "@datocms/cma-client/src/generated/SimpleSchemaTypes";
 import ItemTypeBuilder, {
+  type FieldReferenceConfig,
   type ItemTypeBuilderType,
 } from "./ItemTypeBuilder.js";
 import type { ResolvedDatoBuilderConfig } from "./types/DatoBuilderConfig.js";
 import type { FieldIdOrResolver } from "./types/FieldResolver.js";
-import { isFieldResolver, resolveFieldId } from "./types/FieldResolver.js";
 
 type ModelBuilderBody = Pick<
   SimpleSchemaTypes.ItemTypeCreateSchema,
@@ -80,12 +80,16 @@ type AllModelBuilderOptions = ModelBuilderOptions | LegacyModelBuilderOptions;
 
 export default class ModelBuilder extends ItemTypeBuilder {
   public override type: ItemTypeBuilderType = "model";
-  private orderingFieldResolver?: FieldIdOrResolver | null;
-  private presentationTitleFieldResolver?: FieldIdOrResolver | null;
-  private presentationImageFieldResolver?: FieldIdOrResolver | null;
-  private titleFieldResolver?: FieldIdOrResolver | null;
-  private imagePreviewFieldResolver?: FieldIdOrResolver | null;
-  private excerptFieldResolver?: FieldIdOrResolver | null;
+
+  // Field names that support field resolution
+  private static readonly FIELD_REFERENCE_NAMES = [
+    "ordering_field",
+    "presentation_title_field",
+    "presentation_image_field",
+    "title_field",
+    "image_preview_field",
+    "excerpt_field",
+  ] as const;
 
   constructor(params: AllModelBuilderOptions) {
     const { name, config } = params;
@@ -100,154 +104,28 @@ export default class ModelBuilder extends ItemTypeBuilder {
       modelOptions = params.body;
     }
 
-    // Store the field resolvers for later processing
-    const {
-      ordering_field,
-      presentation_title_field,
-      presentation_image_field,
-      title_field,
-      image_preview_field,
-      excerpt_field,
-      ...bodyWithoutFieldRefs
-    } = modelOptions || {};
+    // Extract field resolvers and clean body before super() call
+    const fieldResolvers: FieldReferenceConfig<string> = {};
+    const cleanOptions: any = {};
+
+    if (modelOptions) {
+      // Copy all properties except field references
+      for (const [key, value] of Object.entries(modelOptions)) {
+        if (ModelBuilder.FIELD_REFERENCE_NAMES.includes(key as any)) {
+          fieldResolvers[key] = value as any;
+        } else {
+          cleanOptions[key] = value;
+        }
+      }
+    }
 
     super({
       type: "model",
-      body: { ...bodyWithoutFieldRefs, name },
+      body: { ...cleanOptions, name },
       config,
     });
 
-    this.orderingFieldResolver = ordering_field;
-    this.presentationTitleFieldResolver = presentation_title_field;
-    this.presentationImageFieldResolver = presentation_image_field;
-    this.titleFieldResolver = title_field;
-    this.imagePreviewFieldResolver = image_preview_field;
-    this.excerptFieldResolver = excerpt_field;
-  }
-
-  /**
-   * Resolves field references to FieldData format for DatoCMS API
-   */
-  private async resolveFieldReferences(itemTypeId: string): Promise<{
-    ordering_field?: SimpleSchemaTypes.FieldData | null;
-    presentation_title_field?: SimpleSchemaTypes.FieldData | null;
-    presentation_image_field?: SimpleSchemaTypes.FieldData | null;
-    title_field?: SimpleSchemaTypes.FieldData | null;
-    image_preview_field?: SimpleSchemaTypes.FieldData | null;
-    excerpt_field?: SimpleSchemaTypes.FieldData | null;
-  }> {
-    const resolved: {
-      ordering_field?: SimpleSchemaTypes.FieldData | null;
-      presentation_title_field?: SimpleSchemaTypes.FieldData | null;
-      presentation_image_field?: SimpleSchemaTypes.FieldData | null;
-      title_field?: SimpleSchemaTypes.FieldData | null;
-      image_preview_field?: SimpleSchemaTypes.FieldData | null;
-      excerpt_field?: SimpleSchemaTypes.FieldData | null;
-    } = {};
-
-    // Get existing fields once for all resolvers
-    let existingFields: SimpleSchemaTypes.Field[] | null = null;
-
-    const getFields = async () => {
-      if (!existingFields) {
-        existingFields = await this.api.call(() =>
-          this.api.client.fields.list(itemTypeId),
-        );
-      }
-      return existingFields;
-    };
-
-    const resolveField = async (
-      resolver: FieldIdOrResolver | null | undefined,
-    ) => {
-      if (resolver === undefined) return undefined;
-      if (resolver === null) return null;
-
-      const fields = await getFields();
-      const fieldId = isFieldResolver(resolver)
-        ? resolveFieldId(resolver, fields)
-        : resolver;
-
-      return {
-        type: "field" as SimpleSchemaTypes.FieldType,
-        id: fieldId,
-      };
-    };
-
-    // Resolve all field references
-    if (this.orderingFieldResolver !== undefined) {
-      resolved.ordering_field = await resolveField(this.orderingFieldResolver);
-    }
-    if (this.presentationTitleFieldResolver !== undefined) {
-      resolved.presentation_title_field = await resolveField(
-        this.presentationTitleFieldResolver,
-      );
-    }
-    if (this.presentationImageFieldResolver !== undefined) {
-      resolved.presentation_image_field = await resolveField(
-        this.presentationImageFieldResolver,
-      );
-    }
-    if (this.titleFieldResolver !== undefined) {
-      resolved.title_field = await resolveField(this.titleFieldResolver);
-    }
-    if (this.imagePreviewFieldResolver !== undefined) {
-      resolved.image_preview_field = await resolveField(
-        this.imagePreviewFieldResolver,
-      );
-    }
-    if (this.excerptFieldResolver !== undefined) {
-      resolved.excerpt_field = await resolveField(this.excerptFieldResolver);
-    }
-
-    return resolved;
-  }
-
-  public override async create(): Promise<string> {
-    // Create the model first
-    const itemId = await super.create();
-
-    // Then update with field references if any exist
-    if (this.hasFieldReferences()) {
-      const fieldReferences = await this.resolveFieldReferences(itemId);
-
-      if (Object.keys(fieldReferences).length > 0) {
-        await this.api.call(() =>
-          this.api.client.itemTypes.update(itemId, fieldReferences),
-        );
-      }
-    }
-
-    return itemId;
-  }
-
-  public override async update(existingId?: string): Promise<string> {
-    // Update the model first
-    const itemId = await super.update(existingId);
-
-    // Then update with field references if any exist
-    if (this.hasFieldReferences()) {
-      const fieldReferences = await this.resolveFieldReferences(itemId);
-
-      await this.api.call(() =>
-        this.api.client.itemTypes.update(itemId, fieldReferences),
-      );
-    }
-
-    return itemId;
-  }
-
-  /**
-   * Check if any field references are defined
-   */
-  private hasFieldReferences(): boolean {
-    return (
-      this.orderingFieldResolver !== undefined ||
-      this.presentationTitleFieldResolver !== undefined ||
-      this.presentationImageFieldResolver !== undefined ||
-      this.titleFieldResolver !== undefined ||
-      this.imagePreviewFieldResolver !== undefined ||
-      this.excerptFieldResolver !== undefined
-    );
+    // Store field resolvers using base class method
+    this.setFieldReferences(fieldResolvers);
   }
 }
