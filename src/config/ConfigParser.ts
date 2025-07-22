@@ -1,7 +1,10 @@
 import fs from "node:fs";
 import path from "node:path";
 import { type ConsoleLogger, LogLevel } from "../logger.js";
-import type { DatoBuilderConfig } from "../types/DatoBuilderConfig.js";
+import type {
+  DatoBuilderConfig,
+  ResolvedDatoBuilderConfig,
+} from "../types/DatoBuilderConfig.js";
 
 export class ConfigParser {
   private readonly logger: ConsoleLogger;
@@ -12,7 +15,7 @@ export class ConfigParser {
     this.configPath = configPath;
   }
 
-  public async loadConfig(): Promise<Required<DatoBuilderConfig>> {
+  public async loadConfig(): Promise<ResolvedDatoBuilderConfig> {
     const configPath = await this.getConfigFilePath();
 
     this.logger.debug(`Loading config from ${configPath}`);
@@ -23,17 +26,19 @@ export class ConfigParser {
       throw new Error("Unable to load dato-builder config file");
     }
 
-    return this.validateConfig({
+    const mergedConfig = {
       ...this.DEFAULTS,
       ...(userConfig.default as DatoBuilderConfig),
-    });
+    };
+
+    return this.validateConfig(mergedConfig);
   }
 
   protected async importConfig(configPath: string): Promise<any> {
     return await import(configPath);
   }
 
-  private get DEFAULTS(): Omit<Required<DatoBuilderConfig>, "apiToken"> {
+  private get DEFAULTS(): Omit<ResolvedDatoBuilderConfig, "apiToken"> {
     return {
       overwriteExistingFields: false,
       modelApiKeySuffix: "model",
@@ -41,7 +46,7 @@ export class ConfigParser {
       blocksPath: path.resolve(process.cwd(), "datocms", "blocks"),
       modelsPath: path.resolve(process.cwd(), "datocms", "models"),
       logLevel: LogLevel.INFO,
-      environment: "main",
+      environment: undefined,
     };
   }
 
@@ -95,7 +100,9 @@ export class ConfigParser {
     }
   }
 
-  private validateConfig<T extends DatoBuilderConfig>(config: T): T {
+  private validateConfig(
+    config: ResolvedDatoBuilderConfig,
+  ): ResolvedDatoBuilderConfig {
     if (!config.apiToken) {
       throw new Error("Validation error: Missing apiToken");
     }

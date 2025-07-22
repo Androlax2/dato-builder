@@ -2,12 +2,12 @@ import ItemTypeBuilder, {
   type ItemTypeBuilderBody,
   type ItemTypeBuilderType,
 } from "./ItemTypeBuilder.js";
-import type { DatoBuilderConfig } from "./types/DatoBuilderConfig.js";
+import type { ResolvedDatoBuilderConfig } from "./types/DatoBuilderConfig.js";
 
 type ModelBuilderOptions = {
   name: string;
   body?: Omit<ItemTypeBuilderBody, "name">;
-  config: Required<DatoBuilderConfig>;
+  config: ResolvedDatoBuilderConfig;
 };
 
 export default class ModelBuilder extends ItemTypeBuilder {

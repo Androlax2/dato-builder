@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 import { createMockCache } from "../../tests/utils/mockCache";
 import { createMockConfig } from "../../tests/utils/mockConfig";
 import { createMockLogger } from "../../tests/utils/mockLogger";
-import type { DatoBuilderConfig } from "../types/DatoBuilderConfig";
+import type { ResolvedDatoBuilderConfig } from "../types/DatoBuilderConfig";
 import type { GlobalOptions } from "./CommandBuilder";
 
 // Create mock functions and classes before mocking modules
@@ -60,7 +60,7 @@ describe("CLIInitializer", () => {
   let mockConfigParser: any;
   let mockCache: any;
   let mockCLI: any;
-  let mockConfig: Required<DatoBuilderConfig>;
+  let mockConfig: ResolvedDatoBuilderConfig;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -85,7 +85,7 @@ describe("CLIInitializer", () => {
     // Mock config parser
     mockConfigParser = {
       loadConfig: jest
-        .fn<() => Promise<Required<DatoBuilderConfig>>>()
+        .fn<() => Promise<ResolvedDatoBuilderConfig>>()
         .mockResolvedValue(mockConfig),
     };
     MockConfigParser.mockImplementation(() => mockConfigParser);

@@ -3,7 +3,7 @@ import DatoApi from "../../Api/DatoApi.js";
 import type { CacheManager } from "../../cache/CacheManager.js";
 import type { ConsoleLogger } from "../../logger.js";
 import type { BuilderContext } from "../../types/BuilderContext.js";
-import type { DatoBuilderConfig } from "../../types/DatoBuilderConfig.js";
+import type { ResolvedDatoBuilderConfig } from "../../types/DatoBuilderConfig.js";
 import { BuildExecutor } from "./BuildExecutor.js";
 import { DeletionDetector } from "./DeletionDetector.js";
 import { DeletionManager } from "./DeletionManager.js";
@@ -14,7 +14,7 @@ import { ItemBuilder } from "./ItemBuilder.js";
 import type { BuildResult, FileInfo } from "./types.js";
 
 interface RunCommandOptions {
-  config: Required<DatoBuilderConfig>;
+  config: ResolvedDatoBuilderConfig;
   cache: CacheManager;
   logger: ConsoleLogger;
   enableDeletion?: boolean;
@@ -36,7 +36,7 @@ export class ItemNotFoundError extends Error {
 }
 
 export class RunCommand {
-  private readonly config: Required<DatoBuilderConfig>;
+  private readonly config: ResolvedDatoBuilderConfig;
   private readonly cache: CacheManager;
   private readonly logger: ConsoleLogger;
   private readonly fileDiscoverer: FileDiscoverer;

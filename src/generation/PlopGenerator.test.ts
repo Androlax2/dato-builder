@@ -6,7 +6,7 @@ import { createMockLogger } from "../../tests/utils/mockLogger";
 import { createMockPlop } from "../../tests/utils/mockPlop";
 import { createMockPlopGenerator } from "../../tests/utils/mockPlopGenerator";
 import type { ConsoleLogger } from "../logger";
-import type { DatoBuilderConfig } from "../types/DatoBuilderConfig";
+import type { ResolvedDatoBuilderConfig } from "../types/DatoBuilderConfig";
 import { PlopGenerator } from "./PlopGenerator";
 
 // Mock dependencies
@@ -40,7 +40,7 @@ jest.unstable_mockModule("inquirer", () => ({
 describe("PlopGenerator", () => {
   let plopGenerator: PlopGenerator;
   let mockLogger: jest.Mocked<ConsoleLogger>;
-  let mockConfig: Required<DatoBuilderConfig>;
+  let mockConfig: ResolvedDatoBuilderConfig;
 
   beforeEach(() => {
     jest.clearAllMocks();

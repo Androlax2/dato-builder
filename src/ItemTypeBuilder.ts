@@ -56,7 +56,10 @@ import Textarea, { type TextareaConfig } from "./Fields/Textarea.js";
 import Url, { type UrlConfig } from "./Fields/Url.js";
 import Wysiwyg, { type WysiwygConfig } from "./Fields/Wysiwyg.js";
 import { ConsoleLogger } from "./logger.js";
-import type { DatoBuilderConfig } from "./types/DatoBuilderConfig.js";
+import type {
+  DatoBuilderConfig,
+  ResolvedDatoBuilderConfig,
+} from "./types/DatoBuilderConfig.js";
 import { executeWithErrorHandling } from "./utils/errors.js";
 import { generateDatoApiKey } from "./utils/utils.js";
 
@@ -74,7 +77,7 @@ type ItemTypeBuilderOptions = {
   body: Omit<SimpleSchemaTypes.ItemTypeCreateSchema, "api_key"> & {
     api_key?: string;
   };
-  config: Required<DatoBuilderConfig>;
+  config: ResolvedDatoBuilderConfig;
 };
 
 type HashableConfigKeys = "modelApiKeySuffix" | "blockApiKeySuffix";
@@ -88,7 +91,7 @@ export default abstract class ItemTypeBuilder {
   readonly name: string;
   readonly type: ItemTypeBuilderType;
   readonly fields: Field[] = [];
-  readonly config: Required<DatoBuilderConfig>;
+  readonly config: ResolvedDatoBuilderConfig;
 
   protected constructor({ type, body, config }: ItemTypeBuilderOptions) {
     this.logger = new ConsoleLogger(config.logLevel);

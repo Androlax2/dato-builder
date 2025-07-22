@@ -1,10 +1,10 @@
-import type { DatoBuilderConfig } from "./DatoBuilderConfig.js";
+import type { ResolvedDatoBuilderConfig } from "./DatoBuilderConfig.js";
 
 export interface BuilderContext {
   /**
    * The configuration object for the DatoBuilder
    */
-  config: Required<DatoBuilderConfig>;
+  config: ResolvedDatoBuilderConfig;
 
   /**
    * Get or create a block by name. Returns the item type ID.

@@ -61,9 +61,19 @@ export interface DatoBuilderConfig {
 
   /**
    * Environment name for DatoCMS operations.
-   * Used for logging and environment-specific behavior.
+   * When undefined, uses the DatoCMS client's default behavior.
    *
-   * @default "main"
+   * @default undefined
    */
   environment?: string;
 }
+
+/**
+ * Fully resolved DatoBuilderConfig with all optional fields required except environment.
+ * Environment remains optional to align with DatoCMS client default behavior.
+ */
+export type ResolvedDatoBuilderConfig = Required<
+  Omit<DatoBuilderConfig, "environment">
+> & {
+  environment?: string;
+};

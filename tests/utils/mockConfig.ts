@@ -1,10 +1,10 @@
-import type { DatoBuilderConfig } from "../../src";
+import type { DatoBuilderConfig, ResolvedDatoBuilderConfig } from "../../src";
 import { LogLevel } from "../../src/logger";
 
 export function createMockConfig(
   config?: Partial<DatoBuilderConfig>,
-): Required<DatoBuilderConfig> {
-  const defaultMockedConfig: Required<DatoBuilderConfig> = {
+): ResolvedDatoBuilderConfig {
+  const defaultMockedConfig: ResolvedDatoBuilderConfig = {
     apiToken: "custom-token",
     overwriteExistingFields: false,
     modelApiKeySuffix: "custom-model",
@@ -12,6 +12,7 @@ export function createMockConfig(
     blocksPath: "/custom/blocks",
     modelsPath: "/custom/models",
     logLevel: LogLevel.NONE,
+    environment: undefined,
   };
 
   return {

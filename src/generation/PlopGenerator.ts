@@ -2,7 +2,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { NodePlopAPI } from "node-plop";
 import type { ConsoleLogger } from "../logger.js";
-import type { DatoBuilderConfig } from "../types/DatoBuilderConfig.js";
+import type { ResolvedDatoBuilderConfig } from "../types/DatoBuilderConfig.js";
 import { pascalToHumanReadable } from "../utils/utils.js";
 
 interface ResultChange {
@@ -21,10 +21,10 @@ type RunActionsFunction = ReturnType<NodePlopAPI["getGenerator"]>["runActions"];
 type RunActionsReturn = ReturnType<RunActionsFunction>;
 
 export class PlopGenerator {
-  private readonly config: Required<DatoBuilderConfig>;
+  private readonly config: ResolvedDatoBuilderConfig;
   private readonly logger: ConsoleLogger;
 
-  constructor(config: Required<DatoBuilderConfig>, logger: ConsoleLogger) {
+  constructor(config: ResolvedDatoBuilderConfig, logger: ConsoleLogger) {
     this.config = config;
     this.logger = logger;
   }

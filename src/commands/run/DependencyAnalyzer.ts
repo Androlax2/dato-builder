@@ -1,11 +1,11 @@
 import type { ConsoleLogger } from "../../logger.js";
 import type { BuilderContext } from "../../types/BuilderContext.js";
-import type { DatoBuilderConfig } from "../../types/DatoBuilderConfig.js";
+import type { ResolvedDatoBuilderConfig } from "../../types/DatoBuilderConfig.js";
 import type { FileInfo } from "./types.js";
 
 export class DependencyAnalyzer {
   constructor(
-    private readonly config: Required<DatoBuilderConfig>,
+    private readonly config: ResolvedDatoBuilderConfig,
     private readonly logger: ConsoleLogger,
   ) {
     this.logger.traceJson("Initializing DependencyAnalyzer", {

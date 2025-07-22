@@ -2,10 +2,10 @@ import type { CacheManager } from "./cache/CacheManager.js";
 import { RunCommand } from "./commands/run/RunCommand.js";
 import { PlopGenerator } from "./generation/PlopGenerator.js";
 import type { ConsoleLogger } from "./logger.js";
-import type { DatoBuilderConfig } from "./types/DatoBuilderConfig.js";
+import type { ResolvedDatoBuilderConfig } from "./types/DatoBuilderConfig.js";
 
 interface BaseCommandOptions {
-  config: Required<DatoBuilderConfig>;
+  config: ResolvedDatoBuilderConfig;
   cache: CacheManager;
   logger: ConsoleLogger;
 }
@@ -17,7 +17,7 @@ interface BuildCommandOptions {
 }
 
 export class DatoBuilderCLI {
-  private readonly config: Required<DatoBuilderConfig>;
+  private readonly config: ResolvedDatoBuilderConfig;
   private readonly cache: CacheManager;
   private readonly logger: ConsoleLogger;
 
