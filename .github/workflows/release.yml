@@ -67,11 +67,50 @@ jobs:
       - name: Spellcheck
         run: npm run spellcheck -- --no-progress --no-summary
 
-      - name: Test
+      - name: Unit Tests
         env:
           NODE_ENV: test
           LOG_LEVEL: ERROR
         run: npm run test:unit
+
+      - name: Check for Integration Test Requirement
+        id: check-integration
+        run: |
+          # Check if this release includes changes that require integration tests
+          echo "Checking if integration tests are needed for this release..."
+          
+          # Get the commit range for this push
+          if [ "${{ github.event_name }}" == "push" ]; then
+            COMMIT_RANGE="${{ github.event.before }}..${{ github.event.after }}"
+          else
+            # For workflow_run, use the last 20 commits as a safe range
+            COMMIT_RANGE="HEAD~20..HEAD"
+          fi
+          
+          # Check for integration-relevant changes in the commit range
+          if git diff --name-only $COMMIT_RANGE | grep -E "(src/Api/|src/DatoCmsSync.ts|src/cli|src/DatoBuilderCLI.ts|src/config/|tests/integration/|package\.json|jest\.config\.integration\.ts)" > /dev/null; then
+            echo "integration-required=true" >> $GITHUB_OUTPUT
+            echo "✅ Integration tests required - found relevant changes"
+          else
+            echo "integration-required=false" >> $GITHUB_OUTPUT
+            echo "⏭️ Integration tests not required - no relevant changes detected"
+          fi
+
+      - name: Integration Tests (Release)
+        if: steps.check-integration.outputs.integration-required == 'true'
+        env:
+          DATOCMS_API_TOKEN: ${{ secrets.DATOCMS_API_TOKEN }}
+          NODE_ENV: test
+          LOG_LEVEL: ERROR
+        run: |
+          echo "🚀 Running integration tests for release validation..."
+          npm run test:integration
+
+      - name: Integration Tests Skipped
+        if: steps.check-integration.outputs.integration-required == 'false'
+        run: |
+          echo "⏭️ Integration tests skipped for this release"
+          echo "No integration-critical changes detected in this release."
 
       - name: Release
         env:
