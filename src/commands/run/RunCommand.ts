@@ -91,7 +91,12 @@ export class RunCommand {
     this.buildExecutor = new BuildExecutor(this.itemBuilder, logger);
     this.deletionDetector = new DeletionDetector(cache, logger);
 
-    const datoApi = new DatoApi(buildClient({ apiToken: config.apiToken }));
+    const datoApi = new DatoApi(
+      buildClient({
+        apiToken: config.apiToken,
+        environment: config.environment,
+      }),
+    );
     this.deletionManager = new DeletionManager(datoApi, cache, logger);
 
     this.logger.trace("RunCommand initialized successfully");
