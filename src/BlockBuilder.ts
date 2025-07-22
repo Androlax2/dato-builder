@@ -2,18 +2,18 @@ import ItemTypeBuilder, {
   type ItemTypeBuilderType,
 } from "./ItemTypeBuilder.js";
 import type { ResolvedDatoBuilderConfig } from "./types/DatoBuilderConfig.js";
+import type { ItemTypeCreateSchema } from "./types/ItemTypeBuilderTypes";
 
-type BlockBuilderBody = {
+type BlockBuilderBody = Pick<
+  ItemTypeCreateSchema,
+  "presentation_title_field" | "presentation_image_field"
+> & {
   /**
    * API key of the block.
    *
    * If not provided, it will be generated from the name.
    */
   api_key?: string;
-  /**
-   * A hint shown to editors to help them understand the purpose of this block.
-   */
-  hint?: string | null;
 };
 
 type BlockBuilderOptions = {
