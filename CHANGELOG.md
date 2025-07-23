@@ -1,3 +1,10 @@
+# [4.0.0-beta.11](https://github.com/Androlax2/dato-builder/compare/v4.0.0-beta.10...v4.0.0-beta.11) (2025-07-23)
+
+
+### Features
+
+* **field resolution:** dynamic field reference resolution ([#44](https://github.com/Androlax2/dato-builder/issues/44)) ([eeb37e8](https://github.com/Androlax2/dato-builder/commit/eeb37e8e818029cd596968d663ffb303bf0a8b4c))
+
 # [4.0.0-beta.10](https://github.com/Androlax2/dato-builder/compare/v4.0.0-beta.9...v4.0.0-beta.10) (2025-07-22)
 
 
