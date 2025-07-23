@@ -47,12 +47,3 @@ jobs:
             ci
             chore
             revert
-          # Custom scopes (optional)
-          scopes: |
-            cli
-            core
-            api
-            ui
-            deps
-            config
-            release
