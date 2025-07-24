@@ -1,4 +1,5 @@
 /**
+ * Semantic release configuration for dato-builder
  * @type {import('semantic-release').GlobalConfig}
  */
 export default {
