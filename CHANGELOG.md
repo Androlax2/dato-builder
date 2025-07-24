@@ -1,3 +1,10 @@
+# [4.0.0-beta.12](https://github.com/Androlax2/dato-builder/compare/v4.0.0-beta.11...v4.0.0-beta.12) (2025-07-24)
+
+
+### Bug Fixes
+
+* **deps:** fix package lock ([d796492](https://github.com/Androlax2/dato-builder/commit/d7964921528291b9c607821a58c761c4396abe8f))
+
 # [4.0.0-beta.11](https://github.com/Androlax2/dato-builder/compare/v4.0.0-beta.10...v4.0.0-beta.11) (2025-07-23)
 
 
