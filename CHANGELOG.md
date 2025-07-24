@@ -1,3 +1,10 @@
+## [4.0.1](https://github.com/Androlax2/dato-builder/compare/v4.0.0...v4.0.1) (2025-07-24)
+
+
+### Bug Fixes
+
+* project words ([b240267](https://github.com/Androlax2/dato-builder/commit/b2402675f380cf55331f2668b9313c8057c4d61d))
+
 # [4.0.0](https://github.com/Androlax2/dato-builder/compare/v3.8.0...v4.0.0) (2025-07-24)
 
 
