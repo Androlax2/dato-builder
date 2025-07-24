@@ -1,0 +1,81 @@
+import type { BuilderContext } from "../../../../../src";
+import { ModelBuilder } from "../../../../../src/index.js";
+
+export default async function buildTestPerfModelFourth({
+  config,
+  getModel,
+  getBlock,
+}: BuilderContext) {
+  return new ModelBuilder({
+    name: "Performance Test Model Fourth",
+    config,
+    body: {
+      api_key: "test_perf_model_fourth",
+      hint: "Performance test model Fourth",
+    },
+  })
+    .addText({
+      label: "Title",
+      body: {
+        api_key: "title",
+        validators: { required: true },
+      },
+    })
+    .addBoolean({
+      label: "Content",
+      body: {
+        api_key: "content",
+      },
+    })
+    .addInteger({
+      label: "Published",
+      body: {
+        api_key: "published",
+        validators: { number_range: { min: 0, max: 1000 } },
+      },
+    })
+    .addFloat({
+      label: "Priority",
+      body: {
+        api_key: "priority",
+        validators: { number_range: { min: 0, max: 1000 } },
+      },
+    })
+    .addDate({
+      label: "Category",
+      body: {
+        api_key: "category",
+      },
+    })
+    .addDateTime({
+      label: "Created",
+      body: {
+        api_key: "created",
+      },
+    })
+    .addLink({
+      label: "Related Model",
+      body: {
+        api_key: "related_model",
+        validators: {
+          item_item_type: {
+            item_types: [await getModel("TestPerfModelAlpha")],
+          },
+        },
+      },
+    })
+    .addModularContent({
+      label: "Content Blocks",
+      body: {
+        api_key: "content_blocks",
+        validators: {
+          rich_text_blocks: {
+            item_types: [
+              await getBlock("TestPerfBlockAlpha"),
+              await getBlock("TestPerfBlockSecond"),
+            ],
+          },
+        },
+      },
+    });
+}

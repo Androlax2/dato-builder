@@ -39,12 +39,12 @@ jobs:
           github.event.comment.author_association == 'COLLABORATOR'
         )
       )
-
+    
     outputs:
       pr-number: ${{ steps.get-pr.outputs.pr-number }}
       pr-sha: ${{ steps.get-pr.outputs.pr-sha }}
       should-run: ${{ steps.get-pr.outputs.should-run }}
-
+    
     steps:
       - name: Get PR Information
         id: get-pr
@@ -91,7 +91,7 @@ jobs:
       cancel-in-progress: true
     needs: [trigger-integration]
     if: needs.trigger-integration.outputs.should-run == 'true'
-
+    
     steps:
       - name: Checkout PR
         uses: actions/checkout@v4

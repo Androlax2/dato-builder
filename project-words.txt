@@ -14,4 +14,16 @@ upserting
 informations
 childrens
 npmignore
+esbuild
 anthropics
+plopfile
+lefthook
+env
+nodemon
+invalidname
+realpath
+TOC
+cpus
+actrc
+itemtypebuilder
+dorny

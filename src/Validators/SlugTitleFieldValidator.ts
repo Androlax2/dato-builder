@@ -1,7 +1,8 @@
-import type { Validator } from "./types";
+import type { FieldIdOrResolver } from "../types/FieldResolver.js";
+import type { Validator } from "./types.js";
 
 export type SlugTitleFieldValidatorConfig = {
-  title_field_id: string;
+  title_field_id: FieldIdOrResolver;
 };
 
 export default class SlugTitleFieldValidator implements Validator {

@@ -6,3 +6,13 @@ dato-builder.config.*
 coverage/
 src/datocms/
 src/.itemTypeBuilderCache.json
+.dato-builder-cache
+.datocms-test-cache
+CLAUDE.md
+TASKS.md
+temp-test-generated/
+.env
+!.env.example
+.claude/
+.secrets
+.actrc

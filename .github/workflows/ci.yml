@@ -32,7 +32,7 @@ jobs:
     name: Code Quality
     runs-on: ubuntu-latest
     timeout-minutes: 10
-
+    
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -62,7 +62,7 @@ jobs:
     name: Unit Tests
     runs-on: ubuntu-latest
     timeout-minutes: 5
-
+    
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -95,7 +95,7 @@ jobs:
           contains(github.event.pull_request.title, '[integration]')
         )
       )
-
+    
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -141,7 +141,7 @@ jobs:
       !contains(github.event.pull_request.labels.*.name, 'run-integration-tests') &&
       !contains(github.event.pull_request.labels.*.name, 'integration') &&
       !contains(github.event.pull_request.title, '[integration]')
-
+    
     steps:
       - name: Integration Tests Status
         run: |

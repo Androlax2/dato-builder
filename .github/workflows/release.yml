@@ -49,14 +49,11 @@ jobs:
           registry-url: 'https://registry.npmjs.org'
 
       - name: Install dependencies
-        run: npm ci --prefer-offline --no-audit
+        run: npm ci --no-audit
 
       - name: Verify dependencies integrity
         run: npm audit signatures
         continue-on-error: true
-
-      - name: Build
-        run: npm run build
 
       - name: Lint
         run: npx @biomejs/biome ci . --diagnostic-level=error

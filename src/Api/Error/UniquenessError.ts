@@ -1,5 +1,5 @@
-import type { ParsedError } from "../ParsedError";
-import GenericDatoError from "./GenericDatoError";
+import type { ParsedError } from "../ParsedError.js";
+import GenericDatoError from "./GenericDatoError.js";
 
 export default class UniquenessError extends GenericDatoError {
   constructor(info: ParsedError) {

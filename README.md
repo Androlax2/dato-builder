@@ -1,6 +1,12 @@
 # Dato Builder
 
-Quickly create Models, Blocks in DatoCMS from your source code.
+**TypeScript-powered DatoCMS schema builder with fluent API for rapid content model development**
+
+[![npm version](https://img.shields.io/npm/v/dato-builder.svg)](https://www.npmjs.com/package/dato-builder)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![TypeScript](https://img.shields.io/badge/TypeScript-Ready-blue.svg)](https://www.typescriptlang.org/)
+
+Quickly create Models, Blocks, and content structures in DatoCMS from your TypeScript source code with concurrent builds, interactive generation, comprehensive validation, and dynamic field reference resolution.
 
 ## Table of Contents
 
@@ -9,8 +15,9 @@ Quickly create Models, Blocks in DatoCMS from your source code.
 - [CLI Commands](#cli-commands)
 - [Usage](#usage)
   - [1. Define a Block](#1-define-a-block)
-    - [2. Define a Model](#2-define-a-model)
-    - [3. Build Everything](#3-build-everything)
+  - [2. Generate Files Quickly](#2-generate-files-quickly)
+  - [3. Define a Model](#3-define-a-model)
+  - [4. Build Everything](#4-build-everything)
 - [Comprehensive Field \& Validator Reference](#comprehensive-field--validator-reference)
   - [Text Fields](#text-fields)
     - [`SingleLineString`](#singlelinestring)
@@ -77,31 +84,231 @@ npm install --save-dev dato-builder
 
 ## Configuration
 
+### Quick Setup
+
 Create a `dato-builder.config.js` in your project root:
 
 ```javascript
 /** @type {import("dato-builder").DatoBuilderConfig} */
-module.exports = {
-  apiToken: process.env.DATO_CMA_TOKEN, // your DatoCMS CMA token
-  overwriteExistingFields: false, // create new fields only; existing fields remain untouched
-  debug: false, // enable verbose logging
-  modelApiKeySuffix: undefined, // suffix for model API keys (e.g. "page" becomes "page_model")
-  blockApiKeySuffix: "block", // suffix for block API keys (e.g. "hero" becomes "hero_block")
+const config = {
+  apiToken: process.env.DATO_CMA_TOKEN,
+  overwriteExistingFields: false,
+  blockApiKeySuffix: "block",
+  environment: undefined, // Uses default environment
 };
+
+export default config;
 ```
 
-> **overwriteExistingFields:**
->
-> - `false` (default): only new fields are created; updates/deletions are skipped.
-> - `true`: existing fields matching your code’s API keys are updated, and any extra fields are removed.
+### Complete Configuration Reference
+
+#### Required Configuration
+
+| Option     | Type     | Description                                                                                                             |
+|------------|----------|-------------------------------------------------------------------------------------------------------------------------|
+| `apiToken` | `string` | **Required.** Your DatoCMS Content Management API token. Find this in your DatoCMS project settings under "API tokens". |
+
+#### Optional Configuration
+
+| Option                    | Type             | Default              | Description                                                                          |
+|---------------------------|------------------|----------------------|--------------------------------------------------------------------------------------|
+| `overwriteExistingFields` | `boolean`        | `false`              | Controls field update behavior (see [Field Update Behavior](#field-update-behavior)) |
+| `modelApiKeySuffix`       | `string \| null` | `"model"`            | Suffix for model API keys (e.g., "page" → "page_model")                              |
+| `blockApiKeySuffix`       | `string \| null` | `"block"`            | Suffix for block API keys (e.g., "hero" → "hero_block")                              |
+| `modelsPath`              | `string`         | `"./datocms/models"` | Path where CLI searches for model definitions                                        |
+| `blocksPath`              | `string`         | `"./datocms/blocks"` | Path where CLI searches for block definitions                                        |
+| `logLevel`                | `LogLevel`       | `LogLevel.INFO`      | Minimum logging level (see [Logging Configuration](#logging-configuration))          |
+| `environment`             | `string`         | `undefined`          | Target DatoCMS environment (see [Environment Configuration](#environment-configuration)) |
+
+### Field Update Behavior
+
+The `overwriteExistingFields` option controls how dato-builder handles existing fields in DatoCMS:
+
+#### `false` (Default - Safe Mode)
+```javascript
+/** @type {import("dato-builder").DatoBuilderConfig} */
+const config = {
+  overwriteExistingFields: false, // Safe: preserve manual changes
+};
+
+export default config;
+```
+- ✅ **New fields**: Created as defined in code
+- ✅ **Removed fields**: Deleted from DatoCMS
+- 🔒 **Existing fields**: Left untouched (preserves manual dashboard changes)
+- **Use case**: Development workflows where content editors make manual adjustments
+
+#### `true` (Sync Mode)
+```javascript
+/** @type {import("dato-builder").DatoBuilderConfig} */
+const config = {
+  overwriteExistingFields: true, // Sync: code is source of truth
+};
+
+export default config;
+```
+- ✅ **New fields**: Created as defined in code
+- ✅ **Removed fields**: Deleted from DatoCMS
+- ⚠️ **Existing fields**: Updated to match code (overwrites manual changes)
+- **Use case**: Production deployments where code definitions are authoritative
+
+### Configuration File Formats
+
+#### JavaScript Configuration
+```javascript
+/** @type {import("dato-builder").DatoBuilderConfig} */
+const config = {
+  apiToken: process.env.DATO_CMA_TOKEN,
+  overwriteExistingFields: false,
+  // ... other options
+};
+
+export default config;
+```
+
+#### TypeScript Configuration
+```typescript
+// dato-builder.config.ts
+import type { DatoBuilderConfig } from "dato-builder";
+
+const config: DatoBuilderConfig = {
+  apiToken: process.env.DATO_CMA_TOKEN!,
+  overwriteExistingFields: false,
+  environment: "production", // Target specific environment
+  // ... other options
+};
+
+export default config;
+```
+
+### Environment Configuration
+
+Target specific DatoCMS environments by setting the `environment` option:
+
+```javascript
+/** @type {import("dato-builder").DatoBuilderConfig} */
+const config = {
+  apiToken: process.env.DATO_CMA_TOKEN,
+  environment: "staging", // Target staging environment
+  // ... other options
+};
+
+export default config;
+```
+
+### Logging Configuration
+
+Configure logging verbosity with the `logLevel` option:
+
+```javascript
+import { LogLevel } from "dato-builder";
+
+/** @type {import("dato-builder").DatoBuilderConfig} */
+const config = {
+  logLevel: LogLevel.DEBUG, // or use numeric values
+};
+
+export default config;
+```
+
+#### Available Log Levels
+
+| Level            | Value | Description         | When to Use        |
+|------------------|-------|---------------------|--------------------|
+| `LogLevel.NONE`  | `-1`  | No logging          | Production (quiet) |
+| `LogLevel.ERROR` | `0`   | Errors only         | Production         |
+| `LogLevel.WARN`  | `1`   | Warnings and errors | Production         |
+| `LogLevel.INFO`  | `2`   | General information | **Default**        |
+| `LogLevel.DEBUG` | `3`   | Detailed debugging  | Development        |
+| `LogLevel.TRACE` | `4`   | Maximum verbosity   | Troubleshooting    |
 
 ## CLI Commands
 
-- **`npx dato-builder run <file|dir>`**  
-  Build one or more scripts (blocks, models, or whole folders).
+### Build Commands
+
+- **`npx dato-builder build`**  
+  Build all DatoCMS types and blocks with enhanced options:
+  - `--skip-deletion` - Skip deletion detection and removal of orphaned items
+  - `--skip-deletion-confirmation` - Skip confirmation prompts for deletions
+  - `--concurrent` - Enable concurrent builds (default concurrency: 3)
+  - `--concurrency <number>` - Set specific concurrency level (implies --concurrent)
+  - `--auto-concurrency` - Automatically determine concurrency based on CPU cores
+
+### Generation Commands
+
+- **`npx dato-builder generate`**  
+  Interactive generator to create new blocks or models with guided prompts.
+
+- **`npx dato-builder generate:block`**  
+  Generate a new DatoCMS block with interactive prompts for name and configuration.
+
+- **`npx dato-builder generate:model`**  
+  Generate a new DatoCMS model with options for singleton, sortable, and tree structure.
+
+### Utility Commands
 
 - **`npx dato-builder clear-cache`**  
-  Wipe the local cache that tracks what’s already been synced.
+  Clear all caches to force fresh builds.
+
+### Global Options
+
+All commands support these global options:
+- `-d, --debug` - Output detailed debugging information
+- `-v, --verbose` - Display fine-grained trace logs
+- `-q, --quiet` - Only display errors
+- `-n, --no-cache` - Disable cache usage
+
+### 📋 Quick Reference
+
+| Command          | Purpose                   | Key Options                             |
+|------------------|---------------------------|-----------------------------------------|
+| `build`          | Build all blocks/models   | `--auto-concurrency`, `--skip-deletion` |
+| `generate`       | Interactive file creation | *None*                                  |
+| `generate:block` | Create new block          | *None*                                  |
+| `generate:model` | Create new model          | *None*                                  |
+| `clear-cache`    | Reset all caches          | *None*                                  |
+
+### 🔧 Troubleshooting
+
+**Common Issues & Solutions:**
+
+**Build Errors**
+```bash
+# Problem: Build fails with permission errors
+# Solution: Check DatoCMS API token permissions
+npx dato-builder build --debug
+
+# Problem: Slow builds
+# Solution: Enable concurrent processing
+npx dato-builder build --auto-concurrency
+```
+
+**Cache Issues**
+```bash
+# Problem: Stale data or unexpected results
+# Solution: Clear cache and rebuild
+npx dato-builder clear-cache
+npx dato-builder build --no-cache
+```
+
+**Environment Issues**
+```bash
+# Problem: Changes appear in wrong environment
+# Solution: Verify config file environment setting
+# Check: dato-builder.config.js environment property
+
+# Problem: "Environment not found" error
+# Solution: Ensure environment exists in DatoCMS project
+# Verify: DatoCMS dashboard > Settings > Environments
+```
+
+**Generation Errors**
+```bash
+# Problem: Generator validation fails
+# Solution: Ensure proper naming (PascalCase)
+# ✅ Good: MyNewBlock, BlogPost
+# ❌ Bad: my-block, blog_post
+```
 
 ---
 
@@ -111,70 +318,92 @@ module.exports = {
 
 ```typescript
 // datocms/blocks/TestBlock.ts
-import { BlockBuilder } from "dato-builder";
+import { BlockBuilder, type BuilderContext } from "dato-builder";
 
-export default async function buildTestBlock(): Promise<string> {
-  const block = new BlockBuilder("Test Block")
-    .addHeading({ label: "Title" })
+export default async function buildTestBlock({ config }: BuilderContext) {
+  return new BlockBuilder({
+      name: "Test Block",
+      config,
+      options: {
+        // Dynamic field reference - finds title field automatically
+        presentation_title_field: (fields) => {
+          const titleField = fields.find(f => f.api_key === "title");
+          return titleField?.id || null;
+        },
+      },
+  })
+    .addHeading({ 
+      label: "Title",
+      body: { api_key: "title" },
+    })
     .addTextarea({ label: "Description" })
     .addImage({
       label: "Image",
       body: { validators: { required: true } },
     });
-
-  return block.upsert();
 }
-
-void buildTestBlock();
 ```
 
 _Run it:_
 
 ```bash
-npx dato-builder run datocms/blocks/TestBlock.ts
+npx dato-builder build
 ```
 
-### 2. Define a Model
+### 2. Generate Files Quickly
+
+Create new blocks and models interactively:
+
+```bash
+# Interactive generator
+npx dato-builder generate
+
+# Or generate specific types directly
+npx dato-builder generate:block
+npx dato-builder generate:model
+```
+
+### 3. Define a Model
 
 ```typescript
 // datocms/models/TestModel.ts
-import { ModelBuilder } from "dato-builder";
-import buildTestBlock from "../blocks/TestBlock";
+import { ModelBuilder, type BuilderContext } from "dato-builder";
 
-export default async function buildTestModel(): Promise<string> {
-  const testBlockId = await buildTestBlock();
-
-  const model = new ModelBuilder("Test Model")
+export default async function buildTestModel({ config, getBlock }: BuilderContext) {
+  return new ModelBuilder({
+      name: "Test Model",
+      config,
+  })
     .addHeading({ label: "Title" })
     .addTextarea({ label: "Description" })
     .addModularContent({
       label: "Content",
       body: {
-        validators: { rich_text_blocks: { item_types: [testBlockId] } },
+        validators: { rich_text_blocks: { item_types: [await getBlock("TestBlock")] } },
       },
     });
-
-  return model.upsert();
 }
-
-void buildTestModel();
 ```
 
 _Run it:_
 
 ```bash
-npx dato-builder run datocms/models/TestModel.ts
+npx dato-builder build
 ```
 
-### 3. Build Everything
+> 🔗 **Advanced Usage**: See [Field Reference](#comprehensive-field--validator-reference) for all available field types and validators.
+
+### 4. Build Everything
 
 ```bash
-npx dato-builder run datocms/
+# Build with performance optimizations
+npx dato-builder build --auto-concurrency
+
+# Build without deletion detection
+npx dato-builder build --skip-deletion
 ```
 
 ---
-
-_Note: You can add more builder scripts (blocks or models) and then point `run` at the parent folder to sync them all in one go._
 
 # Comprehensive Field & Validator Reference
 
@@ -382,23 +611,20 @@ builder.addLocation({
 
 ### ModularContent
 
-> **Option A**: Dynamic IDs via builder functions
+> **Option A**: Use `getBlock()` via `BuilderContext`
 >
-> Run each builder first to get its generated API key (ID), then plug those IDs in.
+> The `BuilderContext` now includes a `getBlock()` & a `getModel()` helper to automatically resolve block API keys (IDs) / Model API 
+> Keys (IDs) at runtime.
 
 ```typescript
 // datocms/models/TestModel.ts
-import { ModelBuilder } from "dato-builder";
-import buildSectionBlock from "../blocks/SectionBlock";
-import buildHighlightModel from "../models/HighlightModel";
+import { ModelBuilder, type BuilderContext } from "dato-builder";
 
-export default async function buildTestModel() {
-  // 1. Build the other blocks/models and capture their API keys:
-  const sectionBlockId = await buildSectionBlock();
-  const highlightModelId = await buildHighlightModel();
-
-  // 2. Use those IDs in your modular-content validator:
-  const model = new ModelBuilder("Test Model")
+export default async function buildTestModel({ config, getBlock, getModel }: BuilderContext) {
+  return new ModelBuilder({
+      name: "Test Model",
+      config
+  })
     .addHeading({ label: "Title" })
     .addTextarea({ label: "Description" })
     .addModularContent({
@@ -406,17 +632,16 @@ export default async function buildTestModel() {
       body: {
         validators: {
           rich_text_blocks: {
-            item_types: [sectionBlockId, highlightModelId],
+            item_types: [
+                await getBlock("SectionBlock"), // dynamically resolve SectionBlock ID
+                await getModel("HighlightModel"), // dynamically resolve HighlightModel ID
+            ],
           },
           size: { min: 1 },
         },
       },
     });
-
-  return model.upsert();
 }
-
-void buildTestModel();
 ```
 
 > **Option B**: Hard-coded IDs
@@ -425,10 +650,13 @@ void buildTestModel();
 
 ```typescript
 // datocms/models/TestModel.ts
-import { ModelBuilder } from "dato-builder";
+import { ModelBuilder, type BuilderContext } from "dato-builder";
 
-export default function buildTestModel() {
-  const model = new ModelBuilder("Test Model")
+export default function buildTestModel({config}: BuilderContext) {
+  return new ModelBuilder({
+      name: "Test Model",
+      config
+  })
     .addHeading({ label: "Title" })
     .addTextarea({ label: "Description" })
     .addModularContent({
@@ -436,50 +664,45 @@ export default function buildTestModel() {
       body: {
         validators: {
           rich_text_blocks: {
-            // replace these with the real API keys you got earlier
+            // replace these with the real API keys you got from DatoCMS
             item_types: ["section_block_item_type_id", "highlight_model_item_type_id"],
           },
           size: { min: 1 },
         },
       },
     });
-
-  return model.upsert();
 }
-
-void buildTestModel();
 ```
 
 ### SingleBlock
 
-> **Option A**: Dynamic IDs via builder functions
+> **Option A**: Use `getBlock()` via `BuilderContext`
 >
-> Capture the block ID from your builder before using it:
+> The `BuilderContext` now includes a `getBlock()` & a `getModel()` helper to automatically resolve block API keys (IDs) / Model API
+> Keys (IDs) at runtime.
 
 ```typescript
-import { ModelBuilder } from "dato-builder";
-import buildHeroBlock from "../blocks/HeroBlock";
+// datocms/models/PageModel.ts
+import { ModelBuilder, type BuilderContext } from "dato-builder";
 
-export default async function buildPageModel() {
-  const heroBlockId = await buildHeroBlock();
-
-  const model = new ModelBuilder("Page Model").addSingleBlock({
-    label: "Hero",
-    type: "framed_single_block",
-    start_collapsed: true,
-    body: {
-      validators: {
-        single_block_blocks: {
-          item_types: [heroBlockId],
-        },
-      },
-    },
-  });
-
-  return model.upsert();
+export default async function buildPageModel({ config, getBlock }: BuilderContext) {
+    return new ModelBuilder({
+        name: "Page Model",
+        config,
+    })
+        .addSingleBlock({
+            label: "Hero",
+            type: "framed_single_block",
+            start_collapsed: true,
+            body: {
+                validators: {
+                    single_block_blocks: {
+                        item_types: [await getBlock("HeroBlock")],
+                    },
+                },
+            },
+        });
 }
-
-void buildPageModel();
 ```
 
 > **Option B**: Hard-coded IDs
@@ -503,34 +726,33 @@ builder.addSingleBlock({
 
 ### StructuredText
 
-> **Option A**: Dynamic IDs via builder functions
+> **Option A**: Use `getBlock()` via `BuilderContext`
 >
-> Fetch block IDs before defining your structured text field:
+> The `BuilderContext` now includes a `getBlock()` & a `getModel()` helper to automatically resolve block API keys (IDs) / Model API
+> Keys (IDs) at runtime.
 
 ```typescript
-import { ModelBuilder } from "dato-builder";
-import buildQuoteBlock from "../blocks/QuoteBlock";
+// datocms/models/ArticleModel.ts
+import { ModelBuilder, type BuilderContext } from "dato-builder";
 
-export default async function buildArticleModel() {
-  const quoteBlockId = await buildQuoteBlock();
-
-  const model = new ModelBuilder("Article Model").addStructuredText({
-    label: "Content",
-    nodes: ["heading", "link"],
-    marks: ["strong", "emphasis"],
-    body: {
-      validators: {
-        structured_text_blocks: {
-          item_types: [quoteBlockId],
-        },
-      },
-    },
-  });
-
-  return model.upsert();
+export default async function buildArticleModel({ config, getBlock }: BuilderContext) {
+    return new ModelBuilder({
+        name: "Article Model",
+        config,
+    })
+        .addStructuredText({
+            label: "Content",
+            nodes: ["heading", "paragraph", "link"],
+            marks: ["strong", "emphasis"],
+            body: {
+                validators: {
+                    structured_text_blocks: {
+                        item_types: [await getBlock("QuoteBlock")],
+                    },
+                },
+            },
+        });
 }
-
-void buildArticleModel();
 ```
 
 > **Option B**: Hard-coded IDs
@@ -1199,3 +1421,7 @@ builder.addStructuredText({
 | Seo                                        | [required_seo_fields](#required_seo_fields), [file_size](#file_size), [image_dimensions](#image_dimensions), [image_aspect_ratio](#image_aspect_ratio), [title_length](#title_length), [description_length](#description_length) |
 
 ---
+
+## 📄 License
+
+MIT License - see [LICENSE](LICENSE) file for details.
