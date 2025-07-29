@@ -59,7 +59,7 @@
   },
   "dependencies": {
     "@commander-js/extra-typings": "^14.0.0",
-    "@datocms/cma-client-node": "^4.0.1",
+    "@datocms/cma-client-node": "^5.0.0",
     "commander": "^14.0.0",
     "glob": "^11.0.3",
     "inquirer": "^12.7.0",
