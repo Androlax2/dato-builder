@@ -94,7 +94,7 @@ jobs:
     
     steps:
       - name: Checkout PR
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           ref: ${{ needs.trigger-integration.outputs.pr-sha }}
           fetch-depth: 0
