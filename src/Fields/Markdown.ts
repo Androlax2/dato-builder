@@ -29,7 +29,7 @@ export default class Markdown extends Field {
         parameters: {
           toolbar,
         },
-        addons: [],
+        addons: body?.addons || [],
       },
     });
   }

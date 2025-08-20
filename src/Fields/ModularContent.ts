@@ -27,7 +27,7 @@ export default class ModularContent extends Field {
         parameters: {
           start_collapsed,
         },
-        addons: [],
+        addons: body?.addons || [],
       },
     });
   }

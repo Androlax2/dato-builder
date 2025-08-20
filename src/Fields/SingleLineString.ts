@@ -36,7 +36,7 @@ export default class SingleLineString extends Field {
           heading: options?.heading ?? false,
           placeholder: options?.placeholder ?? "",
         },
-        addons: [],
+        addons: body?.addons || [],
       },
     });
   }

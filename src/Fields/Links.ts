@@ -34,7 +34,7 @@ export default class Links extends Field {
       appearance: {
         editor: appearanceToEditor[appearance],
         parameters: {},
-        addons: [],
+        addons: body?.addons || [],
       },
     });
   }

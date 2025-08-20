@@ -64,7 +64,7 @@ export default class Seo extends Field {
           fields,
           previews,
         },
-        addons: [],
+        addons: body?.addons || [],
       },
     });
   }

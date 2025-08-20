@@ -24,7 +24,7 @@ export default class StringCheckboxGroup extends Field {
         parameters: {
           options,
         },
-        addons: [],
+        addons: body?.addons || [],
       },
     });
   }

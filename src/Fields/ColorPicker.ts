@@ -37,7 +37,7 @@ export default class ColorPicker extends Field {
           enable_alpha,
           preset_colors,
         },
-        addons: [],
+        addons: body?.addons || [],
       },
     });
   }

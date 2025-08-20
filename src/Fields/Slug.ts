@@ -32,7 +32,7 @@ export default class Slug extends Field {
           url_prefix,
           placeholder,
         },
-        addons: [],
+        addons: body?.addons || [],
       },
     });
   }

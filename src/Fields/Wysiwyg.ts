@@ -39,7 +39,7 @@ export default class Wysiwyg extends Field {
         parameters: {
           toolbar,
         },
-        addons: [],
+        addons: body?.addons || [],
       },
     });
   }

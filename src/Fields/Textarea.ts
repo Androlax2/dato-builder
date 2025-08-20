@@ -17,7 +17,7 @@ export default class Textarea extends Field {
         parameters: {
           placeholder,
         },
-        addons: [],
+        addons: body?.addons || [],
       },
     });
   }

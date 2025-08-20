@@ -17,11 +17,7 @@ export default class StringSelect extends Field {
         parameters: {
           options,
         },
-        addons: [],
-        ...body?.appearance,
-        addons: [
-          ...(body?.appearance?.addons || []),
-        ],
+        addons: body?.addons || [],
       },
     });
   }

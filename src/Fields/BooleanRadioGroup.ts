@@ -24,7 +24,7 @@ export default class BooleanRadioGroup extends Field {
           positive_radio,
           negative_radio,
         },
-        addons: [],
+        addons: body?.addons || [],
       },
     });
   }

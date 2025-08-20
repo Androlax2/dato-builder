@@ -17,7 +17,7 @@ export default class StringRadioGroup extends Field {
         parameters: {
           radios,
         },
-        addons: [],
+        addons: body?.addons || [],
       },
     });
   }

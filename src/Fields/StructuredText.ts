@@ -102,7 +102,7 @@ export default class StructuredText extends Field {
           show_links_target_blank,
           show_links_meta_editor,
         },
-        addons: [],
+        addons: body?.addons || [],
       },
     });
   }

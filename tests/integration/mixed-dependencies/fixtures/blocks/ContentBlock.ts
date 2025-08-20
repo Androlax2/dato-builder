@@ -28,7 +28,7 @@ export default function buildContentBlock({ config }: BuilderContext) {
           parameters: {
             toolbar: ["bold", "italic", "link"],
           },
-          addons: [],
+          addons: body?.addons || [],
         },
       },
     })

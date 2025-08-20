@@ -43,7 +43,7 @@ export default class SingleBlock extends Field {
           start_collapsed:
             type === "framed_single_block" ? start_collapsed : undefined,
         },
-        addons: [],
+        addons: body?.addons || [],
       },
     });
   }

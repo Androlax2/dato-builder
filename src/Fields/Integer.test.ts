@@ -55,7 +55,7 @@ describe("Integer", () => {
           type: "number",
           editor: "number",
           parameters: {},
-          addons: [],
+          addons: body?.addons || [],
         },
       },
     });
@@ -70,7 +70,7 @@ describe("Integer", () => {
         type: "number",
         editor: "number",
         parameters: {},
-        addons: [],
+        addons: body?.addons || [],
       },
       validators: {},
     });

@@ -4,8 +4,18 @@ import Validators from "../Validators/Validators";
 
 type FieldType = Pick<FieldCreateSchema, "field_type">["field_type"];
 
+export type Addon = {
+  [k: string]: unknown;
+  id: string;
+  field_extension?: string;
+  parameters: {
+    [k: string]: unknown;
+  };
+};
+
 export type FieldBody = Omit<FieldCreateSchema, "field_type" | "api_key"> & {
   api_key?: string;
+  addons?: Addon[];
 };
 
 export default abstract class Field {
