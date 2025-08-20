@@ -95,7 +95,7 @@ describe("Field", () => {
         type: "custom",
         editor: "",
         parameters: {},
-        addons: body?.addons || [],
+        addons: [],
       },
       position: 1,
     });

@@ -38,7 +38,7 @@ export default function buildAuthor({ config }: BuilderContext) {
         appearance: {
           editor: "wysiwyg",
           parameters: {},
-          addons: body?.addons || [],
+          addons: [],
         },
       },
     })
