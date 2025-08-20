@@ -18,6 +18,10 @@ export default class StringSelect extends Field {
           options,
         },
         addons: [],
+        ...body?.appearance,
+        addons: [
+          ...(body?.appearance?.addons || []),
+        ],
       },
     });
   }
