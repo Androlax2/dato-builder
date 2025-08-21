@@ -1,3 +1,10 @@
+## [4.1.1](https://github.com/Androlax2/dato-builder/compare/v4.1.0...v4.1.1) (2025-08-21)
+
+
+### Bug Fixes
+
+* **fields:** add required validator to StructuredTextBody ([fbd2319](https://github.com/Androlax2/dato-builder/commit/fbd23195fb94904b95fa60255c29bf2d55d86122))
+
 # [4.1.0](https://github.com/Androlax2/dato-builder/compare/v4.0.1...v4.1.0) (2025-08-20)
 
 
