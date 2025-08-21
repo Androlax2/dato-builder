@@ -37,7 +37,7 @@
     "clean": "rimraf build coverage .nyc_output"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.1.4",
+    "@biomejs/biome": "2.2.0",
     "@commitlint/cli": "^19.8.0",
     "@commitlint/config-conventional": "^19.8.0",
     "@cspell/dict-software-terms": "^5.0.7",
