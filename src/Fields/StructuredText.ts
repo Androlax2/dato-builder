@@ -6,6 +6,7 @@ import Field, { type FieldBody } from "./Field";
 export type StructuredTextBody = Omit<FieldBody, "label" | "validators"> & {
   validators?: Pick<
     ValidatorConfig,
+    | "required"
     | "length"
     | "structured_text_inline_blocks"
     | "structured_text_blocks"
