@@ -1,3 +1,10 @@
+# [4.1.0](https://github.com/Androlax2/dato-builder/compare/v4.0.1...v4.1.0) (2025-08-20)
+
+
+### Features
+
+* **fields:** handle addons ([9752371](https://github.com/Androlax2/dato-builder/commit/975237108c296b8555ca447902b355cd0cf9d49b))
+
 ## [4.0.1](https://github.com/Androlax2/dato-builder/compare/v4.0.0...v4.0.1) (2025-07-24)
 
 
