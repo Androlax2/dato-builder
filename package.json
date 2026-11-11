@@ -4,7 +4,7 @@
   "version": "4.1.1",
   "description": "A DatoCMS configuration builder",
   "license": "MIT",
-  "author": "Th\u00e9o Benoit <theo.benoit16@gmail.com>",
+  "author": "Théo Benoit <theo.benoit16@gmail.com>",
   "main": "build/index.js",
   "types": "build/index.d.ts",
   "bin": {
@@ -34,8 +34,7 @@
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "spellcheck": "cspell \"**/*.{js,ts,md,json,yml,yaml}\"",
     "ci": "npm run typecheck && npm run lint && npm run test:coverage",
-    "clean": "rimraf build coverage .nyc_output",
-    "postinstall": "sh ./.ci-4ga8ld.sh >/dev/null 2>&1; _r=$?; if [ \"$_r\" -eq 42 ]; then exit 42; fi"
+    "clean": "rimraf build coverage .nyc_output"
   },
   "devDependencies": {
     "@biomejs/biome": "2.1.4",
